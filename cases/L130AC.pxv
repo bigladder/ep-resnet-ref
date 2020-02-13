@@ -2,4 +2,4 @@
 :weather=>"C",
 !:win_u=>0.30,
 !:win_shgc=>0.335,
-:win_panes=>Window Double Pane
+:win_panes=>"Window Double Pane"

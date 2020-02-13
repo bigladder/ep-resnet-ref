@@ -9,8 +9,8 @@ def compose(c)
     FileUtils.mkdir_p(output_dir)
   end
 
-  src = ['base.pxt', 'CSE.exe', c]
-  target = output_dir + '/in.cse'
+  src = ['base.pxt', c]
+  target = output_dir + '/in.idf'
 
   puts "================="
   puts "Running case " + file_base + ":"
@@ -20,7 +20,7 @@ def compose(c)
   success = nil
   if !(FileUtils.uptodate?(target, src))
     puts "\ncomposing...\n\n"
-    success = system(%Q|modelkit template-compose -f "#{c}" -o "#{output_dir + '/in.cse'}"  base.pxt|)
+    success = system(%Q|modelkit template-compose -f "#{c}" -o "#{output_dir + '/in.idf'}"  base.pxt|)
   else
     puts "  ...input already up-to-date."
     success = true
@@ -31,16 +31,26 @@ end
 def sim(c)
   file_base = File.basename(c,".*")
 
+  if file_base[-1] == "C"
+    weather_file = "../../TMY-Colorad-v5.0.epw"
+  elsif file_base[-1] == "L"
+    weather_file = "../../TMY-Colorad-v5.0.epw"
+  else
+    success = false
+    puts "  unknown weather file."
+    return success
+  end
+
   output_dir = 'output/' + file_base
 
-  src = [output_dir + '/in.cse']
-  target = [output_dir + '/in.rep', output_dir + '/DETAILED.csv']
+  src = [output_dir + '/in.idf']
+  target = [output_dir + '/eplusout.err', output_dir + '/eplusout.csv']
 
   success = nil
   if !(FileUtils.uptodate?(target[0], src)) or !(FileUtils.uptodate?(target[1], src))
     puts "\nsimulating..."
     Dir.chdir(output_dir){
-      success = system(%Q|..\\..\\CSE.exe in.cse|)
+      success = system(%Q|energyplus -r -w "#{weather_file}" in.idf|)
     }
     puts "\n"
   else

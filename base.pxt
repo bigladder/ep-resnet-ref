@@ -1,9 +1,8 @@
 <%#INTERFACE
   parameter "case_name"
   parameter "ach", :default=>0.67
-  parameter "win_panes", :default=>WINDOW SINGLE PANE
+  parameter "win_panes", :default=>"WINDOW SINGLE PANE"
   parameter "int_load", :default=>2930.711
-  parameter "weather"
   parameter "ext_sol_abs_exposed", :default=>0.6 # applied to exterior face of exposed surfaces (exterior walls, roofs, end gables, doors)
 %>
 
@@ -65,7 +64,6 @@ Shading:Building,
   0.761962839691077;       !- Height {m}
 <% end %>
 
-<% if (case_name.include?("L200A")) || (case_name.include?("L202A")) %>
 Material:AirGap,
    AirGap,                  !- Name
    0.177871290333931;       !- Thermal Resistance {m2-K/W}
@@ -82,6 +80,39 @@ Material:AirGap,
    0.6;                     !- Visible Absorptance
 
  Material,
+   FIBERGLASS BATT R18,     !- Name
+   Rough,                   !- Roughness
+   0.139700283190653,       !- Thickness {m}
+   4.77302014748178E-02,    !- Conductivity {W/m-K}
+   10.8925479862052,        !- Density {kg/m3}
+   836.800006332062,        !- Specific Heat {J/kg-K}
+   0.9,                     !- Thermal Absorptance
+   0.6,                     !- Solar Absorptance
+   0.6;                     !- Visible Absorptance
+
+ Material,
+   FIBERGLASS BATT R38,     !- Name
+   Rough,                   !- Roughness
+   0.304800617870515,       !- Thickness {m}
+   4.49904013901606E-02,    !- Conductivity {W/m-K}
+   9.61107175253399,        !- Density {kg/m3}
+   836.800006332062,        !- Specific Heat {J/kg-K}
+   0.9,                     !- Thermal Absorptance
+   0.6,                     !- Solar Absorptance
+   0.6;
+
+ Material,
+   POLYISOCYANURATE BD INSUL,  !- Name
+   Rough,                   !- Roughness
+   2.54000514892096E-02,    !- Thickness {m}
+   2.00438006193344E-02,    !- Conductivity {W/m-K}
+   32.03690584178,          !- Density {kg/m3}
+   920.480006965268,        !- Specific Heat {J/kg-K}
+   0.9,                     !- Thermal Absorptance
+   0.7,                     !- Solar Absorptance
+   0.7;                     !- Visible Absorptance
+
+ Material,
    L200 JOIST 2X6 24 OC,    !- Name
    Rough,                   !- Roughness
    8.89001802122336E-02,    !- Thickness {m}
@@ -91,7 +122,6 @@ Material:AirGap,
    0.9,                     !- Thermal Absorptance
    0.6,                     !- Solar Absorptance
    0.6;                     !- Visible Absorptance
-<% end %>
 
 <% if (case_name.include?("L100A")) || (case_name.include?("L110A")) || (case_name.include?("L120A")) || (case_name.include?("L170A")) || (case_name.include?("L200A")) || (case_name.include?("L202A"))%>
   Window,
@@ -878,7 +908,7 @@ Window,
                                         !- X,Y,Z  4 {m}
 
   Construction,
-    WINDOW SINGLeE PANE,      !- Name
+    WINDOW SINGLE PANE,      !- Name
     SINGLE PANE GLASS;       !- Outside Layer
 
                                         !- X,Y,Z  1 {m}
@@ -1297,7 +1327,7 @@ WindowMaterial:Glazing,
     PLASTERBOARD,
 <% if (case_name.include?("L200A")) || (case_name.include?("L202A")) %>
     FIBERGLASS BATT R11;     !- Layer 3
-<% elseif case_name.include?("L120A") %>
+<% elsif case_name.include?("L120A") %>
     FIBERGLASS BATT R19,
     FIBERGLASS BATT R38;
 <% else %>
@@ -1309,7 +1339,7 @@ WindowMaterial:Glazing,
     PLASTERBOARD,            !- Outside Layer
 <% if (case_name.include?("L200A")) || (case_name.include?("L202A")) %>
     L200 JOIST 2X6 24 OC;     !- Layer 3
-<% elseif case_name.include?("L120A") %>
+<% elsif case_name.include?("L120A") %>
     JOIST 2X6 24 OC,
     FIBERGLASS BATT R38;     !- Layer 3
 <% else %>
@@ -1411,7 +1441,8 @@ WindowMaterial:Glazing,
     CEILING BATT,            !- Name
 <% if case_name.include?("L120A") %>
     FIBERGLASS BATT R38,     !- Outside Layer
-<% elseif case_name.include?("L200A") %>
+    FIBERGLASS BATT R19,     !- Layer 2
+<% elsif case_name.include?("L200A") %>
     FIBERGLASS BATT R11,     !- Layer 2
 <% else %>
     FIBERGLASS BATT R19,     !- Layer 2
@@ -1422,7 +1453,8 @@ WindowMaterial:Glazing,
     CEILING JOISTS,          !- Name
 <% if case_name.include?("L120A") %>
     FIBERGLASS BATT R38,     !- Outside Layer
-<% elseif (case_name.include?("L200A")) || (case_name.include?("L202A")) %>
+    JOIST 2X6 24 OC,
+<% elsif (case_name.include?("L200A")) || (case_name.include?("L202A")) %>
     L200 JOIST 2X6 24 OC,         !- Outside Layer
 <% else %>
     JOIST 2X6 24 OC,
@@ -1502,7 +1534,7 @@ WindowMaterial:Glazing,
 <% if case_name.include?("L120A") %>
     POLYISOCYANURATE BD INSUL,  !- Layer 2
     FIBERGLASS BATT R18,     !- Layer 3
-<% elseif (case_name.include?("L200A")) || (case_name.include?("L202A")) %>
+<% elsif (case_name.include?("L200A")) || (case_name.include?("L202A")) %>
     FIBERBOARD SHEATHING,    !- Layer 2
     AirGap,                  !- Layer 3
 <% else %>
