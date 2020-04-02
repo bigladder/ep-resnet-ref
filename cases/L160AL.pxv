@@ -1,6 +1,5 @@
-:case_name=>"L160AL",
-:weather=>"L",
-:north_windows=>0,
-:south_windows=>0,
-:east_windows=>9,
-:west_windows=>9
+:case_name=>"L160AL"
+#:north_windows=>0,
+#:south_windows=>0,
+#:east_windows=>9,
+#:west_windows=>9
