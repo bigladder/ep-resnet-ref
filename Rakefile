@@ -34,7 +34,7 @@ def sim(c)
   if file_base[-1] == "C"
     weather_file = "../../TMY-Colorad-v5.0.epw"
   elsif file_base[-1] == "L"
-    weather_file = "../../TMY-Colorad-v5.0.epw"
+    weather_file = "../../TMY-Lasvega-v5.0.epw"
   else
     success = false
     puts "  unknown weather file."
