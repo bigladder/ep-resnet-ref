@@ -9,7 +9,7 @@
   parameter "c_factor", :default=>0.967008195096609 # W/m.K
 %>
 
-  VERSION,9.2;
+  VERSION,9.3;
 
   Building,
     <%= case_name %>,                   !- Name
@@ -19,7 +19,7 @@
     0.004,                   !- Temperature Convergence Tolerance Value {deltaC}
     FullInteriorAndExterior, !- Solar Distribution
     ,                        !- Maximum Number of Warmup Days
-    6;                       !- Minimum Number of Warmup Days
+    1;                       !- Minimum Number of Warmup Days
 
   Timestep,4;
 
@@ -30,8 +30,8 @@
   HeatBalanceAlgorithm,ConductionTransferFunction;
 
   ShadowCalculation,
-    AverageOverDaysInFrequency,  !- Calculation Method
-    1;                       !- Calculation Frequency
+    PolygonClipping,  !- Calculation Method
+    Periodic;                       !- Calculation Frequency
 
   SimulationControl,
     No,                      !- Do Zone Sizing Calculation

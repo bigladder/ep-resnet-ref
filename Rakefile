@@ -50,7 +50,7 @@ def sim(c)
   if !(FileUtils.uptodate?(target[0], src)) or !(FileUtils.uptodate?(target[1], src))
     puts "\nsimulating..."
     Dir.chdir(output_dir){
-      success = system(%Q|energyplus -r -w "#{weather_file}" in.idf|)
+      success = system(%Q|/Applications/EnergyPlus-9-3-0/energyplus -r -w "#{weather_file}" in.idf|)
     }
     puts "\n"
   else
