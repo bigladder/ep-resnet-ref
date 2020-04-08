@@ -1408,22 +1408,6 @@ WindowMaterial:Glazing,
 
   Site:GroundReflectance,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2;
 
-  Output:Variable,*,Site Diffuse Solar Radiation Rate per Area,Hourly;
-
-  Output:Variable,*,Site Direct Solar Radiation Rate per Area,Hourly;
-
-  Output:Variable,*,Site Ground Reflected Solar Radiation Rate per Area,Hourly;
-
-  Output:Variable,*,Site Sky Diffuse Solar Radiation Luminous Efficacy,Hourly;
-
-  Output:Variable,*,Site Beam Solar Radiation Luminous Efficacy,Hourly;
-
-  Output:Variable,*,Site Exterior Horizontal Sky Illuminance,Hourly;
-
-  Output:Variable,*,Site Exterior Beam Normal Illuminance,Hourly;
-
-  Output:Variable,*,Site Exterior Horizontal Beam Illuminance,Hourly;
-
   Construction,
     DOOR,                    !- Name
     DOOR;                    !- Outside Layer
@@ -1771,8 +1755,6 @@ WindowMaterial:Glazing,
     0,                       !- Temperature Term Coefficient
     0,                       !- Velocity Term Coefficient
     0;                       !- Velocity Squared Term Coefficient
-
-  Output:Variable,*,Zone Mean Air Temperature,Hourly;
 
   Material,
     ASPHALT SHINGLE 1/4 IN,  !- Name
@@ -2131,41 +2113,11 @@ WindowMaterial:Glazing,
     ALWAYS 20,               !- Heating Setpoint Temperature Schedule Name
     ALWAYS 25.55;            !- Cooling Setpoint Temperature Schedule Name
 
-  Output:Variable,*,Site Outdoor Air Drybulb Temperature,Hourly;
-
-  Output:Variable,*,Zone Air System Sensible Cooling Energy,Hourly;
-
-  Output:Variable,*,Zone Air System Sensible Heating Energy,Hourly;
-
-  Output:Variable,*,Zone Air Temperature,Hourly;
-
-  Output:Variable,*,Zone Infiltration Air Change Rate,Hourly;
-
-  Output:Variable,*,Electric Equipment Total Heating Energy,Hourly;
-
-  Output:Variable,*,Electric Equipment Latent Gain Energy,Hourly;
-
-  Output:Variable,*,Site Outdoor Air Drybulb Temperature,Monthly;
-
-  Output:Variable,*,Zone Air System Sensible Cooling Energy,Monthly;
-
-  Output:Variable,*,Zone Air System Sensible Heating Energy,Monthly;
-
-  Output:Variable,*,Zone Air Temperature,Monthly;
-
-  Output:Meter,DistrictHeating:Facility,Monthly;
-
-  Output:Meter,DistrictCooling:Facility,Monthly;
-
   Output:Surfaces:Drawing,DXF;
 
   Output:Constructions,Constructions;
 
   Output:VariableDictionary,Regular;
-
-                                        !- X,Y,Z  1 {m}
-                                        !- X,Y,Z  2 {m}
-                                        !- X,Y,Z  3 {m}
 
 <% if (case_name.include?("L302A") || case_name.include?("L304A")) %>
 Site:GroundTemperature:FCfactorMethod,6.58,4.96,4.61,5.1,7.54,10.16,12.57,14.24,14.63,13.68,11.6,9.05;
@@ -2343,13 +2295,6 @@ BuildingSurface:Detailed,
   1.73727527449566,8.22919866866364,0.000000,  !- X,Y,Z ==> Vertex 2 {m}
   17.3727527449566,8.22919866866364,0.000000,  !- X,Y,Z ==> Vertex 3 {m}
   17.3727527449566,0.000000,0.000000;  !- X,Y,Z ==> Vertex 4 {m}
-
-                                      !- X,Y,Z  4 {m}
-                                      !- X,Y,Z  1 {m}
-                                      !- X,Y,Z  2 {m}
-                                      !- X,Y,Z  3 {m}
-
-Output:Variable,*,Surface Inside Face Convection Heat Gain Energy,Hourly;
 
 Construction,
     FLOOR OVCS NO BATTING,   !- Name
@@ -2715,14 +2660,11 @@ Construction:FfactorGroundFloor,
   51.2039028272404;        !- PerimeterExposed {m}
 
 <% if (case_name.include?("L322A") || case_name.include?("L324A") || case_name.include?("LK322A") || case_name.include?("LK324A")) %>
-Output:Variable,*,Surface Inside Face Convection Heat Gain Energy,Hourly;
 
 Construction:CfactorUndergroundWall,
    UGWall,                  !- Name
    <%= c_factor %>,       !- C-Factor {W/m2-K}
    2.00649198501531;        !- Height {m}
-
-Output:Variable,*,Site Deep Ground Temperature,Hourly;
 
 Construction,
    Base-Conc-WallToSoil,    !- Name
@@ -3241,3 +3183,17 @@ ExposedPerimeterFraction,
 ;
 
 <% end %>
+
+
+  Output:Variable,*,Site Outdoor Air Drybulb Temperature,Hourly;
+
+  Output:Variable,*,Zone Mean Air Temperature,Hourly;
+
+  Output:Variable,*,Zone Ideal Loads Supply Air Total Heating Energy,Hourly;
+
+  Output:Variable,*,Zone Ideal Loads Supply Air Total Cooling Energy,Hourly;
+
+  Output:Meter,DistrictHeating:Facility,Monthly;
+
+  Output:Meter,DistrictCooling:Facility,Monthly;
+
