@@ -37,7 +37,6 @@ rim_joist_hieght = (7.5/12.0)|'ft' # [ft]
 basement_wall_height = (6 + 7.0/12.0)|'ft' # [ft]
 zone_vol_bsmt = floor_area*(sill_plate_hieght + rim_joist_hieght + basement_wall_height) # Conditioned attic zone volume in cubic feet
 
-
 win_width = 3.0|'ft' # Window width [ft]
 win_height = 5.0|'ft' # Window height [ft]
 
@@ -49,8 +48,6 @@ overhang_height = 1.0|'ft' # Height of gap between top of window and bottom of o
 
 # Internal use
 nsteps = 1
-
-
 
 %>
   VERSION,9.3;
@@ -102,30 +99,34 @@ nsteps = 1
 
   Site:GroundReflectance,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2;
 
-Foundation:Kiva:Settings,
-  1.8,                     !- Soil Conductivity {W/m-K}
-  3200,                    !- Soil Density {kg/m3}
-  836,                     !- Soil Specific Hevat {J/kg-K}
-  0.9,                     !- Ground Solar Absorptivity {dimensionless}
-  0.9,                     !- Ground Thermal Absorptivity {dimensionless}
-  0.03,                    !- Ground Surface Roughness {m}
-  40,                      !- Far-Field Width {m}
-  Autoselect;              !- Deep-Ground Boundary Condition
+  Foundation:Kiva:Settings,
+    1.8,                     !- Soil Conductivity {W/m-K}
+    3200,                    !- Soil Density {kg/m3}
+    836,                     !- Soil Specific Hevat {J/kg-K}
+    0.9,                     !- Ground Solar Absorptivity {dimensionless}
+    0.9,                     !- Ground Thermal Absorptivity {dimensionless}
+    0.03,                    !- Ground Surface Roughness {m}
+    40,                      !- Far-Field Width {m}
+    Autoselect;              !- Deep-Ground Boundary Condition
 
   GlobalGeometryRules,
     UpperLeftCorner,         !- Starting Vertex Position
     Counterclockwise,        !- Vertex Entry Direction
     World;                   !- Coordinate System
 
-! Materials
+!--- Schedule Type Limits Section ---
+  ScheduleTypeLimits,
+    Any Number;              !- Name
+
+!--- Materials Section ---
 
 ! Air gaps
-Material:AirGap,
+  Material:AirGap,
    AirGap,                  !- Name
    0.177871290333931;       !- Thermal Resistance {m2-K/W}
 
 ! Insulation
- Material,
+  Material,
    R-11 Fiberglass Batt,     !- Name
    Rough,                   !- Roughness
    <%= 3.5|'in' %>,    !- Thickness {m}
@@ -147,16 +148,16 @@ Material:AirGap,
    0.6,                     !- Solar Absorptance
    0.6;                     !- Visible Absorptance
 
-   Material,
-     R-19 Fiberglass Batt - Ceiling,     !- Name
-     Rough,                   !- Roughness
-     <%= 6.25|'in' %>,        !- Thickness {m}
-     4.77302014748178E-02,    !- Conductivity {W/m-K}
-     9.61107175253399,        !- Density {kg/m3}
-     836.800006332062,        !- Specific Heat {J/kg-K}
-     0.9,                     !- Thermal Absorptance
-     0.6,                     !- Solar Absorptance
-     0.6;                     !- Visible Absorptance
+ Material,
+   R-19 Fiberglass Batt - Ceiling,     !- Name
+   Rough,                   !- Roughness
+   <%= 6.25|'in' %>,        !- Thickness {m}
+   4.77302014748178E-02,    !- Conductivity {W/m-K}
+   9.61107175253399,        !- Density {kg/m3}
+   836.800006332062,        !- Specific Heat {J/kg-K}
+   0.9,                     !- Thermal Absorptance
+   0.6,                     !- Solar Absorptance
+   0.6;                     !- Visible Absorptance
 
  Material,
    R-38 Fiberglass Batt - Ceiling,     !- Name
@@ -168,7 +169,6 @@ Material:AirGap,
    0.9,                     !- Thermal Absorptance
    0.6,                     !- Solar Absorptance
    0.6;
-
 
  Material,
    Polyisocyanurate board insulation,  !- Name
@@ -182,85 +182,84 @@ Material:AirGap,
    0.7;                     !- Visible Absorptance
 
 ! Wood Framing
-   Material,
-     Wood Framing - 2x4,    !- Name
-     Rough,                   !- Roughness
-    <%= 3.5|'in' %>,    !- Thickness {m}
-     0.115648403573426,       !- Conductivity {W/m-K}
-     512.590493468479,        !- Density {kg/m3}
-     1380.7200104479,         !- Specific Heat {J/kg-K}
-     0.9,                     !- Thermal Absorptance
-     0.6,                     !- Solar Absorptance
-     0.6;                     !- Visible Absorptance
+ Material,
+   Wood Framing - 2x4,    !- Name
+   Rough,                   !- Roughness
+  <%= 3.5|'in' %>,    !- Thickness {m}
+   0.115648403573426,       !- Conductivity {W/m-K}
+   512.590493468479,        !- Density {kg/m3}
+   1380.7200104479,         !- Specific Heat {J/kg-K}
+   0.9,                     !- Thermal Absorptance
+   0.6,                     !- Solar Absorptance
+   0.6;                     !- Visible Absorptance
 
-   Material,
-     Wood Framing - 2x6,    !- Name
-     Rough,                   !- Roughness
-    <%= 5.5|'in' %>,    !- Thickness {m}
-     0.115648403573426,       !- Conductivity {W/m-K}
-     512.590493468479,        !- Density {kg/m3}
-     1380.7200104479,         !- Specific Heat {J/kg-K}
-     0.9,                     !- Thermal Absorptance
-     0.6,                     !- Solar Absorptance
-     0.6;                     !- Visible Absorptance
+ Material,
+   Wood Framing - 2x6,    !- Name
+   Rough,                   !- Roughness
+  <%= 5.5|'in' %>,    !- Thickness {m}
+   0.115648403573426,       !- Conductivity {W/m-K}
+   512.590493468479,        !- Density {kg/m3}
+   1380.7200104479,         !- Specific Heat {J/kg-K}
+   0.9,                     !- Thermal Absorptance
+   0.6,                     !- Solar Absorptance
+   0.6;                     !- Visible Absorptance
 
- ! Wall finishes
-   Material,
-     PLASTERBOARD,            !- Name
-     Rough,                   !- Roughness
-     <%= 0.5|'in' %>,    !- Thickness {m}
-     0.160206204950219,       !- Conductivity {W/m-K}
-     800.922646044499,        !- Density {kg/m3}
-     1087.84000823168,        !- Specific Heat {J/kg-K}
-     0.9,                     !- Thermal Absorptance
-     0.6,                     !- Solar Absorptance
-     0.6;                     !- Visible Absorptance
+! Wall finishes
+ Material,
+   PLASTERBOARD,            !- Name
+   Rough,                   !- Roughness
+   <%= 0.5|'in' %>,    !- Thickness {m}
+   0.160206204950219,       !- Conductivity {W/m-K}
+   800.922646044499,        !- Density {kg/m3}
+   1087.84000823168,        !- Specific Heat {J/kg-K}
+   0.9,                     !- Thermal Absorptance
+   0.6,                     !- Solar Absorptance
+   0.6;                     !- Visible Absorptance
 
-   Material,
-     Hardboard Siding,!- Name
-     Rough,                   !- Roughness
-     <%= (7.0/16.0)|'in' %>,    !- Thickness {m}
-     9.45952029229017E-02,    !- Conductivity {W/m-K}
-     640.738116835599,        !- Density {kg/m3}
-     1171.52000886489,        !- Specific Heat {J/kg-K}
-     0.9,                     !- Thermal Absorptance
-     <%= ext_sol_abs_exposed %>,                     !- Solar Absorptance
-     <%= ext_sol_abs_exposed %>;                     !- Visible Absorptance
+ Material,
+   Hardboard Siding,!- Name
+   Rough,                   !- Roughness
+   <%= (7.0/16.0)|'in' %>,    !- Thickness {m}
+   9.45952029229017E-02,    !- Conductivity {W/m-K}
+   640.738116835599,        !- Density {kg/m3}
+   1171.52000886489,        !- Specific Heat {J/kg-K}
+   0.9,                     !- Thermal Absorptance
+   <%= ext_sol_abs_exposed %>,                     !- Solar Absorptance
+   <%= ext_sol_abs_exposed %>;                     !- Visible Absorptance
 
 ! Roof
-       Material,
-         PLYWOOD 1/2 IN,          !- Name
-         Rough,                   !- Roughness
-         <%= 0.5|'in' %>,    !- Thickness {m}
-         0.11550420356897,        !- Conductivity {W/m-K}
-         544.627399310259,        !- Density {kg/m3}
-         1213.36000918149,        !- Specific Heat {J/kg-K}
-         0.9,                     !- Thermal Absorptance
-         0.6,                     !- Solar Absorptance
-         0.6;                     !- Visible Absorptance
+ Material,
+   PLYWOOD 1/2 IN,          !- Name
+   Rough,                   !- Roughness
+   <%= 0.5|'in' %>,    !- Thickness {m}
+   0.11550420356897,        !- Conductivity {W/m-K}
+   544.627399310259,        !- Density {kg/m3}
+   1213.36000918149,        !- Specific Heat {J/kg-K}
+   0.9,                     !- Thermal Absorptance
+   0.6,                     !- Solar Absorptance
+   0.6;                     !- Visible Absorptance
 
+ Material,
+   PLYWOOD 3/4 IN,          !- Name
+   Rough,                   !- Roughness
+   <%= 0.75|'in' %>,    !- Thickness {m}
+   0.115360003564514,       !- Conductivity {W/m-K}
+   544.627399310259,        !- Density {kg/m3}
+   1213.36000918149,        !- Specific Heat {J/kg-K}
+   0.9,                     !- Thermal Absorptance
+   0.6,                     !- Solar Absorptance
+   0.6;                     !- Visible Absorptance
 
-     Material,
-       PLYWOOD 3/4 IN,          !- Name
-       Rough,                   !- Roughness
-       <%= 0.75|'in' %>,    !- Thickness {m}
-       0.115360003564514,       !- Conductivity {W/m-K}
-       544.627399310259,        !- Density {kg/m3}
-       1213.36000918149,        !- Specific Heat {J/kg-K}
-       0.9,                     !- Thermal Absorptance
-       0.6,                     !- Solar Absorptance
-       0.6;                     !- Visible Absorptance
-
-       Material,
-         ASPHALT SHINGLE,  !- Name
-         Rough,                   !- Roughness
-         <%= 0.25|'in' %>,     !- Thickness {m}
-         8.19056025308051E-02,    !- Conductivity {W/m-K}
-         1121.2917044623,         !- Density {kg/m3}
-         1255.20000949809,        !- Specific Heat {J/kg-K}
-         0.9,                     !- Thermal Absorptance
-         <%= ext_sol_abs_exposed %>,                     !- Solar Absorptance
-         <%= ext_sol_abs_exposed %>;                     !- Visible Absorptance
+ Material,
+   ASPHALT SHINGLE,  !- Name
+   Rough,                   !- Roughness
+   <%= 0.25|'in' %>,     !- Thickness {m}
+   8.19056025308051E-02,    !- Conductivity {W/m-K}
+   1121.2917044623,         !- Density {kg/m3}
+   1255.20000949809,        !- Specific Heat {J/kg-K}
+   0.9,                     !- Thermal Absorptance
+   <%= ext_sol_abs_exposed %>,                     !- Solar Absorptance
+   <%= ext_sol_abs_exposed %>;                     !- Visible Absorptance
 
 ! Wood door
 Material,
@@ -274,18 +273,7 @@ Material,
   <%= ext_sol_abs_exposed %>,                     !- Solar Absorptance
   <%= ext_sol_abs_exposed %>;                     !- Visible Absorptance
 
-! Floor slab Concrete  Material,
-Material,
-  Poured Concrete - 4in,            !- Name
-  Rough,                   !- Roughness
-  <%= 4|'in' %>,       !- Thickness {m}
-  1.80221165568662,        !- Conductivity {W/m-K}
-  2242.5834089246,         !- Density {kg/m3}
-  836.800006332062,        !- Specific Heat {J/kg-K}
-  0.9,                     !- Thermal Absorptance
-  0.7,                     !- Solar Absorptance
-  0.7;                     !- Visible Absorptance
-
+! Fiberboard Sheathing
   Material,
     Fiberboard Sheathing,    !- Name
     Rough,                   !- Roughness
@@ -297,18 +285,31 @@ Material,
     0.7,                     !- Solar Absorptance
     0.7;                     !- Visible Absorptance
 
+! Carpet with Fibrous Pad
+  Material,
+    Carpet with Fibrous Pad,            !- Name
+    Rough,                   !- Roughness
+    0.0128,                  !- Thickness {m}
+    0.034591544112,        !- Conductivity {W/m-K}
+    54.462775471464,         !- Density {kg/m3}
+    1339.776,        !- Specific Heat {J/kg-K}
+    ,                     !- Thermal Absorptance
+    ,                     !- Solar Absorptance
+    ;                     !- Visible Absorptance
 
-    Material,
-      Carpet with Fibrous Pad,            !- Name
-      Rough,                   !- Roughness
-      0.0128,                  !- Thickness {m}
-      0.034591544112,        !- Conductivity {W/m-K}
-      54.462775471464,         !- Density {kg/m3}
-      1339.776,        !- Specific Heat {J/kg-K}
-      ,                     !- Thermal Absorptance
-      ,                     !- Solar Absorptance
-      ;                     !- Visible Absorptance
+! Concrete for slab-on-grade floor
+Material,
+  Poured Concrete - 4in,            !- Name
+  Rough,                   !- Roughness
+  <%= 4|'in' %>,       !- Thickness {m}
+  1.80221165568662,        !- Conductivity {W/m-K}
+  2242.5834089246,         !- Density {kg/m3}
+  836.800006332062,        !- Specific Heat {J/kg-K}
+  0.9,                     !- Thermal Absorptance
+  0.7,                     !- Solar Absorptance
+  0.7;                     !- Visible Absorptance
 
+! Concrete for basement wall and foundation footing
 Material,
   Poured Concrete - 6in,            !- Name
   Rough,                   !- Roughness
@@ -342,7 +343,6 @@ Foundation:Kiva,
   0.508,!20|"IN",                     !- Wall Depth Below Slab {m}
   Foundation Footing;     !- Footing Wall Construction Name
 
-
 Material,
   Rim Joist 2x8,           !- Name
   Rough,                   !- Roughness
@@ -353,7 +353,6 @@ Material,
   0.9,                     !- Thermal Absorptance
   0.7,                     !- Solar Absorptance
   0.7;                     !- Visible Absorptance
-
 
 Material,
   Slab Insulation,              !- Name
@@ -368,16 +367,7 @@ Material,
 
 <% end %>
 
-Construction,
- WINDOW CONSTRUCTION,      !- Name
-<% if win_panes == 1 %>
- SINGLE PANE GLASS;       !- Outside Layer
-<% else %>
- OUTSIDE PANE GLASS,
- ARGON GAP,
- INSIDE PANE GLASS;
-<% end %>
-
+! Window layers
 WindowMaterial:Glazing,
   SINGLE PANE GLASS,       !- Name
   SpectralAverage,         !- Optical Data Type
@@ -453,22 +443,32 @@ WindowProperty:FrameAndDivider,
   0,                       !- Divider Visible Absorptance
   0.9;                     !- Divider Thermal Hemispherical Emissivity
 
+!--- Construction Assembly Section ---
+Construction,
+ WINDOW CONSTRUCTION,      !- Name
+<% if win_panes == 1 %>
+ SINGLE PANE GLASS;       !- Outside Layer
+<% else %>
+ OUTSIDE PANE GLASS,       !- Outside Layer
+ ARGON GAP,                !- Layer 2
+ INSIDE PANE GLASS;        !- Layer 3
+<% end %>
+
 Construction,
  Interior Wall - Cavity,       !- Name
  PLASTERBOARD,            !- Outside Layer
- AirGap,
- PLASTERBOARD;            !- Layer 2
+ AirGap,                  !- Layer 2
+ PLASTERBOARD;            !- Layer 3
 
 Construction,
   Interior Wall - Frame,    !- Name
   PLASTERBOARD,            !- Outside Layer
-  Wood Framing - 2x4,    !- Layer 2
+  Wood Framing - 2x4,      !- Layer 2
   PLASTERBOARD;            !- Layer 3
 
 Construction,
  DOOR,                    !- Name
- Solid Core Door;                    !- Outside Layer
-
+ Solid Core Door;         !- Outside Layer
 
 Construction,
   Floor Slab,           !- Name
@@ -488,40 +488,39 @@ Construction,
 Construction,
   Raised Floor - Frame,       !- Name
 <% if envelope_eff != "LOW" and foundation_type != "BASEMENT" %>
-  Wood Framing - 2x4,
+  Wood Framing - 2x4,         !- Outside Layer
 <% end %>
   PLYWOOD 3/4 IN,          !- Layer 2
   Carpet with Fibrous Pad;   !- Layer 3
 
 Construction,
   ROOF,                    !- Name
-  ASPHALT SHINGLE,  !- Outside Layer
+  ASPHALT SHINGLE,         !- Outside Layer
   PLYWOOD 1/2 IN;          !- Layer 2
-
 
 Construction,
   Gable Wall,               !- Name
+  Hardboard Siding,         !- Outside Layer
+  PLYWOOD 1/2 IN;           !- Layer 2
+
+Construction,
+  Exterior Wall - Cavity, !- Name
   Hardboard Siding,!- Outside Layer
-  PLYWOOD 1/2 IN;          !- Layer 2
-
-  Construction,
-    Exterior Wall - Cavity, !- Name
-    Hardboard Siding,!- Outside Layer
 <% if envelope_eff == "HIGH" %>
-    Polyisocyanurate board insulation,  !- Layer 2
-    R-18 Fiberglass Batt,     !- Layer 3
+  Polyisocyanurate board insulation,  !- Layer 2
+  R-18 Fiberglass Batt,     !- Layer 3
 <% elsif envelope_eff == "LOW" %>
-    FIBERBOARD SHEATHING,    !- Layer 2
-    AirGap,                  !- Layer 3
+  FIBERBOARD SHEATHING,    !- Layer 2
+  AirGap,                  !- Layer 3
 <% else %>
-    FIBERBOARD SHEATHING,    !- Layer 2
-    R-11 Fiberglass Batt,         !- Layer 3
+  FIBERBOARD SHEATHING,    !- Layer 2
+  R-11 Fiberglass Batt,         !- Layer 3
 <% end %>
-    PLASTERBOARD;            !- Layer 4
+  PLASTERBOARD;            !- Layer 4
 
   Construction,
-    Exterior Wall - Frame, !- Name
-    Hardboard Siding,!- Outside Layer
+    Exterior Wall - Frame,    !- Name
+    Hardboard Siding,         !- Outside Layer
 <% if envelope_eff == "HIGH" %>
     Polyisocyanurate board insulation,  !- Layer 2
     Wood Framing - 2x6,         !- Layer 3
@@ -547,23 +546,22 @@ Construction,
     Ceiling - Frame,          !- Name
 <% if envelope_eff == "HIGH" %>
     R-38 Fiberglass Batt - Ceiling,     !- Outside Layer
-    Wood Framing - 2x6,
+    Wood Framing - 2x6,                 !- Layer 2
 <% elsif envelope_eff == "LOW" %>
     Wood Framing - 2x4,         !- Outside Layer (assumed to be same thickness as Slab Insulation layer)
 <% else %>
-    Wood Framing - 2x6,
+    Wood Framing - 2x6,        !- Outside Layer
 <% end %>
     PLASTERBOARD;            !- Layer 2
 
-
   Construction,
     Attic floor - Cavity,        !- Name
-    PLASTERBOARD,
+    PLASTERBOARD,                !- Outside Layer
 <% if envelope_eff == "LOW" %>
-    R-11 Fiberglass Batt;     !- Layer 3
+    R-11 Fiberglass Batt;     !- Layer 2
 <% elsif envelope_eff == "HIGH" %>
-    R-19 Fiberglass Batt - Ceiling,
-    R-38 Fiberglass Batt - Ceiling;
+    R-19 Fiberglass Batt - Ceiling,     !- Layer 2
+    R-38 Fiberglass Batt - Ceiling;     !- Layer 3
 <% else %>
     R-19 Fiberglass Batt - Ceiling;     !- Layer 2
 <% end %>
@@ -572,25 +570,25 @@ Construction,
     Attic floor - Frame,      !- Name
     PLASTERBOARD,            !- Outside Layer
 <% if envelope_eff == "LOW" %>
-    Wood Framing - 2x4;     !- Layer 3
+    Wood Framing - 2x4;     !- Layer 2
 <% elsif envelope_eff == "HIGH" %>
-    Wood Framing - 2x6,
+    Wood Framing - 2x6,     !- Layer 2
     R-38 Fiberglass Batt - Ceiling;     !- Layer 3
 <% else %>
     Wood Framing - 2x6;         !- Layer 2
 <% end %>
 
 Construction,
-  Foundation Footing, !- Name
+  Foundation Footing,               !- Name
   Poured Concrete - 6in;            !- Outside Layer
 
 <% if foundation_type == "BASEMENT" %>
 Construction,
-   Basement Wall, !- Name
+   Basement Wall,                   !- Name
    Poured Concrete - 6in;            !- Outside Layer
 
 Construction,
-  Rim Joist,         !- Name
+  Rim Joist,               !- Name
   Hardboard Siding,         !- Outside Layer
   Fiberboard Sheathing,    !- Layer 2
    <% if foundation_insulated %>
@@ -623,36 +621,52 @@ Foundation:Kiva,
 
 <% end %>
 
- <%
+<%
 if foundation_type == "SLAB"
   framing_factor_floor = 0.0
 else
   framing_factor_floor = framing_factor_other
 end
 
- surfaces_cond = [
+surfaces_cond = [
    {:name=>"North Wall",:type=>"Wall",:length=>width,:azm=>0,:windows=>north_windows,:framing_factor=>framing_factor_walls,:doors=>1,:start_x=>width,:start_y=>depth},
    {:name=>"East Wall",:type=>"Wall",:length=>depth,:azm=>90,:windows=>east_windows,:framing_factor=>framing_factor_walls,:doors=>0,:start_x=>width,:start_y=>0},
    {:name=>"South Wall",:type=>"Wall",:length=>width,:azm=>180,:windows=>south_windows,:framing_factor=>framing_factor_walls,:doors=>1,:start_x=>0,:start_y=>0},
    {:name=>"West Wall",:type=>"Wall",:length=>depth,:azm=>270,:windows=>west_windows,:framing_factor=>framing_factor_walls,:doors=>0,:start_x=>0,:start_y=>depth},
    {:name=>"Ceiling",:type=>"Ceiling",:area=>floor_area,:windows=>0,:framing_factor=>framing_factor_other,:doors=>0},
    {:name=>"Floor",:type=>"Floor",:area=>floor_area,:windows=>0,:framing_factor=>framing_factor_floor,:doors=>0}
- ]
+]
 %>
+!--- Main Zone Section ---
+Zone,
+  Main Zone,                !- Name
+  0,                       !- Direction of Relative North {deg}
+  0,                       !- X Origin {m}
+  0,                       !- Y Origin {m}
+  0,                       !- Z Origin {m}
+  1,                       !- Type
+  1,                       !- Multiplier
+  autocalculate,           !- Ceiling Height {m}
+  autocalculate,           !- Volume {m3}
+  autocalculate,           !- Floor Area {m2}
+  ,                        !- Zone Inside Convection Algorithm
+  ,                        !- Zone Outside Convection Algorithm
+  Yes;                     !- Part of Total Floor Area
 
+!--- Main Zone Surfaces Section ---
 <% for surface in surfaces_cond %>
   <% if surface[:type] == "Wall" %>
 Wall:Exterior,
-  <%= surface[:name] %>-Cav, !- Name
-  Exterior Wall - Cavity,                       !- Construction Name
+  <%= surface[:name] %>-Cav,     !- Name
+  Exterior Wall - Cavity,          !- Construction Name
   Main Zone,                       !- Zone Name
-  <%= surface[:azm] %>, !- Azimuth Angle {deg}
-  90, !- Tilt Angle {deg]}
-  <%= surface[:start_x] %>, !- Starting X Coordinate {m}
-  <%= surface[:start_y] %>, !- Starting Y Coordinate {m}
-  0, !- Starting Z Coordinate {m}
-  <%= surface[:length] %>, !- Length {m}
-  <%= height_cond %>; !- Height {m}
+  <%= surface[:azm] %>,     !- Azimuth Angle {deg}
+  90,                              !- Tilt Angle {deg]}
+  <%= surface[:start_x] %>,     !- Starting X Coordinate {m}
+  <%= surface[:start_y] %>,     !- Starting Y Coordinate {m}
+  0,                               !- Starting Z Coordinate {m}
+  <%= surface[:length] %>,     !- Length {m}
+  <%= height_cond %>;     !- Height {m}
 
     <% if surface[:windows] > 0 %>
 <%
@@ -673,246 +687,119 @@ end
 %>
 
 FenestrationSurface:Detailed,
-  <%= surface[:name] %>-Windows,                       !- Name
-  Window,                       !- Surface Type
-  WINDOW CONSTRUCTION,                       !- Construction Name
-  <%= surface[:name] %>-Cav,                       !- Building Surface Name
-  ,                       !- Outside Boundary Condition Object
-  autocalculate,             !- View Factor to Ground
-  Frame-Divider_1,                       !- Frame and Divider Name
-  <%= surface[:windows] %>,                       !- Multiplier
-  autocalculate,             !- Number of Vertices
-  <%= surface[:start_x] + b  %>,!- Vertex 1 X-coordinate {m}
-  <%= surface[:start_y] + a %>,  !- Vertex 1 Y-coordinate {m}
-  <%= 0.5 + win_height %>,   !- Vertex 1 Z-coordinate {m}
-  <%= surface[:start_x] + b  %>,!- Vertex 2 X-coordinate {m}
-  <%= surface[:start_y] + a %>,  !- Vertex 2 Y-coordinate {m}
-  0.5,   !- Vertex 2 Z-coordinate {m}
-  <%= surface[:start_x] + b + b*win_width  %>,!- Vertex 3 X-coordinate {m}
-  <%= surface[:start_y] + a + a*win_width %>,  !- Vertex 3 Y-coordinate {m}
-  0.5,   !- Vertex 3 Z-coordinate {m}
-  <%= surface[:start_x] + b + b*win_width  %>,!- Vertex 4 X-coordinate {m}
-  <%= surface[:start_y] + a + a*win_width  %>,  !- Vertex 4 Y-coordinate {m}
-  <%= 0.5 + win_height %>;   !- Vertex 4 Z-coordinate {m}
+  <%= surface[:name] %>-Windows,     !- Name
+  Window,                               !- Surface Type
+  WINDOW CONSTRUCTION,                  !- Construction Name
+  <%= surface[:name] %>-Cav,     !- Building Surface Name
+  ,                                     !- Outside Boundary Condition Object
+  autocalculate,                        !- View Factor to Ground
+  Frame-Divider_1,                      !- Frame and Divider Name
+  <%= surface[:windows] %>,     !- Multiplier
+  autocalculate,                        !- Number of Vertices
+  <%= surface[:start_x] + b  %>,     !- Vertex 1 X-coordinate {m}
+  <%= surface[:start_y] + a %>,     !- Vertex 1 Y-coordinate {m}
+  <%= 0.5 + win_height %>,     !- Vertex 1 Z-coordinate {m}
+  <%= surface[:start_x] + b  %>,     !- Vertex 2 X-coordinate {m}
+  <%= surface[:start_y] + a %>,     !- Vertex 2 Y-coordinate {m}
+  0.5,                                  !- Vertex 2 Z-coordinate {m}
+  <%= surface[:start_x] + b + b*win_width  %>,     !- Vertex 3 X-coordinate {m}
+  <%= surface[:start_y] + a + a*win_width %>,     !- Vertex 3 Y-coordinate {m}
+  0.5,                                  !- Vertex 3 Z-coordinate {m}
+  <%= surface[:start_x] + b + b*win_width  %>,     !- Vertex 4 X-coordinate {m}
+  <%= surface[:start_y] + a + a*win_width  %>,     !- Vertex 4 Y-coordinate {m}
+  <%= 0.5 + win_height %>;     !- Vertex 4 Z-coordinate {m}
     <% end %>
 
     <% if surface[:doors] > 0 %>
 FenestrationSurface:Detailed,
-  <%= surface[:name] %>-Door,                       !- Name
+  <%= surface[:name] %>-Door,     !- Name
   Door,                       !- Surface Type
   DOOR,                       !- Construction Name
-  <%= surface[:name] %>-Cav,                       !- Building Surface Name
-  ,                       !- Outside Boundary Condition Object
-  autocalculate,             !- View Factor to Ground
-  ,                       !- Frame and Divider Name
-  ,                       !- Multiplier
-  autocalculate,             !- Number of Vertices
-  <%= surface[:start_x] + D*b  %>,!- Vertex 1 X-coordinate {m}
-  <%= surface[:start_y] + D*a %>,  !- Vertex 1 Y-coordinate {m}
-  <%= door_height %>,   !- Vertex 1 Z-coordinate {m}
-  <%= surface[:start_x] + D*b  %>,!- Vertex 2 X-coordinate {m}
-  <%= surface[:start_y] + D*a %>,  !- Vertex 2 Y-coordinate {m}
-  0,   !- Vertex 2 Z-coordinate {m}
-  <%= surface[:start_x] + D*b + b*door_width  %>,!- Vertex 3 X-coordinate {m}
-  <%= surface[:start_y] + D*a + a*door_width %>,  !- Vertex 3 Y-coordinate {m}
-  0,   !- Vertex 3 Z-coordinate {m}
-  <%= surface[:start_x] + D*b + b*door_width  %>,!- Vertex 4 X-coordinate {m}
-  <%= surface[:start_y] + D*a + a*door_width  %>,  !- Vertex 4 Y-coordinate {m}
-  <%= door_height %>;   !- Vertex 4 Z-coordinate {m}
+  <%= surface[:name] %>-Cav,     !- Building Surface Name
+  ,                           !- Outside Boundary Condition Object
+  autocalculate,              !- View Factor to Ground
+  ,                           !- Frame and Divider Name
+  ,                           !- Multiplier
+  autocalculate,              !- Number of Vertices
+  <%= surface[:start_x] + D*b  %>,     !- Vertex 1 X-coordinate {m}
+  <%= surface[:start_y] + D*a %>,     !- Vertex 1 Y-coordinate {m}
+  <%= door_height %>,     !- Vertex 1 Z-coordinate {m}
+  <%= surface[:start_x] + D*b  %>,     !- Vertex 2 X-coordinate {m}
+  <%= surface[:start_y] + D*a %>,     !- Vertex 2 Y-coordinate {m}
+  0,                          !- Vertex 2 Z-coordinate {m}
+  <%= surface[:start_x] + D*b + b*door_width  %>,     !- Vertex 3 X-coordinate {m}
+  <%= surface[:start_y] + D*a + a*door_width %>,     !- Vertex 3 Y-coordinate {m}
+  0,                          !- Vertex 3 Z-coordinate {m}
+  <%= surface[:start_x] + D*b + b*door_width  %>,     !- Vertex 4 X-coordinate {m}
+  <%= surface[:start_y] + D*a + a*door_width  %>,     !- Vertex 4 Y-coordinate {m}
+  <%= door_height %>;     !- Vertex 4 Z-coordinate {m}
     <% end %>
 
   <% elsif surface[:type] == "Ceiling" %>
 Ceiling:Interzone,
-  <%= surface[:name] %>-Cav,                       !- Name
-  Ceiling - Cavity,                       !- Construction Name
+  <%= surface[:name] %>-Cav,     !- Name
+  Ceiling - Cavity,                !- Construction Name
   Main Zone,                       !- Zone Name
-  Attic Zone,                       !- Outside Boundary Condition Object
-  0,   ! Azimuth
-  0,! Tilt Angle
-  <%= width %>, <%= depth %>, <%= height_cond %>,                       !- Starting Coordinates {m}
-  <%= width %>,!- Length
-  <%= depth %>; !- Width
+  Attic Zone,                      !- Outside Boundary Condition Object
+  0,                               !- Azimuth
+  0,                               !- Tilt Angle
+  <%= width %>, <%= depth %>, <%= height_cond %>,     !- Starting Coordinates {m}
+  <%= width %>,     !- Length
+  <%= depth %>;     !- Width
 
   <% elsif surface[:type] == "Floor" %>
 BuildingSurface:Detailed,
-<%= surface[:name] %>-Cav,                       !- Name
+<%= surface[:name] %>-Cav,     !- Name
   Floor,                       !- Surface Type
     <% if foundation_type != "SLAB" %>
-  Raised Floor - Cavity,                        !- Construction Name
+  Raised Floor - Cavity,       !- Construction Name
     <% else %>
-  Floor Slab,                       !- Construction Name
+  Floor Slab,                  !- Construction Name
     <% end %>
-  Main Zone,                       !- Zone Name
+  Main Zone,                   !- Zone Name
     <% if foundation_type == "RAISED" %>
-  Outdoors,                       !- Outside Boundary Condition
-  ,                       !- Outside Boundary Condition Object
+  Outdoors,                    !- Outside Boundary Condition
+  ,                            !- Outside Boundary Condition Object
     <% elsif foundation_type == "SLAB" %>
-  Foundation,                       !- Outside Boundary Condition
-  Slab Foundation,                       !- Outside Boundary Condition Object
+  Foundation,                  !- Outside Boundary Condition
+  Slab Foundation,             !- Outside Boundary Condition Object
     <% elsif foundation_type == "BASEMENT" %>
-  Zone,                       !- Outside Boundary Condition
-  Basement Zone,                       !- Outside Boundary Condition Object
+  Zone,                        !- Outside Boundary Condition
+  Basement Zone,               !- Outside Boundary Condition Object
     <% end %>
-  NoSun,                !- Sun Exposure
-  NoWind,               !- Wind Exposure
-  autocalculate,             !- View Factor to Ground
-  4,             !- Number of Vertices
-  0, 0, 0,                       !- Vertex 1 X-Y-Z coordinates {m}
-  0, <%= depth %>, 0,                       !- Vertex 1 Y-coordinate {m}
-  <%= width %>, <%= depth %>, 0,                       !- Vertex 1 Z-coordinate {m}
+  NoSun,                       !- Sun Exposure
+  NoWind,                      !- Wind Exposure
+  autocalculate,               !- View Factor to Ground
+  4,                           !- Number of Vertices
+  0, 0, 0,                     !- Vertex 1 X-Y-Z coordinates {m}
+  0, <%= depth %>, 0,     !- Vertex 1 Y-coordinate {m}
+  <%= width %>, <%= depth %>, 0,     !- Vertex 1 Z-coordinate {m}
   <%= width %>, 0, 0;                       !- Vertex 2 X-coordinate {m}
 
     <% if foundation_type == "SLAB" %>
 SurfaceProperty:ExposedFoundationPerimeter,
-  <%= surface[:name] %>-Cav,
-  ExposedPerimeterFraction,
-  ,
-  1;
+  <%= surface[:name] %>-Cav,          !- Surface Name
+  ExposedPerimeterFraction,           !- Exposed Perimeter Calculation Method
+  ,                                   !- Total Exposed Perimeter
+  1;                                  !- Exposed Perimeter Fraction
     <% end %>
   <% end %>
 <% end %>
 
-<%
-# Surfaces in Unconditioned Attic Zone
-# Constructions for gable walls and roofs are continuous without framing
-surfaces_attic = [
-  {:name=>"East Attic Gable Wall",:type=>"Wall",:area=>0.5*depth*height_attic,:azm=>90,:windows=>0},
-  {:name=>"West Attic Gable Wall",:type=>"Wall",:area=>0.5*depth*height_attic,:azm=>270,:windows=>0},
-  {:name=>"North Roof",:type=>"Roof",:area=>roof_pitch*width,:azm=>0,:windows=>0},
-  {:name=>"South Roof",:type=>"Roof",:area=>roof_pitch*width,:azm=>180,:windows=>0}
-]
-%>
-
-<% for surface in surfaces_attic %>
-  <% if surface[:type] == "Wall" %>
-Wall:Detailed,
-  <%= surface[:name] %>,                       !- Name
-  Gable Wall,                       !- Construction Name
-  Attic Zone,                       !- Zone Name
-  Outdoors,                       !- Outside Boundary Condition
-  ,                       !- Outside Boundary Condition Object
-  SunExposed,                !- Sun Exposure
-  WindExposed,               !- Wind Exposure
-  autocalculate,             !- View Factor to Ground
-  3,                         !- Number of Vertices
-   <% if surface[:name].include?("West") %>
-  <%= width %>,              !- Vertex 1 X-coordinate {m}
-  <%= depth/2.0 %>,          !- Vertex 1 Y-coordinate {m}
-  <%= height_attic + height_cond %>,  !- Vertex 1 Z-coordinate {m}
-  <%= width %>,              !- Vertex 2 X-coordinate {m}
-  0,                         !- Vertex 2 Y-coordinate {m}
-  <%= height_cond %>,        !- Vertex 2 Z-coordinate {m}
-  <%= width %>,              !- Vertex 3 X-coordinate {m}
-  <%= depth %>,              !- Vertex 3 Y-coordinate {m}
-  <%= height_cond %>;        !- Vertex 3 Z-coordinate {m}
-    <% elsif surface[:name].include?("East") %>
-  0,              !- Vertex 1 X-coordinate {m}
-  <%= depth/2.0 %>,          !- Vertex 1 Y-coordinate {m}
-  <%= height_attic + height_cond %>,  !- Vertex 1 Z-coordinate {m}
-  0,  !- Vertex 2 X-coordinate {m}
-  <%= depth %>,              !- Vertex 2 Y-coordinate {m}
-  <%= height_cond %>,        !- Vertex 2 Z-coordinate {m}
-  0,              !- Vertex 3 X-coordinate {m}
-  0,                         !- Vertex 3 Y-coordinate {m}
-  <%= height_cond %>;        !- Vertex 3 Z-coordinate {m}
-    <% end %>
-  <% elsif surface[:type] == "Roof" %>
-Roof,
-  <%= surface[:name] %>,                       !- Name
-  ROOF,                       !- Construction Name
-  Attic Zone,                       !- Zone Name
-  <%= surface[:azm] %>, !- Azimuth Angle
-    <% if surface[:name].include?("North") %>
-  <%= roof_tilt %>, !- Tilt Angle
-  <%= width %>, <%= depth %>, <%= height_cond %>,        !- Starting Coordinates {m}
-    <% else %>
-  <%= roof_tilt %>, !- Tilt Angle
-  0, 0, <%= height_cond %>,        !- Starting Coordinates {m}
-    <% end %>
-  <%= width %>,!- Length
-  <%= roof_pitch|'ft' %>; !- Width
-
-  <% end %>
-<% end %>
-
-
-<% if overhangs %>
-Shading:Building,
-  South Wall Overhang,     !- Name
-  180,                     !- Azimuth Angle {deg}
-  0,                       !- Tilt Angle {deg}
-  0,                       !- Starting X Coordinate {m}
-  -0.761962839691077,      !- Starting Y Coordinate {m}
-  2.43828108701145,        !- Starting Z Coordinate {m}
-  17.3727527449566,        !- Length {m}
-  0.761962839691077;       !- Height {m}
-<% end %>
-
+!--- Main Zone Internal Mass for Interior Wall Section ---
 InternalMass,
   Interior Wall - Cavity,      !- Name
-  Interior Wall - Cavity,       !- Construction Name
-  Main Zone,                !- Zone or ZoneList Name
-  171.222167776412;        !- Surface Area {m2}
+  Interior Wall - Cavity,      !- Construction Name
+  Main Zone,                   !- Zone or ZoneList Name
+  171.222167776412;            !- Surface Area {m2}
 
 InternalMass,
-  Interior Wall - Frame,   !- Name
-  Interior Wall - Frame,    !- Construction Name
-  Main Zone,                !- Zone or ZoneList Name
-  19.0246853084902;        !- Surface Area {m2}
+  Interior Wall - Frame,       !- Name
+  Interior Wall - Frame,       !- Construction Name
+  Main Zone,                   !- Zone or ZoneList Name
+  19.0246853084902;            !- Surface Area {m2}
 
-
-Schedule:Day:Hourly,
-  INTERNAL LOADS,          !- Name
-  Any Number,              !- Schedule Type Limits Name
-  0.1386,                  !- Hour 1
-  0.1386,                  !- Hour 2
-  0.1386,                  !- Hour 3
-  0.1386,                  !- Hour 4
-  0.1386,                  !- Hour 5
-  0.2315,                  !- Hour 6
-  0.2909,                  !- Hour 7
-  0.5818,                  !- Hour 8
-  0.3394,                  !- Hour 9
-  0.2077,                  !- Hour 10
-  0.2077,                  !- Hour 11
-  0.277,                   !- Hour 12
-  0.2077,                  !- Hour 13
-  0.1732,                  !- Hour 14
-  0.1801,                  !- Hour 15
-  0.1801,                  !- Hour 16
-  0.2633,                  !- Hour 17
-  0.284,                   !- Hour 18
-  0.3048,                  !- Hour 19
-  0.4779,                  !- Hour 20
-  0.4779,                  !- Hour 21
-  0.4989,                  !- Hour 22
-  0.4989,                  !- Hour 23
-  0.4503;                  !- Hour 24
-
-Schedule:Week:Daily,
-  INTERNAL LOADS WEEK,     !- Name
-  INTERNAL LOADS,          !- Sunday Schedule:Day Name
-  INTERNAL LOADS,          !- Monday Schedule:Day Name
-  INTERNAL LOADS,          !- Tuesday Schedule:Day Name
-  INTERNAL LOADS,          !- Wednesday Schedule:Day Name
-  INTERNAL LOADS,          !- Thursday Schedule:Day Name
-  INTERNAL LOADS,          !- Friday Schedule:Day Name
-  INTERNAL LOADS,          !- Saturday Schedule:Day Name
-  INTERNAL LOADS,          !- Holiday Schedule:Day Name
-  INTERNAL LOADS,          !- SummerDesignDay Schedule:Day Name
-  INTERNAL LOADS,          !- WinterDesignDay Schedule:Day Name
-  INTERNAL LOADS,          !- CustomDay1 Schedule:Day Name
-  INTERNAL LOADS;          !- CustomDay2 Schedule:Day Name
-
-Schedule:Year,
-  INTERNAL LOADS YEAR,     !- Name
-  Any Number,              !- Schedule Type Limits Name
-  INTERNAL LOADS WEEK,     !- Schedule:Week Name 1
-  1,                       !- Start Month 1
-  1,                       !- Start Day 1
-  12,                      !- End Month 1
-  31;                      !- End Day 1
-
+!--- Main Zone Internal Gains Section ---
 ElectricEquipment,
   INTERNAL GAINS,          !- Name
   Main Zone,                !- Zone or ZoneList Name
@@ -926,156 +813,240 @@ ElectricEquipment,
   0,                       !- Fraction Lost
   General;                 !- End-Use Subcategory
 
-  ZoneInfiltration:DesignFlowRate,
-    ZONE TWO INFILTRATION,   !- Name
-    Attic Zone,          !- Zone or ZoneList Name
-    ALWAYS 1,                !- Schedule Name
-    AirChanges/Hour,         !- Design Flow Rate Calculation Method
-    ,                        !- Design Flow Rate {m3/s}
-    ,                        !- Flow per Zone Floor Area {m3/s-m2}
-    ,                        !- Flow per Exterior Surface Area {m3/s-m2}
-    2.4,                     !- Air Changes per Hour {1/hr}
-    1,                       !- Constant Term Coefficient
-    0,                       !- Temperature Term Coefficient
-    0,                       !- Velocity Term Coefficient
-    0;                       !- Velocity Squared Term Coefficient
+Schedule:Compact,
+  INTERNAL LOADS YEAR,                !- Name
+  Any Number,              !- Schedule Type Limits Name
+  Through: 12/31,          !- Field 1
+  For: AllDays,            !- Field 2
+  Until: 5:00, 0.1386,     !- Field 3
+  Until: 6:00, 0.2315,     !- Field 4
+  Until: 7:00, 0.2909,     !- Field 5
+  Until: 8:00, 0.5818,     !- Field 6
+  Until: 9:00, 0.3394,     !- Field 7
+  Until: 11:00, 0.2077,     !- Field 8
+  Until: 12:00, 0.277,     !- Field 9
+  Until: 13:00, 0.2077,     !- Field 10
+  Until: 14:00, 0.1732,     !- Field 11
+  Until: 16:00, 0.1801,     !- Field 12
+  Until: 17:00, 0.2633,     !- Field 13
+  Until: 18:00, 0.284,     !- Field 14
+  Until: 19:00, 0.3048,     !- Field 15
+  Until: 21:00, 0.4779,     !- Field 16
+  Until: 23:00, 0.4989,     !- Field 17
+  Until: 24:00, 0.4503;     !- Field 18
 
-  Schedule:Compact,
-    ALWAYS 1,                !- Name
-    Any Number,              !- Schedule Type Limits Name
-    Through: 12/31,          !- Field 1
-    For: AllDays,            !- Field 2
-    Until: 24:00,1;          !- Field 3
+!--- Main Zone Infiltration Section ---
+ZoneInfiltration:DesignFlowRate,
+  Main Zone INFILTRATION,   !- Name
+  Main Zone,                !- Zone or ZoneList Name
+  ALWAYS 1,                !- Schedule Name
+  AirChanges/Hour,         !- Design Flow Rate Calculation Method
+  ,                        !- Design Flow Rate {m3/s}
+  ,                        !- Flow per Zone Floor Area {m3/s-m2}
+  ,                        !- Flow per Exterior Surface Area {m3/s-m2}
+  <%= ach %>,                    !- Air Changes per Hour {1/hr}
+  1,                       !- Constant Term Coefficient
+  0,                       !- Temperature Term Coefficient
+  0,                       !- Velocity Term Coefficient
+  0;                       !- Velocity Squared Term Coefficient
 
-  ZoneInfiltration:DesignFlowRate,
-    Main Zone INFILTRATION,   !- Name
-    Main Zone,                !- Zone or ZoneList Name
-    ALWAYS 1,                !- Schedule Name
-    AirChanges/Hour,         !- Design Flow Rate Calculation Method
-    ,                        !- Design Flow Rate {m3/s}
-    ,                        !- Flow per Zone Floor Area {m3/s-m2}
-    ,                        !- Flow per Exterior Surface Area {m3/s-m2}
-    <%= ach %>,                    !- Air Changes per Hour {1/hr}
-    1,                       !- Constant Term Coefficient
-    0,                       !- Temperature Term Coefficient
-    0,                       !- Velocity Term Coefficient
-    0;                       !- Velocity Squared Term Coefficient
+Schedule:Compact,
+  ALWAYS 1,                !- Name
+  Any Number,              !- Schedule Type Limits Name
+  Through: 12/31,          !- Field 1
+  For: AllDays,            !- Field 2
+  Until: 24:00,1;          !- Field 3
 
-  Zone,
-    Attic Zone,          !- Name
-    0,                       !- Direction of Relative North {deg}
-    0,                       !- X Origin {m}
-    0,                       !- Y Origin {m}
-    0,                       !- Z Origin {m}
-    1,                       !- Type
-    1,                       !- Multiplier
-    autocalculate,           !- Ceiling Height {m}
-    autocalculate,           !- Volume {m3}
-    autocalculate,           !- Floor Area {m2}
-    ,                        !- Zone Inside Convection Algorithm
-    ,                        !- Zone Outside Convection Algorithm
-    No;                      !- Part of Total Floor Area
+!--- Main Zone HVAC Section ---
+ZoneHVAC:EquipmentConnections,
+  Main Zone,                !- Zone Name
+  Main Zone Equipment,      !- Zone Conditioning Equipment List Name
+  Main Zone Supply Inlet,   !- Zone Air Inlet Node or NodeList Name
+  ,                        !- Zone Air Exhaust Node or NodeList Name
+  Main Zone Zone Air Node,  !- Zone Air Node Name
+  Main Zone Return Outlet;  !- Zone Return Air Node or NodeList Name
 
+ZoneHVAC:EquipmentList,
+  Main Zone Equipment,      !- Name
+  SequentialLoad,          !- Load Distribution Scheme
+  ZoneHVAC:IdealLoadsAirSystem,  !- Zone Equipment 1 Object Type
+  Main Zone Purchased Air,  !- Zone Equipment 1 Name
+  1,                       !- Zone Equipment 1 Cooling Sequence
+  1,                       !- Zone Equipment 1 Heating or No-Load Sequence
+  ,                        !- Zone Equipment 1 Sequential Cooling Fraction Schedule Name
+  ;                        !- Zone Equipment 1 Sequential Heating Fraction Schedule Name
 
-  Zone,
-    Main Zone,                !- Name
-    0,                       !- Direction of Relative North {deg}
-    0,                       !- X Origin {m}
-    0,                       !- Y Origin {m}
-    0,                       !- Z Origin {m}
-    1,                       !- Type
-    1,                       !- Multiplier
-    autocalculate,           !- Ceiling Height {m}
-    autocalculate,           !- Volume {m3}
-    autocalculate,           !- Floor Area {m2}
-    ,                        !- Zone Inside Convection Algorithm
-    ,                        !- Zone Outside Convection Algorithm
-    Yes;                     !- Part of Total Floor Area
+ZoneHVAC:IdealLoadsAirSystem,
+  Main Zone Purchased Air,  !- Name
+  ,                        !- Availability Schedule Name
+  Main Zone Supply Inlet,   !- Zone Supply Air Node Name
+  ,                        !- Zone Exhaust Air Node Name
+  ,                        !- System Inlet Air Node Name
+  50,                      !- Maximum Heating Supply Air Temperature {C}
+  10,                      !- Minimum Cooling Supply Air Temperature {C}
+  0.015,                   !- Maximum Heating Supply Air Humidity Ratio {kgWater/kgDryAir}
+  0.01,                    !- Minimum Cooling Supply Air Humidity Ratio {kgWater/kgDryAir}
+  NoLimit,                 !- Heating Limit
+  ,                        !- Maximum Heating Air Flow Rate {m3/s}
+  ,                        !- Maximum Sensible Heating Capacity {W}
+  NoLimit,                 !- Cooling Limit
+  ,                        !- Maximum Cooling Air Flow Rate {m3/s}
+  ,                        !- Maximum Total Cooling Capacity {W}
+  ,                        !- Heating Availability Schedule Name
+  ,                        !- Cooling Availability Schedule Name
+  None,                    !- Dehumidification Control Type
+  ,                        !- Cooling Sensible Heat Ratio {dimensionless}
+  None,                    !- Humidification Control Type
+  ,                        !- Design Specification Outdoor Air Object Name
+  ,                        !- Outdoor Air Inlet Node Name
+  ,                        !- Demand Controlled Ventilation Type
+  ,                        !- Outdoor Air Economizer Type
+  ,                        !- Heat Recovery Type
+  ,                        !- Sensible Heat Recovery Effectiveness {dimensionless}
+  ;                        !- Latent Heat Recovery Effectiveness {dimensionless}
 
-  ScheduleTypeLimits,
-    Any Number;              !- Name
+ZoneControl:Thermostat,
+  Main Zone Thermostat,     !- Name
+  Main Zone,                !- Zone or ZoneList Name
+  ALWAYS 4,                !- Control Type Schedule Name
+  ThermostatSetpoint:DualSetpoint,  !- Control 1 Object Type
+  Office Thermostat Dual SP Control;  !- Control 1 Name
 
-  Schedule:Compact,
-    ALWAYS 4,                !- Name
-    Any Number,              !- Schedule Type Limits Name
-    Through: 12/31,          !- Field 1
-    For: AllDays,            !- Field 2
-    Until: 24:00,4;          !- Field 3
+Schedule:Compact,
+  ALWAYS 4,                !- Name
+  Any Number,              !- Schedule Type Limits Name
+  Through: 12/31,          !- Field 1
+  For: AllDays,            !- Field 2
+  Until: 24:00,4;          !- Field 3
 
-  Schedule:Compact,
-    ALWAYS 20,               !- Name
-    Any Number,              !- Schedule Type Limits Name
-    Through: 12/31,          !- Field 1
-    For: AllDays,            !- Field 2
-    Until: 24:00,20;         !- Field 3
+ThermostatSetpoint:DualSetpoint,
+  Office Thermostat Dual SP Control,  !- Name
+  ALWAYS 20,               !- Heating Setpoint Temperature Schedule Name
+  ALWAYS 25.55;            !- Cooling Setpoint Temperature Schedule Name
 
-  Schedule:Compact,
-    ALWAYS 25.55,            !- Name
-    Any Number,              !- Schedule Type Limits Name
-    Through: 12/31,          !- Field 1
-    For: AllDays,            !- Field 2
-    Until: 24:00,25.55555;   !- Field 3
+Schedule:Compact,
+  ALWAYS 20,               !- Name
+  Any Number,              !- Schedule Type Limits Name
+  Through: 12/31,          !- Field 1
+  For: AllDays,            !- Field 2
+  Until: 24:00,20;         !- Field 3
 
-  ZoneHVAC:EquipmentConnections,
-    Main Zone,                !- Zone Name
-    Main Zone Equipment,      !- Zone Conditioning Equipment List Name
-    Main Zone Supply Inlet,   !- Zone Air Inlet Node or NodeList Name
-    ,                        !- Zone Air Exhaust Node or NodeList Name
-    Main Zone Zone Air Node,  !- Zone Air Node Name
-    Main Zone Return Outlet;  !- Zone Return Air Node or NodeList Name
+Schedule:Compact,
+  ALWAYS 25.55,            !- Name
+  Any Number,              !- Schedule Type Limits Name
+  Through: 12/31,          !- Field 1
+  For: AllDays,            !- Field 2
+  Until: 24:00,25.55555;   !- Field 3
 
-  ZoneHVAC:EquipmentList,
-    Main Zone Equipment,      !- Name
-    SequentialLoad,          !- Load Distribution Scheme
-    ZoneHVAC:IdealLoadsAirSystem,  !- Zone Equipment 1 Object Type
-    Main Zone Purchased Air,  !- Zone Equipment 1 Name
-    1,                       !- Zone Equipment 1 Cooling Sequence
-    1,                       !- Zone Equipment 1 Heating or No-Load Sequence
-    ,                        !- Zone Equipment 1 Sequential Cooling Fraction Schedule Name
-    ;                        !- Zone Equipment 1 Sequential Heating Fraction Schedule Name
+<%
+# Surfaces in Unconditioned Attic Zone
+# Constructions for gable walls and roofs are continuous without framing
+surfaces_attic = [
+  {:name=>"East Attic Gable Wall",:type=>"Wall",:area=>0.5*depth*height_attic,:azm=>90,:windows=>0},
+  {:name=>"West Attic Gable Wall",:type=>"Wall",:area=>0.5*depth*height_attic,:azm=>270,:windows=>0},
+  {:name=>"North Roof",:type=>"Roof",:area=>roof_pitch*width,:azm=>0,:windows=>0},
+  {:name=>"South Roof",:type=>"Roof",:area=>roof_pitch*width,:azm=>180,:windows=>0}
+]
+%>
 
-  ZoneHVAC:IdealLoadsAirSystem,
-    Main Zone Purchased Air,  !- Name
-    ,                        !- Availability Schedule Name
-    Main Zone Supply Inlet,   !- Zone Supply Air Node Name
-    ,                        !- Zone Exhaust Air Node Name
-    ,                        !- System Inlet Air Node Name
-    50,                      !- Maximum Heating Supply Air Temperature {C}
-    10,                      !- Minimum Cooling Supply Air Temperature {C}
-    0.015,                   !- Maximum Heating Supply Air Humidity Ratio {kgWater/kgDryAir}
-    0.01,                    !- Minimum Cooling Supply Air Humidity Ratio {kgWater/kgDryAir}
-    NoLimit,                 !- Heating Limit
-    ,                        !- Maximum Heating Air Flow Rate {m3/s}
-    ,                        !- Maximum Sensible Heating Capacity {W}
-    NoLimit,                 !- Cooling Limit
-    ,                        !- Maximum Cooling Air Flow Rate {m3/s}
-    ,                        !- Maximum Total Cooling Capacity {W}
-    ,                        !- Heating Availability Schedule Name
-    ,                        !- Cooling Availability Schedule Name
-    None,                    !- Dehumidification Control Type
-    ,                        !- Cooling Sensible Heat Ratio {dimensionless}
-    None,                    !- Humidification Control Type
-    ,                        !- Design Specification Outdoor Air Object Name
-    ,                        !- Outdoor Air Inlet Node Name
-    ,                        !- Demand Controlled Ventilation Type
-    ,                        !- Outdoor Air Economizer Type
-    ,                        !- Heat Recovery Type
-    ,                        !- Sensible Heat Recovery Effectiveness {dimensionless}
-    ;                        !- Latent Heat Recovery Effectiveness {dimensionless}
+!--- Attic Zone Section ---
+Zone,
+  Attic Zone,          !- Name
+  0,                       !- Direction of Relative North {deg}
+  0,                       !- X Origin {m}
+  0,                       !- Y Origin {m}
+  0,                       !- Z Origin {m}
+  1,                       !- Type
+  1,                       !- Multiplier
+  autocalculate,           !- Ceiling Height {m}
+  autocalculate,           !- Volume {m3}
+  autocalculate,           !- Floor Area {m2}
+  ,                        !- Zone Inside Convection Algorithm
+  ,                        !- Zone Outside Convection Algorithm
+  No;                      !- Part of Total Floor Area
 
-  ZoneControl:Thermostat,
-    Main Zone Thermostat,     !- Name
-    Main Zone,                !- Zone or ZoneList Name
-    ALWAYS 4,                !- Control Type Schedule Name
-    ThermostatSetpoint:DualSetpoint,  !- Control 1 Object Type
-    Office Thermostat Dual SP Control;  !- Control 1 Name
+!--- Attic Zone Surfaces Section ---
+<% for surface in surfaces_attic %>
+  <% if surface[:type] == "Wall" %>
+Wall:Detailed,
+  <%= surface[:name] %>,     !- Name
+  Gable Wall,                !- Construction Name
+  Attic Zone,                !- Zone Name
+  Outdoors,                  !- Outside Boundary Condition
+  ,                          !- Outside Boundary Condition Object
+  SunExposed,                !- Sun Exposure
+  WindExposed,               !- Wind Exposure
+  autocalculate,             !- View Factor to Ground
+  3,                         !- Number of Vertices
+   <% if surface[:name].include?("West") %>
+  <%= width %>,     !- Vertex 1 X-coordinate {m}
+  <%= depth/2.0 %>,     !- Vertex 1 Y-coordinate {m}
+  <%= height_attic + height_cond %>,     !- Vertex 1 Z-coordinate {m}
+  <%= width %>,     !- Vertex 2 X-coordinate {m}
+  0,     !- Vertex 2 Y-coordinate {m}
+  <%= height_cond %>,     !- Vertex 2 Z-coordinate {m}
+  <%= width %>,     !- Vertex 3 X-coordinate {m}
+  <%= depth %>,     !- Vertex 3 Y-coordinate {m}
+  <%= height_cond %>;        !- Vertex 3 Z-coordinate {m}
+    <% elsif surface[:name].include?("East") %>
+  0,     !- Vertex 1 X-coordinate {m}
+  <%= depth/2.0 %>,     !- Vertex 1 Y-coordinate {m}
+  <%= height_attic + height_cond %>,     !- Vertex 1 Z-coordinate {m}
+  0,     !- Vertex 2 X-coordinate {m}
+  <%= depth %>,     !- Vertex 2 Y-coordinate {m}
+  <%= height_cond %>,     !- Vertex 2 Z-coordinate {m}
+  0,     !- Vertex 3 X-coordinate {m}
+  0,     !- Vertex 3 Y-coordinate {m}
+  <%= height_cond %>;        !- Vertex 3 Z-coordinate {m}
+    <% end %>
+  <% elsif surface[:type] == "Roof" %>
+Roof,
+  <%= surface[:name] %>,     !- Name
+  ROOF,                       !- Construction Name
+  Attic Zone,                 !- Zone Name
+  <%= surface[:azm] %>,     !- Azimuth Angle
+    <% if surface[:name].include?("North") %>
+  <%= roof_tilt %>,     !- Tilt Angle
+  <%= width %>, <%= depth %>, <%= height_cond %>,     !- Starting Coordinates {m}
+    <% else %>
+  <%= roof_tilt %>,     !- Tilt Angle
+  0, 0, <%= height_cond %>,     !- Starting Coordinates {m}
+    <% end %>
+  <%= width %>,     !- Length
+  <%= roof_pitch|'ft' %>; !- Width
 
-  ThermostatSetpoint:DualSetpoint,
-    Office Thermostat Dual SP Control,  !- Name
-    ALWAYS 20,               !- Heating Setpoint Temperature Schedule Name
-    ALWAYS 25.55;            !- Cooling Setpoint Temperature Schedule Name
+  <% end %>
+<% end %>
+
+<% if overhangs %>
+Shading:Building,
+  South Wall Overhang,     !- Name
+  180,                     !- Azimuth Angle {deg}
+  0,                       !- Tilt Angle {deg}
+  0,                       !- Starting X Coordinate {m}
+  -0.761962839691077,      !- Starting Y Coordinate {m}
+  2.43828108701145,        !- Starting Z Coordinate {m}
+  17.3727527449566,        !- Length {m}
+  0.761962839691077;       !- Height {m}
+<% end %>
+
+!--- Attic Zone Infiltration Section ---
+ZoneInfiltration:DesignFlowRate,
+  Attic Zone Infiltration,   !- Name
+  Attic Zone,          !- Zone or ZoneList Name
+  ALWAYS 1,                !- Schedule Name
+  AirChanges/Hour,         !- Design Flow Rate Calculation Method
+  ,                        !- Design Flow Rate {m3/s}
+  ,                        !- Flow per Zone Floor Area {m3/s-m2}
+  ,                        !- Flow per Exterior Surface Area {m3/s-m2}
+  2.4,                     !- Air Changes per Hour {1/hr}
+  1,                       !- Constant Term Coefficient
+  0,                       !- Temperature Term Coefficient
+  0,                       !- Velocity Term Coefficient
+  0;                       !- Velocity Squared Term Coefficient
 
 <% if foundation_type == "BASEMENT" %>
+!--- Basement Zone Section ---
   Zone,
     Basement Zone,                !- Name
     0,                       !- Direction of Relative North {deg}
@@ -1146,6 +1117,7 @@ ZoneHVAC:IdealLoadsAirSystem,
     ;                        !- Latent Heat Recovery Effectiveness {dimensionless}
 <% end %>
 
+!--- Outputs Section ---
   Output:Table:SummaryReports,
     AllSummary;              !- Report 1 Name
 
