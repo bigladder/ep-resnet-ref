@@ -1,2 +1,3 @@
 :case_name=>"L304AC",
-:f_factor=>0.845800186407634
+:foundation_type=>"SLAB",
+:foundation_insulated=>true

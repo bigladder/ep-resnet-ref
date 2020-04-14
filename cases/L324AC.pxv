@@ -1,2 +1,3 @@
 :case_name=>"L324AC",
-:c_factor=> 0.348077524130488
+:foundation_type=>"BASEMENT",
+:foundation_insulated=>true

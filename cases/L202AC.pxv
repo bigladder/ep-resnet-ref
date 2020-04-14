@@ -1,3 +1,4 @@
 :case_name=>"L202AC",
 :ach=>1.5,
-:ext_sol_abs_exposed=>0.2
+:ext_sol_abs_exposed=>0.2,
+:envelope_eff=>"LOW"

@@ -1,5 +1,3 @@
 :case_name=>"L130AC",
-#:win_u=>0.30,
-#:win_shgc=>0.335,
-:win_panes=>"Window Double Pane",
-:win_frame=>6.47322
+:win_panes=>2,
+:win_frame_u=>6.47322
