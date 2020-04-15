@@ -1135,11 +1135,9 @@ ZoneHVAC:IdealLoadsAirSystem,
   Output:Variable,*,Site Outdoor Air Drybulb Temperature,Hourly;
 
   Output:Variable,*,Zone Mean Air Temperature,Hourly;
-
+  Output:Variable,*,Zone Thermostat Heating Setpoint Temperature,Hourly;
+  Output:Variable,*,Zone Thermostat Cooling Setpoint Temperature,Hourly;
   Output:Variable,*,Zone Ideal Loads Supply Air Total Heating Energy,Hourly;
-
   Output:Variable,*,Zone Ideal Loads Supply Air Total Cooling Energy,Hourly;
-
-  Output:Meter,DistrictHeating:Facility,Monthly;
-
-  Output:Meter,DistrictCooling:Facility,Monthly;
+  Output:Variable,*,Zone Windows Total Transmitted Solar Radiation Energy,Hourly;
+  Output:Variable,*,Zone Infiltration Sensible Heat Loss Energy,Hourly;
