@@ -1,1 +1,3 @@
-:case_name=>"L120AL"
+:case_name=>"L120AL",
+:framing_factor_walls=>0.22,
+:envelope_eff=>"HIGH"

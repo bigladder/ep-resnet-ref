@@ -1,2 +1,3 @@
 :case_name=>"L200AL",
-:ach=>1.5
+:ach=>1.5,
+:envelope_eff=>"LOW"

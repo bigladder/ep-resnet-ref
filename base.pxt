@@ -48,7 +48,7 @@ overhang_height = 1.0|'ft' # Height of gap between top of window and bottom of o
 
 # Internal use
 nsteps = 1
-
+Win_dor = 3.0 # (Win_dor-1) is the distance between windows and door in {m}
 %>
   VERSION,9.3;
 
@@ -185,7 +185,7 @@ nsteps = 1
  Material,
    Wood Framing - 2x4,    !- Name
    Rough,                   !- Roughness
-  <%= 3.5|'in' %>,    !- Thickness {m}
+   <%= 3.5|'in' %>,    !- Thickness {m}
    0.115648403573426,       !- Conductivity {W/m-K}
    512.590493468479,        !- Density {kg/m3}
    1380.7200104479,         !- Specific Heat {J/kg-K}
@@ -196,7 +196,7 @@ nsteps = 1
  Material,
    Wood Framing - 2x6,    !- Name
    Rough,                   !- Roughness
-  <%= 5.5|'in' %>,    !- Thickness {m}
+   <%= 5.5|'in' %>,    !- Thickness {m}
    0.115648403573426,       !- Conductivity {W/m-K}
    512.590493468479,        !- Density {kg/m3}
    1380.7200104479,         !- Specific Heat {J/kg-K}
@@ -321,7 +321,7 @@ Material,
   0.7,                     !- Solar Absorptance
   0.7;                     !- Visible Absorptance
 
-<% if foundation_type == "BASEMENT" %>
+<% if foundation_type == "SLAB" %>
 Foundation:Kiva,
   Slab Foundation,          !- Name
   ,                        !- Initial Indoor Air Temperature
@@ -333,7 +333,7 @@ Foundation:Kiva,
   ,                        !- Exterior Horizontal Insulation Material Name
   ,                        !- Exterior Horizontal Insulation Depth {m}
   ,                        !- Exterior Horizontal Insulation Width {m}
-  <% if (case_name.include?("LK304AC")) %>
+  <% if foundation_insulated %>
   Slab Insulation,              !- Exterior Vertical Insulation Material Name
   <% else %>
   ,              !- Exterior Vertical Insulation Material Name
@@ -342,17 +342,6 @@ Foundation:Kiva,
   0.1016,!4|"IN",                      !- Wall Height Above Grade {m}
   0.508,!20|"IN",                     !- Wall Depth Below Slab {m}
   Foundation Footing;     !- Footing Wall Construction Name
-
-Material,
-  Rim Joist 2x8,           !- Name
-  Rough,                   !- Roughness
-  <%= 1.5|'in' %>,    !- Thickness {m} (on the side perpendicular to heat flow direction)
-  0.11550420356897,        !- Conductivity {W/m-K}
-  512.590493468479,        !- Density {kg/m3}
-  1380.7200104479,         !- Specific Heat {J/kg-K}
-  0.9,                     !- Thermal Absorptance
-  0.7,                     !- Solar Absorptance
-  0.7;                     !- Visible Absorptance
 
 Material,
   Slab Insulation,              !- Name
@@ -583,6 +572,18 @@ Construction,
   Poured Concrete - 6in;            !- Outside Layer
 
 <% if foundation_type == "BASEMENT" %>
+
+Material,
+  Rim Joist 2x8,           !- Name
+  Rough,                   !- Roughness
+  <%= 1.5|'in' %>,    !- Thickness {m} (on the side perpendicular to heat flow direction)
+  0.11550420356897,        !- Conductivity {W/m-K}
+  512.590493468479,        !- Density {kg/m3}
+  1380.7200104479,         !- Specific Heat {J/kg-K}
+  0.9,                     !- Thermal Absorptance
+  0.7,                     !- Solar Absorptance
+  0.7;                     !- Visible Absorptance
+
 Construction,
    Basement Wall,                   !- Name
    Poured Concrete - 6in;            !- Outside Layer
@@ -604,7 +605,7 @@ Foundation:Kiva,
   ,                        !- Interior Horizontal Insulation Material Name
   ,                        !- Interior Horizontal Insulation Depth {m}
   ,                        !- Interior Horizontal Insulation Width {m}
-  <% if (case_name.include?("LK324A")) %>
+  <% if foundation_insulated %>
   R-11 Fiberglass Batt,              !- Interior Vertical Insulation Material Name
   <% else %>
   ,                        !- Interior Vertical Insulation Material Name
@@ -668,23 +669,27 @@ Wall:Exterior,
   <%= surface[:length] %>,     !- Length {m}
   <%= height_cond %>;     !- Height {m}
 
-    <% if surface[:windows] > 0 %>
 <%
-D = 3 # D-1 is distance between windows and door in m
+
+# The following variables a, b, c and d are intermediary variables used to dynamicaly define the doors
+# and windows X,Y,Z coordinates. Windows are placed 1m far from each wall edge.
+
 if surface[:name] == "North Wall"
-  b = -1
+  b = -1.0
   a = 0
 elsif surface[:name] == "South Wall"
-  b = 1
+  b = 1.0
   a = 0
 elsif surface[:name] == "West Wall"
-  a = -1
+  a = -1.0
   b = 0
 elsif surface[:name] == "East Wall"
-  a = 1
+  a = 1.0
   b = 0
 end
+
 %>
+    <% if surface[:windows] > 0 %>
 
 FenestrationSurface:Detailed,
   <%= surface[:name] %>-Windows,     !- Name
@@ -721,17 +726,17 @@ FenestrationSurface:Detailed,
   ,                           !- Frame and Divider Name
   ,                           !- Multiplier
   autocalculate,              !- Number of Vertices
-  <%= surface[:start_x] + D*b  %>,     !- Vertex 1 X-coordinate {m}
-  <%= surface[:start_y] + D*a %>,     !- Vertex 1 Y-coordinate {m}
+  <%= surface[:start_x] + Win_dor*b  %>,     !- Vertex 1 X-coordinate {m}
+  <%= surface[:start_y] + Win_dor*a %>,     !- Vertex 1 Y-coordinate {m}
   <%= door_height %>,     !- Vertex 1 Z-coordinate {m}
-  <%= surface[:start_x] + D*b  %>,     !- Vertex 2 X-coordinate {m}
-  <%= surface[:start_y] + D*a %>,     !- Vertex 2 Y-coordinate {m}
+  <%= surface[:start_x] + Win_dor*b  %>,     !- Vertex 2 X-coordinate {m}
+  <%= surface[:start_y] + Win_dor*a %>,     !- Vertex 2 Y-coordinate {m}
   0,                          !- Vertex 2 Z-coordinate {m}
-  <%= surface[:start_x] + D*b + b*door_width  %>,     !- Vertex 3 X-coordinate {m}
-  <%= surface[:start_y] + D*a + a*door_width %>,     !- Vertex 3 Y-coordinate {m}
+  <%= surface[:start_x] + Win_dor*b + b*door_width  %>,     !- Vertex 3 X-coordinate {m}
+  <%= surface[:start_y] + Win_dor*a + a*door_width %>,     !- Vertex 3 Y-coordinate {m}
   0,                          !- Vertex 3 Z-coordinate {m}
-  <%= surface[:start_x] + D*b + b*door_width  %>,     !- Vertex 4 X-coordinate {m}
-  <%= surface[:start_y] + D*a + a*door_width  %>,     !- Vertex 4 Y-coordinate {m}
+  <%= surface[:start_x] + Win_dor*b + b*door_width  %>,     !- Vertex 4 X-coordinate {m}
+  <%= surface[:start_y] + Win_dor*a + a*door_width  %>,     !- Vertex 4 Y-coordinate {m}
   <%= door_height %>;     !- Vertex 4 Z-coordinate {m}
     <% end %>
 
@@ -749,7 +754,7 @@ Ceiling:Interzone,
 
   <% elsif surface[:type] == "Floor" %>
 BuildingSurface:Detailed,
-<%= surface[:name] %>-Cav,     !- Name
+  <%= surface[:name] %>-Cav,     !- Name
   Floor,                       !- Surface Type
     <% if foundation_type != "SLAB" %>
   Raised Floor - Cavity,       !- Construction Name
@@ -802,10 +807,10 @@ InternalMass,
 !--- Main Zone Internal Gains Section ---
 ElectricEquipment,
   INTERNAL GAINS,          !- Name
-  Main Zone,                !- Zone or ZoneList Name
+  Main Zone,               !- Zone or ZoneList Name
   INTERNAL LOADS YEAR,     !- Schedule Name
   EquipmentLevel,          !- Design Level Calculation Method
-  <%= int_load %>,                !- Design Level {W}
+  <%= int_load %>,         !- Design Level {W}
   ,                        !- Watts per Zone Floor Area {W/m2}
   ,                        !- Watts per Person {W/person}
   0.178,                   !- Fraction Latent
@@ -814,7 +819,7 @@ ElectricEquipment,
   General;                 !- End-Use Subcategory
 
 Schedule:Compact,
-  INTERNAL LOADS YEAR,                !- Name
+  INTERNAL LOADS YEAR,     !- Name
   Any Number,              !- Schedule Type Limits Name
   Through: 12/31,          !- Field 1
   For: AllDays,            !- Field 2
@@ -823,28 +828,28 @@ Schedule:Compact,
   Until: 7:00, 0.2909,     !- Field 5
   Until: 8:00, 0.5818,     !- Field 6
   Until: 9:00, 0.3394,     !- Field 7
-  Until: 11:00, 0.2077,     !- Field 8
+  Until: 11:00, 0.2077,    !- Field 8
   Until: 12:00, 0.277,     !- Field 9
-  Until: 13:00, 0.2077,     !- Field 10
-  Until: 14:00, 0.1732,     !- Field 11
-  Until: 16:00, 0.1801,     !- Field 12
-  Until: 17:00, 0.2633,     !- Field 13
+  Until: 13:00, 0.2077,    !- Field 10
+  Until: 14:00, 0.1732,    !- Field 11
+  Until: 16:00, 0.1801,    !- Field 12
+  Until: 17:00, 0.2633,    !- Field 13
   Until: 18:00, 0.284,     !- Field 14
-  Until: 19:00, 0.3048,     !- Field 15
-  Until: 21:00, 0.4779,     !- Field 16
-  Until: 23:00, 0.4989,     !- Field 17
-  Until: 24:00, 0.4503;     !- Field 18
+  Until: 19:00, 0.3048,    !- Field 15
+  Until: 21:00, 0.4779,    !- Field 16
+  Until: 23:00, 0.4989,    !- Field 17
+  Until: 24:00, 0.4503;    !- Field 18
 
 !--- Main Zone Infiltration Section ---
 ZoneInfiltration:DesignFlowRate,
-  Main Zone INFILTRATION,   !- Name
-  Main Zone,                !- Zone or ZoneList Name
+  Main Zone INFILTRATION,  !- Name
+  Main Zone,               !- Zone or ZoneList Name
   ALWAYS 1,                !- Schedule Name
   AirChanges/Hour,         !- Design Flow Rate Calculation Method
   ,                        !- Design Flow Rate {m3/s}
   ,                        !- Flow per Zone Floor Area {m3/s-m2}
   ,                        !- Flow per Exterior Surface Area {m3/s-m2}
-  <%= ach %>,                    !- Air Changes per Hour {1/hr}
+  <%= ach %>,              !- Air Changes per Hour {1/hr}
   1,                       !- Constant Term Coefficient
   0,                       !- Temperature Term Coefficient
   0,                       !- Velocity Term Coefficient
@@ -862,24 +867,24 @@ ZoneHVAC:EquipmentConnections,
   Main Zone,                !- Zone Name
   Main Zone Equipment,      !- Zone Conditioning Equipment List Name
   Main Zone Supply Inlet,   !- Zone Air Inlet Node or NodeList Name
-  ,                        !- Zone Air Exhaust Node or NodeList Name
+  ,                         !- Zone Air Exhaust Node or NodeList Name
   Main Zone Zone Air Node,  !- Zone Air Node Name
   Main Zone Return Outlet;  !- Zone Return Air Node or NodeList Name
 
 ZoneHVAC:EquipmentList,
   Main Zone Equipment,      !- Name
-  SequentialLoad,          !- Load Distribution Scheme
+  SequentialLoad,           !- Load Distribution Scheme
   ZoneHVAC:IdealLoadsAirSystem,  !- Zone Equipment 1 Object Type
   Main Zone Purchased Air,  !- Zone Equipment 1 Name
-  1,                       !- Zone Equipment 1 Cooling Sequence
-  1,                       !- Zone Equipment 1 Heating or No-Load Sequence
-  ,                        !- Zone Equipment 1 Sequential Cooling Fraction Schedule Name
-  ;                        !- Zone Equipment 1 Sequential Heating Fraction Schedule Name
+  1,                        !- Zone Equipment 1 Cooling Sequence
+  1,                        !- Zone Equipment 1 Heating or No-Load Sequence
+  ,                         !- Zone Equipment 1 Sequential Cooling Fraction Schedule Name
+  ;                         !- Zone Equipment 1 Sequential Heating Fraction Schedule Name
 
 ZoneHVAC:IdealLoadsAirSystem,
-  Main Zone Purchased Air,  !- Name
+  Main Zone Purchased Air, !- Name
   ,                        !- Availability Schedule Name
-  Main Zone Supply Inlet,   !- Zone Supply Air Node Name
+  Main Zone Supply Inlet,  !- Zone Supply Air Node Name
   ,                        !- Zone Exhaust Air Node Name
   ,                        !- System Inlet Air Node Name
   50,                      !- Maximum Heating Supply Air Temperature {C}
@@ -908,7 +913,7 @@ ZoneHVAC:IdealLoadsAirSystem,
 ZoneControl:Thermostat,
   Main Zone Thermostat,     !- Name
   Main Zone,                !- Zone or ZoneList Name
-  ALWAYS 4,                !- Control Type Schedule Name
+  ALWAYS 4,                 !- Control Type Schedule Name
   ThermostatSetpoint:DualSetpoint,  !- Control 1 Object Type
   Office Thermostat Dual SP Control;  !- Control 1 Name
 
@@ -979,7 +984,7 @@ Wall:Detailed,
   autocalculate,             !- View Factor to Ground
   3,                         !- Number of Vertices
    <% if surface[:name].include?("West") %>
-  <%= width %>,     !- Vertex 1 X-coordinate {m}
+  <%= width %>,         !- Vertex 1 X-coordinate {m}
   <%= depth/2.0 %>,     !- Vertex 1 Y-coordinate {m}
   <%= height_attic + height_cond %>,     !- Vertex 1 Z-coordinate {m}
   <%= width %>,     !- Vertex 2 X-coordinate {m}
