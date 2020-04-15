@@ -1128,3 +1128,5 @@ ZoneHVAC:IdealLoadsAirSystem,
   Output:Variable,*,Zone Ideal Loads Supply Air Total Cooling Energy,Hourly;
   Output:Variable,*,Zone Windows Total Transmitted Solar Radiation Energy,Hourly;
   Output:Variable,*,Zone Infiltration Sensible Heat Loss Energy,Hourly;
+
+  Output:SQLite, SimpleAndTabular;  !- Option Type
