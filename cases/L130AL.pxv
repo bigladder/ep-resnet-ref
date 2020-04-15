@@ -1,3 +1,4 @@
 :case_name=>"L130AL",
+:climate=>"COOLING",
 :win_panes=>2,
 :win_frame_u=>6.47322

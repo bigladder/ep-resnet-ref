@@ -1,3 +1,4 @@
 :case_name=>"L324AC",
+:climate=>"HEATING",
 :foundation_type=>"BASEMENT",
 :foundation_insulated=>true

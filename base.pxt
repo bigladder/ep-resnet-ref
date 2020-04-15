@@ -1,5 +1,6 @@
 <%#INTERFACE
   parameter "case_name"
+  parameter "climate"
   parameter "ach", :default=>0.67
   parameter "int_load", :default=>2930.711
   parameter "win_frame_u", :default=>51.649480578971 # W/m2K Surface to surface conductance from Table 7-4
@@ -21,7 +22,15 @@
 %>
 
 <%
-require 'modelkit/energyplus'
+# Climate info
+if climate == "HEATING"
+  heat_power = 3413000|'btuh' # 3.413 million Btu/hr, required by Section 7.2.1.15
+  cool_power = 0 # No cooling, required by Section 7.2.1.14.1
+elsif climate == "COOLING"
+  heat_power = 0 # No heating, required by Section 7.2.1.14.1
+  cool_power = 3413000|'btuh' # 3.413 million Btu/hr, required by Section 7.2.1.15
+end
+
 
 # Dimensions
 width = 57.0|'ft' # East-to-West dimension in feet
@@ -918,24 +927,12 @@ ZoneHVAC:IdealLoadsAirSystem,
   10,                      !- Minimum Cooling Supply Air Temperature {C}
   0.015,                   !- Maximum Heating Supply Air Humidity Ratio {kgWater/kgDryAir}
   0.01,                    !- Minimum Cooling Supply Air Humidity Ratio {kgWater/kgDryAir}
-  NoLimit,                 !- Heating Limit
+  LimitCapacity,           !- Heating Limit
   ,                        !- Maximum Heating Air Flow Rate {m3/s}
-  ,                        !- Maximum Sensible Heating Capacity {W}
-  NoLimit,                 !- Cooling Limit
+  <%= heat_power %>,       !- Maximum Sensible Heating Capacity {W}
+  LimitCapacity,           !- Cooling Limit
   ,                        !- Maximum Cooling Air Flow Rate {m3/s}
-  ,                        !- Maximum Total Cooling Capacity {W}
-  ,                        !- Heating Availability Schedule Name
-  ,                        !- Cooling Availability Schedule Name
-  None,                    !- Dehumidification Control Type
-  ,                        !- Cooling Sensible Heat Ratio {dimensionless}
-  None,                    !- Humidification Control Type
-  ,                        !- Design Specification Outdoor Air Object Name
-  ,                        !- Outdoor Air Inlet Node Name
-  ,                        !- Demand Controlled Ventilation Type
-  ,                        !- Outdoor Air Economizer Type
-  ,                        !- Heat Recovery Type
-  ,                        !- Sensible Heat Recovery Effectiveness {dimensionless}
-  ;                        !- Latent Heat Recovery Effectiveness {dimensionless}
+  <%= cool_power %>;       !- Maximum Total Cooling Capacity {W}
 
 ZoneControl:Thermostat,
   Main Zone Thermostat,     !- Name
@@ -1218,24 +1215,12 @@ ZoneHVAC:IdealLoadsAirSystem,
     10,                      !- Minimum Cooling Supply Air Temperature {C}
     0.015,                   !- Maximum Heating Supply Air Humidity Ratio {kgWater/kgDryAir}
     0.01,                    !- Minimum Cooling Supply Air Humidity Ratio {kgWater/kgDryAir}
-    NoLimit,                 !- Heating Limit
+    LimitCapacity,           !- Heating Limit
     ,                        !- Maximum Heating Air Flow Rate {m3/s}
-    ,                        !- Maximum Sensible Heating Capacity {W}
-    NoLimit,                 !- Cooling Limit
+    <%= heat_power %>,       !- Maximum Sensible Heating Capacity {W}
+    LimitCapacity,           !- Cooling Limit
     ,                        !- Maximum Cooling Air Flow Rate {m3/s}
-    ,                        !- Maximum Total Cooling Capacity {W}
-    ,                        !- Heating Availability Schedule Name
-    ,                        !- Cooling Availability Schedule Name
-    None,                    !- Dehumidification Control Type
-    ,                        !- Cooling Sensible Heat Ratio {dimensionless}
-    None,                    !- Humidification Control Type
-    ,                        !- Design Specification Outdoor Air Object Name
-    ,                        !- Outdoor Air Inlet Node Name
-    ,                        !- Demand Controlled Ventilation Type
-    ,                        !- Outdoor Air Economizer Type
-    ,                        !- Heat Recovery Type
-    ,                        !- Sensible Heat Recovery Effectiveness {dimensionless}
-    ;                        !- Latent Heat Recovery Effectiveness {dimensionless}
+    <%= cool_power %>;       !- Maximum Total Cooling Capacity {W}
 <% end %>
 
 !--- Outputs Section ---
@@ -1251,11 +1236,11 @@ ZoneHVAC:IdealLoadsAirSystem,
   Output:Variable,*,Site Outdoor Air Drybulb Temperature,Hourly;
 
   Output:Variable,*,Zone Mean Air Temperature,Hourly;
-
+  Output:Variable,*,Zone Thermostat Heating Setpoint Temperature,Hourly;
+  Output:Variable,*,Zone Thermostat Cooling Setpoint Temperature,Hourly;
   Output:Variable,*,Zone Ideal Loads Supply Air Total Heating Energy,Hourly;
-
   Output:Variable,*,Zone Ideal Loads Supply Air Total Cooling Energy,Hourly;
+  Output:Variable,*,Zone Windows Total Transmitted Solar Radiation Energy,Hourly;
+  Output:Variable,*,Zone Infiltration Sensible Heat Loss Energy,Hourly;
 
-  Output:Meter,DistrictHeating:Facility,Monthly;
-
-  Output:Meter,DistrictCooling:Facility,Monthly;
+  Output:SQLite, SimpleAndTabular;  !- Option Type
