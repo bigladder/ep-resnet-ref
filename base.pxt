@@ -21,6 +21,8 @@
 %>
 
 <%
+require 'modelkit/energyplus'
+
 # Dimensions
 width = 57.0|'ft' # East-to-West dimension in feet
 depth = 27.0|'ft' # North-to-South dimension in feet
@@ -32,10 +34,12 @@ floor_area = width*depth # Floor area for both conditioned and attic zones in sq
 zone_vol_cond = floor_area*height_cond # Conditioned zone volume in cubic feet
 zone_vol_attic = 0.5*floor_area*height_attic # Unconditioned attic zone volume in cubic feet
 
-sill_plate_hieght = (1.5/12.0)|'ft' # [ft]
-rim_joist_hieght = (7.5/12.0)|'ft' # [ft]
-basement_wall_height = (6 + 7.0/12.0)|'ft' # [ft]
-zone_vol_bsmt = floor_area*(sill_plate_hieght + rim_joist_hieght + basement_wall_height) # Conditioned attic zone volume in cubic feet
+sill_plate_height = 1.5|'in' # [ft]
+rim_joist_height = 7.5|'in' # [ft]
+basement_below_grade = (6|'ft') + (7.0|'in') # [ft]
+basement_above_grade = 8|'in'
+basement_wall_height = basement_below_grade + basement_above_grade
+zone_vol_bsmt = floor_area*(sill_plate_height + rim_joist_height + basement_wall_height) # Conditioned basement zone volume in cubic feet
 
 win_width = 3.0|'ft' # Window width [ft]
 win_height = 5.0|'ft' # Window height [ft]
@@ -44,11 +48,28 @@ door_width = 3.0|'ft' # Door width [ft]
 door_height = (6.00 + (8.00 / 12.00) )|'ft' # Door height [ft]
 
 overhang_depth = 2.5|'ft' # Depth of overhang [ft]
-overhang_height = 1.0|'ft' # Height of gap between top of window and bottom of overhang [ft]
+overhang_height = 8.0|'ft' # Height of gap between main zone floor and bottom of overhang [ft]
+
+# coordinates
+box = {
+  :north=>[[width,depth],[0,depth]],
+  :east=>[[width,0],[width,depth]],
+  :south=>[[0,0],[width,0]],
+  :west=>[[0,depth],[0,0]]
+}
+
+z_grade = 0.0
+z_basement_bottom = z_grade - basement_below_grade
+z_sill_plate_bottom = z_grade + basement_above_grade
+z_rim_joist_bottom = z_sill_plate_bottom + sill_plate_height
+z_main_bottom =  z_rim_joist_bottom + rim_joist_height
+z_attic_bottom = z_main_bottom + height_cond
+
+
 
 # Internal use
 nsteps = 1
-Win_dor = 3.0 # (Win_dor-1) is the distance between windows and door in {m}
+win_door = 3.0 # (win_door-1) is the distance between windows and door in {m}
 %>
   VERSION,9.3;
 
@@ -338,9 +359,9 @@ Foundation:Kiva,
   <% else %>
   ,              !- Exterior Vertical Insulation Material Name
   <% end %>
-  0.6096,!24|"IN",                     !- Exterior Vertical Insulation Depth {m}
-  0.1016,!4|"IN",                      !- Wall Height Above Grade {m}
-  0.508,!20|"IN",                     !- Wall Depth Below Slab {m}
+  <%= 24.0|'in' %>,                     !- Exterior Vertical Insulation Depth {m}
+  <%= 4.00|'in' %>,                      !- Wall Height Above Grade {m}
+  <%= 20.0|'in' %>,                     !- Wall Depth Below Slab {m}
   Foundation Footing;     !- Footing Wall Construction Name
 
 Material,
@@ -599,6 +620,12 @@ Construction,
   Rim Joist 2x8;           !- Layer 3
    <% end %>
 
+Construction,
+  Sill Plate, !- Name
+  Hardboard Siding, !- Outside Layer
+  Fiberboard Sheathing,
+  Wood Framing - 2x4;
+
 Foundation:Kiva,
   Basement Foundation,          !- Name
   ,                        !- Initial Indoor Air Temperature
@@ -610,13 +637,13 @@ Foundation:Kiva,
   <% else %>
   ,                        !- Interior Vertical Insulation Material Name
   <% end %>
-  0.762,!2.5|"ft",                !- Interior Vertical Insulation Depth {m}
+  <%= 2.5|"ft" %>,         !- Interior Vertical Insulation Depth {m}
   ,                        !- Exterior Horizontal Insulation Material Name
   ,                        !- Exterior Horizontal Insulation Depth {m}
   ,                        !- Exterior Horizontal Insulation Width {m}
   ,                        !- Exterior Vertical Insulation Material Name
   ,                        !- Exterior Vertical Insulation Depth {m}
-  0.2032,!8|"IN",                  !- Wall Height Above Grade {m}
+  <%= 8.0|'in' %>,                  !- Wall Height Above Grade {m}
   0,                       !- Wall Depth Below Slab {m}
   Foundation Footing; !- Footing Wall Construction Name
 
@@ -665,7 +692,7 @@ Wall:Exterior,
   90,                              !- Tilt Angle {deg]}
   <%= surface[:start_x] %>,     !- Starting X Coordinate {m}
   <%= surface[:start_y] %>,     !- Starting Y Coordinate {m}
-  0,                               !- Starting Z Coordinate {m}
+  <%= z_main_bottom %>,                               !- Starting Z Coordinate {m}
   <%= surface[:length] %>,     !- Length {m}
   <%= height_cond %>;     !- Height {m}
 
@@ -703,16 +730,16 @@ FenestrationSurface:Detailed,
   autocalculate,                        !- Number of Vertices
   <%= surface[:start_x] + b  %>,     !- Vertex 1 X-coordinate {m}
   <%= surface[:start_y] + a %>,     !- Vertex 1 Y-coordinate {m}
-  <%= 0.5 + win_height %>,     !- Vertex 1 Z-coordinate {m}
+  <%= 0.5 + win_height + z_main_bottom %>,     !- Vertex 1 Z-coordinate {m}
   <%= surface[:start_x] + b  %>,     !- Vertex 2 X-coordinate {m}
   <%= surface[:start_y] + a %>,     !- Vertex 2 Y-coordinate {m}
-  0.5,                                  !- Vertex 2 Z-coordinate {m}
+  <%= 0.5 + z_main_bottom %>,                !- Vertex 2 Z-coordinate {m}
   <%= surface[:start_x] + b + b*win_width  %>,     !- Vertex 3 X-coordinate {m}
   <%= surface[:start_y] + a + a*win_width %>,     !- Vertex 3 Y-coordinate {m}
-  0.5,                                  !- Vertex 3 Z-coordinate {m}
+  <%= 0.5 + z_main_bottom %>,                                  !- Vertex 3 Z-coordinate {m}
   <%= surface[:start_x] + b + b*win_width  %>,     !- Vertex 4 X-coordinate {m}
   <%= surface[:start_y] + a + a*win_width  %>,     !- Vertex 4 Y-coordinate {m}
-  <%= 0.5 + win_height %>;     !- Vertex 4 Z-coordinate {m}
+  <%= 0.5 + win_height + z_main_bottom %>;     !- Vertex 4 Z-coordinate {m}
     <% end %>
 
     <% if surface[:doors] > 0 %>
@@ -726,18 +753,18 @@ FenestrationSurface:Detailed,
   ,                           !- Frame and Divider Name
   ,                           !- Multiplier
   autocalculate,              !- Number of Vertices
-  <%= surface[:start_x] + Win_dor*b  %>,     !- Vertex 1 X-coordinate {m}
-  <%= surface[:start_y] + Win_dor*a %>,     !- Vertex 1 Y-coordinate {m}
-  <%= door_height %>,     !- Vertex 1 Z-coordinate {m}
-  <%= surface[:start_x] + Win_dor*b  %>,     !- Vertex 2 X-coordinate {m}
-  <%= surface[:start_y] + Win_dor*a %>,     !- Vertex 2 Y-coordinate {m}
-  0,                          !- Vertex 2 Z-coordinate {m}
-  <%= surface[:start_x] + Win_dor*b + b*door_width  %>,     !- Vertex 3 X-coordinate {m}
-  <%= surface[:start_y] + Win_dor*a + a*door_width %>,     !- Vertex 3 Y-coordinate {m}
-  0,                          !- Vertex 3 Z-coordinate {m}
-  <%= surface[:start_x] + Win_dor*b + b*door_width  %>,     !- Vertex 4 X-coordinate {m}
-  <%= surface[:start_y] + Win_dor*a + a*door_width  %>,     !- Vertex 4 Y-coordinate {m}
-  <%= door_height %>;     !- Vertex 4 Z-coordinate {m}
+  <%= surface[:start_x] + win_door*b  %>,     !- Vertex 1 X-coordinate {m}
+  <%= surface[:start_y] + win_door*a %>,     !- Vertex 1 Y-coordinate {m}
+  <%= door_height + z_main_bottom%>,     !- Vertex 1 Z-coordinate {m}
+  <%= surface[:start_x] + win_door*b  %>,     !- Vertex 2 X-coordinate {m}
+  <%= surface[:start_y] + win_door*a %>,     !- Vertex 2 Y-coordinate {m}
+  <%= z_main_bottom %>,                          !- Vertex 2 Z-coordinate {m}
+  <%= surface[:start_x] + win_door*b + b*door_width  %>,     !- Vertex 3 X-coordinate {m}
+  <%= surface[:start_y] + win_door*a + a*door_width %>,     !- Vertex 3 Y-coordinate {m}
+  <%= z_main_bottom %>,                          !- Vertex 3 Z-coordinate {m}
+  <%= surface[:start_x] + win_door*b + b*door_width  %>,     !- Vertex 4 X-coordinate {m}
+  <%= surface[:start_y] + win_door*a + a*door_width  %>,     !- Vertex 4 Y-coordinate {m}
+  <%= door_height + z_main_bottom %>;     !- Vertex 4 Z-coordinate {m}
     <% end %>
 
   <% elsif surface[:type] == "Ceiling" %>
@@ -748,7 +775,7 @@ Ceiling:Interzone,
   Attic Zone,                      !- Outside Boundary Condition Object
   0,                               !- Azimuth
   0,                               !- Tilt Angle
-  <%= width %>, <%= depth %>, <%= height_cond %>,     !- Starting Coordinates {m}
+  <%= width %>, <%= depth %>, <%= height_cond + z_main_bottom %>,     !- Starting Coordinates {m}
   <%= width %>,     !- Length
   <%= depth %>;     !- Width
 
@@ -776,10 +803,10 @@ BuildingSurface:Detailed,
   NoWind,                      !- Wind Exposure
   autocalculate,               !- View Factor to Ground
   4,                           !- Number of Vertices
-  0, 0, 0,                     !- Vertex 1 X-Y-Z coordinates {m}
-  0, <%= depth %>, 0,     !- Vertex 1 Y-coordinate {m}
-  <%= width %>, <%= depth %>, 0,     !- Vertex 1 Z-coordinate {m}
-  <%= width %>, 0, 0;                       !- Vertex 2 X-coordinate {m}
+  0, 0, <%= z_main_bottom %>,                     !- Vertex 1 X-Y-Z coordinates {m}
+  0, <%= depth %>, <%= z_main_bottom %>,     !- Vertex 1 Y-coordinate {m}
+  <%= width %>, <%= depth %>, <%= z_main_bottom %>,     !- Vertex 1 Z-coordinate {m}
+  <%= width %>, 0, <%= z_main_bottom %>;                       !- Vertex 2 X-coordinate {m}
 
     <% if foundation_type == "SLAB" %>
 SurfaceProperty:ExposedFoundationPerimeter,
@@ -986,23 +1013,23 @@ Wall:Detailed,
    <% if surface[:name].include?("West") %>
   <%= width %>,         !- Vertex 1 X-coordinate {m}
   <%= depth/2.0 %>,     !- Vertex 1 Y-coordinate {m}
-  <%= height_attic + height_cond %>,     !- Vertex 1 Z-coordinate {m}
+  <%= height_attic + z_attic_bottom %>,     !- Vertex 1 Z-coordinate {m}
   <%= width %>,     !- Vertex 2 X-coordinate {m}
   0,     !- Vertex 2 Y-coordinate {m}
-  <%= height_cond %>,     !- Vertex 2 Z-coordinate {m}
+  <%= z_attic_bottom %>,     !- Vertex 2 Z-coordinate {m}
   <%= width %>,     !- Vertex 3 X-coordinate {m}
   <%= depth %>,     !- Vertex 3 Y-coordinate {m}
-  <%= height_cond %>;        !- Vertex 3 Z-coordinate {m}
+  <%= z_attic_bottom %>;        !- Vertex 3 Z-coordinate {m}
     <% elsif surface[:name].include?("East") %>
   0,     !- Vertex 1 X-coordinate {m}
   <%= depth/2.0 %>,     !- Vertex 1 Y-coordinate {m}
-  <%= height_attic + height_cond %>,     !- Vertex 1 Z-coordinate {m}
+  <%= height_attic + z_attic_bottom %>,     !- Vertex 1 Z-coordinate {m}
   0,     !- Vertex 2 X-coordinate {m}
   <%= depth %>,     !- Vertex 2 Y-coordinate {m}
-  <%= height_cond %>,     !- Vertex 2 Z-coordinate {m}
+  <%= z_attic_bottom %>,     !- Vertex 2 Z-coordinate {m}
   0,     !- Vertex 3 X-coordinate {m}
   0,     !- Vertex 3 Y-coordinate {m}
-  <%= height_cond %>;        !- Vertex 3 Z-coordinate {m}
+  <%= z_attic_bottom %>;        !- Vertex 3 Z-coordinate {m}
     <% end %>
   <% elsif surface[:type] == "Roof" %>
 Roof,
@@ -1012,10 +1039,10 @@ Roof,
   <%= surface[:azm] %>,     !- Azimuth Angle
     <% if surface[:name].include?("North") %>
   <%= roof_tilt %>,     !- Tilt Angle
-  <%= width %>, <%= depth %>, <%= height_cond %>,     !- Starting Coordinates {m}
+  <%= width %>, <%= depth %>, <%= z_attic_bottom %>,     !- Starting Coordinates {m}
     <% else %>
   <%= roof_tilt %>,     !- Tilt Angle
-  0, 0, <%= height_cond %>,     !- Starting Coordinates {m}
+  0, 0, <%= z_attic_bottom %>,     !- Starting Coordinates {m}
     <% end %>
   <%= width %>,     !- Length
   <%= roof_pitch|'ft' %>; !- Width
@@ -1029,10 +1056,10 @@ Shading:Building,
   180,                     !- Azimuth Angle {deg}
   0,                       !- Tilt Angle {deg}
   0,                       !- Starting X Coordinate {m}
-  -0.761962839691077,      !- Starting Y Coordinate {m}
-  2.43828108701145,        !- Starting Z Coordinate {m}
-  17.3727527449566,        !- Length {m}
-  0.761962839691077;       !- Height {m}
+  <%= -overhang_depth %>,      !- Starting Y Coordinate {m}
+  <%= overhang_height + z_main_bottom %>,        !- Starting Z Coordinate {m}
+  <%= width %>,        !- Length {m}
+  <%= overhang_depth %>;       !- Height {m}
 <% end %>
 
 !--- Attic Zone Infiltration Section ---
@@ -1067,7 +1094,96 @@ ZoneInfiltration:DesignFlowRate,
     ,                        !- Zone Outside Convection Algorithm
     Yes;                     !- Part of Total Floor Area
 
-  ZoneControl:Thermostat,
+  <%
+  surfaces_bsmt = [
+    {:name=>"East Basement Rim Joist",:type=>"Wall",:direction=>:east,:ext_cond=>"Ambient",:con=>"Rim Joist",
+      :z_bottom=>z_rim_joist_bottom, :z_top=>z_main_bottom
+    },
+    {:name=>"West Basement Rim Joist",:type=>"Wall",:direction=>:west,:ext_cond=>"Ambient",:con=>"Rim Joist",
+      :z_bottom=>z_rim_joist_bottom, :z_top=>z_main_bottom
+    },
+    {:name=>"North Basement Rim Joist",:type=>"Wall",:direction=>:north,:ext_cond=>"Ambient",:con=>"Rim Joist",
+      :z_bottom=>z_rim_joist_bottom, :z_top=>z_main_bottom
+    },
+    {:name=>"South Basement Rim Joist",:type=>"Wall",:direction=>:south,:ext_cond=>"Ambient",:con=>"Rim Joist",
+      :z_bottom=>z_rim_joist_bottom, :z_top=>z_main_bottom
+    },
+    {:name=>"East Basement Sill Plate",:type=>"Wall",:direction=>:east,:ext_cond=>"Ambient",:con=>"Sill Plate",
+      :z_bottom=>z_sill_plate_bottom, :z_top=>z_rim_joist_bottom
+    },
+    {:name=>"West Basement Sill Plate",:type=>"Wall",:direction=>:west,:ext_cond=>"Ambient",:con=>"Sill Plate",
+      :z_bottom=>z_sill_plate_bottom, :z_top=>z_rim_joist_bottom
+    },
+    {:name=>"North Basement Sill Plate",:type=>"Wall",:direction=>:north,:ext_cond=>"Ambient",:con=>"Sill Plate",
+      :z_bottom=>z_sill_plate_bottom, :z_top=>z_rim_joist_bottom
+    },
+    {:name=>"South Basement Sill Plate",:type=>"Wall",:direction=>:south,:ext_cond=>"Ambient",:con=>"Sill Plate",
+      :z_bottom=>z_sill_plate_bottom, :z_top=>z_rim_joist_bottom
+    },
+    {:name=>"East Basement Wall",:type=>"Wall",:direction=>:east,:ext_cond=>"Ground",:con=>"Basement Wall",
+      :z_bottom=>z_basement_bottom, :z_top=>z_sill_plate_bottom
+    },
+    {:name=>"West Basement Wall",:type=>"Wall",:direction=>:west,:ext_cond=>"Ground",:con=>"Basement Wall",
+      :z_bottom=>z_basement_bottom, :z_top=>z_sill_plate_bottom
+    },
+    {:name=>"North Basement Wall",:type=>"Wall",:direction=>:north,:ext_cond=>"Ground",:con=>"Basement Wall",
+      :z_bottom=>z_basement_bottom, :z_top=>z_sill_plate_bottom
+    },
+    {:name=>"South Basement Wall",:type=>"Wall",:direction=>:south,:ext_cond=>"Ground",:con=>"Basement Wall",
+      :z_bottom=>z_basement_bottom, :z_top=>z_sill_plate_bottom
+    },
+    {:name=>"Basement Floor",:type=>"Floor",:ext_cond=>"Foundation",:con=>"Floor Slab"}
+  ]
+  %>
+  <% for surface in surfaces_bsmt %>
+    <% if surface[:type] == "Wall" %>
+Wall:Detailed,
+  <%= surface[:name] %>,     !- Name
+  <%= surface[:con] %>,             !- Construction Name
+  Basement Zone,                       !- Zone Name
+      <% if surface[:ext_cond] == "Ambient" %>
+  Outdoors,                !- Outside Boundary Condition
+  ,                       !- Outside Boundary Condition Object
+  SunExposed,                !- Sun Exposure
+  WindExposed,               !- Wind Exposure
+      <% else %>
+  Foundation,                !- Outside Boundary Condition
+  Basement Foundation,       !- Outside Boundary Condition Object
+  SunExposed,                !- Sun Exposure
+  WindExposed,               !- Wind Exposure
+      <% end %>
+  autocalculate,             !- View Factor to Ground
+  4,             !- Number of Vertices
+  <%= box[surface[:direction]][0][0] %>,<%= box[surface[:direction]][0][1] %>,<%= surface[:z_top] %>,              !- Vertex coordinate {m}
+  <%= box[surface[:direction]][0][0] %>,<%= box[surface[:direction]][0][1] %>,<%= surface[:z_bottom] %>,              !- Vertex coordinate {m}
+  <%= box[surface[:direction]][1][0] %>,<%= box[surface[:direction]][1][1] %>,<%= surface[:z_bottom] %>,              !- Vertex coordinate {m}
+  <%= box[surface[:direction]][1][0] %>,<%= box[surface[:direction]][1][1] %>,<%= surface[:z_top] %>;              !- Vertex coordinate {m}
+
+    <% elsif surface[:type] == "Floor" %>
+Floor:Detailed,
+  <%= surface[:name] %>,                       !- Name
+  <%= surface[:con] %>,                       !- Construction Name
+  Basement Zone,                        !- Zone Name
+  <%= surface[:ext_cond] %>,                       !- Outside Boundary Condition
+  Basement Foundation,                       !- Outside Boundary Condition Object
+  NoSun,                !- Sun Exposure
+  NoWind,               !- Wind Exposure
+  autocalculate,             !- View Factor to Ground
+  4,             !- Number of Vertices
+  0, 0, <%= z_basement_bottom %>,              !- Vertex coordinate {m}
+  0, <%= depth %>, <%= z_basement_bottom %>,              !- Vertex coordinate {m}
+  <%= width %>, <%= depth %>, <%= z_basement_bottom %>,              !- Vertex coordinate {m}
+  <%= width %>, 0, <%= z_basement_bottom %>;              !- Vertex coordinate {m}
+
+SurfaceProperty:ExposedFoundationPerimeter,
+  <%= surface[:name] %>,          !- Surface Name
+  ExposedPerimeterFraction,           !- Exposed Perimeter Calculation Method
+  ,                                   !- Total Exposed Perimeter
+  1;                                  !- Exposed Perimeter Fraction
+    <% end %>
+  <% end %>
+
+ZoneControl:Thermostat,
     Basement Zone Thermostat,  !- Name
     Basement Zone,     !- Zone or ZoneList Name
     ALWAYS 4,                !- Control Type Schedule Name
