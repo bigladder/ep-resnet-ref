@@ -1,3 +1,4 @@
 :case_name=>"L200AL",
+:climate=>"COOLING",
 :ach=>1.5,
 :envelope_eff=>"LOW"

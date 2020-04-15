@@ -1,1 +1,2 @@
-:case_name=>"L100AC"
+:case_name=>"L100AC",
+:climate=>"HEATING"

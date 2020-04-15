@@ -1,2 +1,3 @@
 :case_name=>"L170AL",
+:climate=>"COOLING",
 :int_load=>0

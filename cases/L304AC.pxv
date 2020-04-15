@@ -1,3 +1,4 @@
 :case_name=>"L304AC",
+:climate=>"HEATING",
 :foundation_type=>"SLAB",
 :foundation_insulated=>true
