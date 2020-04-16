@@ -516,7 +516,7 @@ WindowMaterial:Gas,
 
 WindowProperty:FrameAndDivider,
   Window Frame,         !- Name
-  <%= 2.75|'in' %>,        !- Frame Width {m}
+  <%= win_frame_width %>,        !- Frame Width {m}
   ,                        !- Frame Outside Projection {m}
   ,                        !- Frame Inside Projection {m}
   <%= win_frame_u %>,      !- Frame Conductance {W/m2-K}
@@ -525,7 +525,7 @@ WindowProperty:FrameAndDivider,
   0,                       !- Frame Visible Absorptance
   0.9,                     !- Frame Thermal Hemispherical Emissivity
   DividedLite,             !- Divider Type
-  <%= 2.75|'in' %>,        !- Divider Width {m}
+  <%= win_frame_width %>,        !- Divider Width {m}
   1,                       !- Number of Horizontal Dividers
   ,                        !- Number of Vertical Dividers
   ,                        !- Divider Outside Projection {m}
@@ -900,13 +900,13 @@ BuildingSurface:Detailed,
   NoWind,                     !- Wind Exposure
   autocalculate,              !- View Factor to Ground
   4,                          !- Number of Vertices
-  <%= footprint[:north][0][0] %>,<%= footprint[:north][0][1] %>,<%= z_attic_bottom %>,              !- Vertex coordinate {m}
-  <%= footprint[:east][0][0] %>,<%= footprint[:east][0][1] %>,<%= z_attic_bottom %>,              !- Vertex coordinate {m}
-  <%= footprint[:south][0][0] %>,<%= footprint[:south][0][1] %>,<%= z_attic_bottom %>,              !- Vertex coordinate {m}
-  <%= footprint[:west][0][0] %>,<%= footprint[:west][0][1] %>,<%= z_attic_bottom %>;              !- Vertex coordinate {m}
+  0, 0, <%= z_attic_bottom %>,              !- Vertex coordinate {m}
+  0, <%= depth %>, <%= z_attic_bottom %>,              !- Vertex coordinate {m}
+  <%= width %>, <%= depth %>, <%= z_attic_bottom %>,              !- Vertex coordinate {m}
+  <%= width %>, 0, <%= z_attic_bottom %>;              !- Vertex coordinate {m}
 
 BuildingSurface:Detailed,
-  Floor,                       !- Name
+  Main Zone Floor,                       !- Name
   Floor,                       !- Surface Type
 <% if foundation_type != "SLAB" %>
   Raised Floor - Cavity,       !- Construction Name
@@ -935,7 +935,7 @@ BuildingSurface:Detailed,
 
 <% if foundation_type == "SLAB" %>
 SurfaceProperty:ExposedFoundationPerimeter,
-  <%= surface[:name] %>-Cav,          !- Surface Name
+  Main Zone Floor,          !- Surface Name
   ExposedPerimeterFraction,           !- Exposed Perimeter Calculation Method
   ,                                   !- Total Exposed Perimeter
   1;                                  !- Exposed Perimeter Fraction

@@ -1,6 +1,6 @@
 :case_name=>"L160AC",
 :climate=>"HEATING",
-:north_windows=>0,
-:south_windows=>0,
-:east_windows=>9,
-:west_windows=>9
+:north_windows=>[],
+:south_windows=>[],
+:east_windows=>[0|'ft',3|'ft',6|'ft',9|'ft',12|'ft',15|'ft',18|'ft',21|'ft',24|'ft'],
+:west_windows=>[0|'ft',3|'ft',6|'ft',9|'ft',12|'ft',15|'ft',18|'ft',21|'ft',24|'ft']
