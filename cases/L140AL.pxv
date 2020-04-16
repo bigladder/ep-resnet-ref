@@ -1,6 +1,6 @@
 :case_name=>"L140AL",
 :climate=>"COOLING",
-:north_windows=>0,
-:south_windows=>0,
-:east_windows=>0,
-:west_windows=>0
+:north_windows=>[],
+:south_windows=>[],
+:east_windows=>[],
+:west_windows=>[]

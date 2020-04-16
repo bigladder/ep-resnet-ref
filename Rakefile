@@ -69,9 +69,12 @@ def results(cases)
   File.write(sql_files_CO, "")
   File.write(sql_files_LV, "")
 
+  src = [output_dir + '/results.txt']
+
   for c in cases
     file_base = File.basename(c,".*")
     sql_file = 'output/' + file_base + '/eplusout.sql'
+    src << sql_file
     if file_base[-1] == "C"
       File.write(sql_files_CO, "#{sql_file}\n", mode: "a")
     elsif file_base[-1] == "L"
@@ -83,7 +86,6 @@ def results(cases)
     end
   end
 
-  src = [output_dir + '/results.txt']
   target = [output_dir + '/results_CO.csv', output_dir + '/results_LV.csv']
 
   puts "================="

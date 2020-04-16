@@ -1,7 +1,8 @@
 :case_name=>"L155AC",
 :climate=>"HEATING",
-:north_windows=>0,
-:south_windows=>18,
-:east_windows=>0,
-:west_windows=>0,
+:north_windows=>[],
+:south_windows=>[0|'ft',3|'ft',6|'ft',9|'ft',12|'ft',15|'ft',18|'ft',21|'ft',24|'ft',27|'ft',30|'ft',36|'ft',39|'ft',42|'ft',45|'ft',48|'ft',51|'ft',54|'ft'],
+:east_windows=>[],
+:west_windows=>[],
+:south_doors=>[33|'ft'],
 :overhangs=>true

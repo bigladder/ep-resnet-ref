@@ -8,10 +8,14 @@
   parameter "ext_sol_abs_exposed", :default=>0.6 # applied to exterior face of exposed surfaces (exterior walls, roofs, end gables, doors)
   parameter "f_factor", :default=>1.68536980053971 # W/m.K, GARD approach for modeling the slab
   parameter "c_factor", :default=>0.967008195096609 # W/m.K
-  parameter "north_windows", :default=>6 # number of windows in North exterior wall
-  parameter "south_windows", :default=>6 # number of windows in South exterior wall
-  parameter "east_windows", :default=>3 # number of windows in East exterior wall
-  parameter "west_windows", :default=>3 # number of windows in West exterior wall
+  parameter "north_windows", :default=>[5|'ft',14|'ft',28|'ft',34|'ft',41|'ft',46|'ft'] # 6 windows in North exterior wall (measured from the left side of the wall)
+  parameter "south_windows", :default=>[5|'ft',14|'ft',19|'ft',24|'ft',29|'ft',44|'ft'] # 6 windows in South exterior wall (measured from the left side of the wall)
+  parameter "east_windows", :default=>[5|'ft',12|'ft',19|'ft'] # 3 windows in East exterior wall (measured from the left side of the wall)
+  parameter "west_windows", :default=>[5|'ft',13|'ft',20|'ft'] # 3 windows in West exterior wall (measured from the left side of the wall)
+  parameter "north_doors", :default=>[23|'ft']
+  parameter "east_doors", :default=>[]
+  parameter "south_doors", :default=>[34|'ft']
+  parameter "west_doors", :default=>[]
   parameter "overhangs", :default=>false
   parameter "foundation_insulated", :default=>false
   parameter "foundation_type", :default=>"RAISED" # choices: FLOATING, SLAB, BASEMENT
@@ -43,24 +47,29 @@ floor_area = width*depth # Floor area for both conditioned and attic zones in sq
 zone_vol_cond = floor_area*height_cond # Conditioned zone volume in cubic feet
 zone_vol_attic = 0.5*floor_area*height_attic # Unconditioned attic zone volume in cubic feet
 
-sill_plate_height = 1.5|'in' # [ft]
-rim_joist_height = 7.5|'in' # [ft]
-basement_below_grade = (6|'ft') + (7.0|'in') # [ft]
+sill_plate_height = 1.5|'in'
+rim_joist_height = 7.5|'in'
+basement_below_grade = (6|'ft') + (7.0|'in')
 basement_above_grade = 8|'in'
 basement_wall_height = basement_below_grade + basement_above_grade
 zone_vol_bsmt = floor_area*(sill_plate_height + rim_joist_height + basement_wall_height) # Conditioned basement zone volume in cubic feet
 
-win_width = 3.0|'ft' # Window width [ft]
-win_height = 5.0|'ft' # Window height [ft]
+win_width = 3.0|'ft' # Window width
+win_height = 5.0|'ft' # Window height
+win_frame_width = 2.75|'in'
+glazing_width = win_width - 2*win_frame_width
+glazing_height = win_height - 2*win_frame_width
 
-door_width = 3.0|'ft' # Door width [ft]
-door_height = (6.00 + (8.00 / 12.00) )|'ft' # Door height [ft]
 
-overhang_depth = 2.5|'ft' # Depth of overhang [ft]
-overhang_height = 8.0|'ft' # Height of gap between main zone floor and bottom of overhang [ft]
+door_width = 3.0|'ft' # Door width
+door_height = (6.00 + (8.00 / 12.00) )|'ft' # Door height
+
+
+overhang_depth = 2.5|'ft' # Depth of overhang
+overhang_height = 8.0|'ft' # Height of gap between main zone floor and bottom of overhang
 
 # coordinates
-box = {
+footprint = {
   :north=>[[width,depth],[0,depth]],
   :east=>[[width,0],[width,depth]],
   :south=>[[0,0],[width,0]],
@@ -71,15 +80,21 @@ z_grade = 0.0
 z_basement_bottom = z_grade - basement_below_grade
 z_sill_plate_bottom = z_grade + basement_above_grade
 z_rim_joist_bottom = z_sill_plate_bottom + sill_plate_height
-z_main_bottom =  z_rim_joist_bottom + rim_joist_height
+if foundation_type == "BASEMENT"
+  z_main_bottom =  z_rim_joist_bottom + rim_joist_height
+else
+  z_main_bottom =  z_grade
+end
+z_win_bottom = z_main_bottom + (2|'ft') + win_frame_width
+z_win_top = z_win_bottom + glazing_height
+z_door_top = z_main_bottom + door_height
 z_attic_bottom = z_main_bottom + height_cond
-
-
+z_attic_top = z_attic_bottom + height_attic
 
 # Internal use
-nsteps = 1
-win_door = 3.0 # (win_door-1) is the distance between windows and door in {m}
+nsteps = 6
 %>
+
   VERSION,9.3;
 
   Building,
@@ -102,7 +117,7 @@ win_door = 3.0 # (win_door-1) is the distance between windows and door in {m}
 
   ShadowCalculation,
     PolygonClipping,  !- Calculation Method
-    Periodic;                       !- Calculation Frequency
+    Periodic;         !- Calculation Frequency
 
   SimulationControl,
     No,                      !- Do Zone Sizing Calculation
@@ -152,7 +167,7 @@ win_door = 3.0 # (win_door-1) is the distance between windows and door in {m}
 
 ! Air gaps
   Material:AirGap,
-   AirGap,                  !- Name
+   Air Gap,                  !- Name
    0.177871290333931;       !- Thermal Resistance {m2-K/W}
 
 ! Insulation
@@ -213,9 +228,9 @@ win_door = 3.0 # (win_door-1) is the distance between windows and door in {m}
 
 ! Wood Framing
  Material,
-   Wood Framing - 2x4,    !- Name
+   Wood Framing - 2x4,      !- Name
    Rough,                   !- Roughness
-   <%= 3.5|'in' %>,    !- Thickness {m}
+   <%= 3.5|'in' %>,         !- Thickness {m}
    0.115648403573426,       !- Conductivity {W/m-K}
    512.590493468479,        !- Density {kg/m3}
    1380.7200104479,         !- Specific Heat {J/kg-K}
@@ -224,9 +239,9 @@ win_door = 3.0 # (win_door-1) is the distance between windows and door in {m}
    0.6;                     !- Visible Absorptance
 
  Material,
-   Wood Framing - 2x6,    !- Name
+   Wood Framing - 2x6,      !- Name
    Rough,                   !- Roughness
-   <%= 5.5|'in' %>,    !- Thickness {m}
+   <%= 5.5|'in' %>,         !- Thickness {m}
    0.115648403573426,       !- Conductivity {W/m-K}
    512.590493468479,        !- Density {kg/m3}
    1380.7200104479,         !- Specific Heat {J/kg-K}
@@ -236,9 +251,9 @@ win_door = 3.0 # (win_door-1) is the distance between windows and door in {m}
 
 ! Wall finishes
  Material,
-   PLASTERBOARD,            !- Name
+   Plasterboard,            !- Name
    Rough,                   !- Roughness
-   <%= 0.5|'in' %>,    !- Thickness {m}
+   <%= 0.5|'in' %>,         !- Thickness {m}
    0.160206204950219,       !- Conductivity {W/m-K}
    800.922646044499,        !- Density {kg/m3}
    1087.84000823168,        !- Specific Heat {J/kg-K}
@@ -259,7 +274,7 @@ win_door = 3.0 # (win_door-1) is the distance between windows and door in {m}
 
 ! Roof
  Material,
-   PLYWOOD 1/2 IN,          !- Name
+   Plywood - 1/2 in,          !- Name
    Rough,                   !- Roughness
    <%= 0.5|'in' %>,    !- Thickness {m}
    0.11550420356897,        !- Conductivity {W/m-K}
@@ -270,7 +285,7 @@ win_door = 3.0 # (win_door-1) is the distance between windows and door in {m}
    0.6;                     !- Visible Absorptance
 
  Material,
-   PLYWOOD 3/4 IN,          !- Name
+   Plywood - 3/4 in,          !- Name
    Rough,                   !- Roughness
    <%= 0.75|'in' %>,    !- Thickness {m}
    0.115360003564514,       !- Conductivity {W/m-K}
@@ -281,7 +296,7 @@ win_door = 3.0 # (win_door-1) is the distance between windows and door in {m}
    0.6;                     !- Visible Absorptance
 
  Material,
-   ASPHALT SHINGLE,  !- Name
+   Asphalt Shingle,  !- Name
    Rough,                   !- Roughness
    <%= 0.25|'in' %>,     !- Thickness {m}
    8.19056025308051E-02,    !- Conductivity {W/m-K}
@@ -351,6 +366,11 @@ Material,
   0.7,                     !- Solar Absorptance
   0.7;                     !- Visible Absorptance
 
+Construction,
+  Foundation Wall,               !- Name
+  Poured Concrete - 6in;            !- Outside Layer
+
+
 <% if foundation_type == "SLAB" %>
 Foundation:Kiva,
   Slab Foundation,          !- Name
@@ -369,9 +389,9 @@ Foundation:Kiva,
   ,              !- Exterior Vertical Insulation Material Name
   <% end %>
   <%= 24.0|'in' %>,                     !- Exterior Vertical Insulation Depth {m}
-  <%= 4.00|'in' %>,                      !- Wall Height Above Grade {m}
+  0.0,                                  !- Wall Height Above Grade {m}
   <%= 20.0|'in' %>,                     !- Wall Depth Below Slab {m}
-  Foundation Footing;     !- Footing Wall Construction Name
+  Foundation Wall;     !- Footing Wall Construction Name
 
 Material,
   Slab Insulation,              !- Name
@@ -386,237 +406,18 @@ Material,
 
 <% end %>
 
-! Window layers
-WindowMaterial:Glazing,
-  SINGLE PANE GLASS,       !- Name
-  SpectralAverage,         !- Optical Data Type
-  ,                        !- Window Glass Spectral Data Set Name
-  2.99720607572673E-03,    !- Thickness {m}
-  0.837,                   !- Solar Transmittance at Normal Incidence
-  0.075,                   !- Front Side Solar Reflectance at Normal Incidence
-  0.075,                   !- Back Side Solar Reflectance at Normal Incidence
-  0.837,                   !- Visible Transmittance at Normal Incidence
-  0.075,                   !- Front Side Visible Reflectance at Normal Incidence
-  0.075,                   !- Back Side Visible Reflectance at Normal Incidence
-  0.0,                     !- Infrared Transmittance at Normal Incidence
-  0.84,                    !- Front Side Infrared Hemispherical Emissivity
-  0.84,                    !- Back Side Infrared Hemispherical Emissivity
-  0.899808027803211;       !- Conductivity {W/m-K}
-
-WindowMaterial:Glazing,
-  OUTSIDE PANE GLASS,      !- Name
-  SpectralAverage,         !- Optical Data Type
-  ,                        !- Window Glass Spectral Data Set Name
-  2.99720607572673E-03,    !- Thickness {m}
-  0.45,                    !- Solar Transmittance at Normal Incidence
-  0.34,                    !- Front Side Solar Reflectance at Normal Incidence
-  0.34,                    !- Back Side Solar Reflectance at Normal Incidence
-  0.45,                    !- Visible Transmittance at Normal Incidence
-  0.34,                    !- Front Side Visible Reflectance at Normal Incidence
-  0.34,                    !- Back Side Visible Reflectance at Normal Incidence
-  0.0,                     !- Infrared Transmittance at Normal Incidence
-  0.84,                    !- Front Side Infrared Hemispherical Emissivity
-  0.04,                    !- Back Side Infrared Hemispherical Emissivity
-  0.899808027803211;       !- Conductivity {W/m-K}
-
-WindowMaterial:Glazing,
-  INSIDE PANE GLASS,       !- Name
-  SpectralAverage,         !- Optical Data Type
-  ,                        !- Window Glass Spectral Data Set Name
-  2.99720607572673E-03,    !- Thickness {m}
-  0.837,                   !- Solar Transmittance at Normal Incidence
-  0.075,                   !- Front Side Solar Reflectance at Normal Incidence
-  0.075,                   !- Back Side Solar Reflectance at Normal Incidence
-  0.837,                   !- Visible Transmittance at Normal Incidence
-  0.075,                   !- Front Side Visible Reflectance at Normal Incidence
-  0.075,                   !- Back Side Visible Reflectance at Normal Incidence
-  0.0,                     !- Infrared Transmittance at Normal Incidence
-  0.84,                    !- Front Side Infrared Hemispherical Emissivity
-  0.84,                    !- Back Side Infrared Hemispherical Emissivity
-  0.899808027803211;       !- Conductivity {W/m-K}
-
-WindowMaterial:Gas,
-  ARGON GAP,               !- Name
-  Argon,                   !- Gas Type
-  1.27000257446048E-02;    !- Thickness {m}
-
-WindowProperty:FrameAndDivider,
-  Frame-Divider_1,         !- Name
-  6.98466952333941E-02,    !- Frame Width {m}
-  ,                        !- Frame Outside Projection {m}
-  ,                        !- Frame Inside Projection {m}
-  <%= win_frame_u %>,      !- Frame Conductance {W/m2-K}
-  1,                       !- Ratio of Frame-Edge Glass Conductance to Center-Of-Glass Conductance
-  0.6,                     !- Frame Solar Absorptance
-  0,                       !- Frame Visible Absorptance
-  0.9,                     !- Frame Thermal Hemispherical Emissivity
-  DividedLite,             !- Divider Type
-  6.98466952333941E-02,    !- Divider Width {m}
-  1,                       !- Number of Horizontal Dividers
-  ,                        !- Number of Vertical Dividers
-  ,                        !- Divider Outside Projection {m}
-  ,                        !- Divider Inside Projection {m}
-  <%= win_frame_u %>,      !- Divider Conductance {W/m2-K}
-  1,                       !- Ratio of Divider-Edge Glass Conductance to Center-Of-Glass Conductance
-  0.6,                     !- Divider Solar Absorptance
-  0,                       !- Divider Visible Absorptance
-  0.9;                     !- Divider Thermal Hemispherical Emissivity
-
-!--- Construction Assembly Section ---
-Construction,
- WINDOW CONSTRUCTION,      !- Name
-<% if win_panes == 1 %>
- SINGLE PANE GLASS;       !- Outside Layer
-<% else %>
- OUTSIDE PANE GLASS,       !- Outside Layer
- ARGON GAP,                !- Layer 2
- INSIDE PANE GLASS;        !- Layer 3
-<% end %>
-
-Construction,
- Interior Wall - Cavity,       !- Name
- PLASTERBOARD,            !- Outside Layer
- AirGap,                  !- Layer 2
- PLASTERBOARD;            !- Layer 3
-
-Construction,
-  Interior Wall - Frame,    !- Name
-  PLASTERBOARD,            !- Outside Layer
-  Wood Framing - 2x4,      !- Layer 2
-  PLASTERBOARD;            !- Layer 3
-
-Construction,
- DOOR,                    !- Name
- Solid Core Door;         !- Outside Layer
-
-Construction,
-  Floor Slab,           !- Name
-<% if foundation_type == "SLAB" %>
-  Carpet with Fibrous Pad,
-<% end %>
-  Poured Concrete - 4in;                 !- Outside Layer
-
-Construction,
-  Raised Floor - Cavity,      !- Name
-<% if envelope_eff != "LOW" and foundation_type != "BASEMENT" %>
-  R-11 Fiberglass Batt,         !- Outside Layer
-<% end %>
-  PLYWOOD 3/4 IN,          !- Layer 2
-  Carpet with Fibrous Pad;   !- Layer 3
-
-Construction,
-  Raised Floor - Frame,       !- Name
-<% if envelope_eff != "LOW" and foundation_type != "BASEMENT" %>
-  Wood Framing - 2x4,         !- Outside Layer
-<% end %>
-  PLYWOOD 3/4 IN,          !- Layer 2
-  Carpet with Fibrous Pad;   !- Layer 3
-
-Construction,
-  ROOF,                    !- Name
-  ASPHALT SHINGLE,         !- Outside Layer
-  PLYWOOD 1/2 IN;          !- Layer 2
-
-Construction,
-  Gable Wall,               !- Name
-  Hardboard Siding,         !- Outside Layer
-  PLYWOOD 1/2 IN;           !- Layer 2
-
-Construction,
-  Exterior Wall - Cavity, !- Name
-  Hardboard Siding,!- Outside Layer
-<% if envelope_eff == "HIGH" %>
-  Polyisocyanurate board insulation,  !- Layer 2
-  R-18 Fiberglass Batt,     !- Layer 3
-<% elsif envelope_eff == "LOW" %>
-  FIBERBOARD SHEATHING,    !- Layer 2
-  AirGap,                  !- Layer 3
-<% else %>
-  FIBERBOARD SHEATHING,    !- Layer 2
-  R-11 Fiberglass Batt,         !- Layer 3
-<% end %>
-  PLASTERBOARD;            !- Layer 4
-
-  Construction,
-    Exterior Wall - Frame,    !- Name
-    Hardboard Siding,         !- Outside Layer
-<% if envelope_eff == "HIGH" %>
-    Polyisocyanurate board insulation,  !- Layer 2
-    Wood Framing - 2x6,         !- Layer 3
-<% else %>
-    FIBERBOARD SHEATHING,    !- Layer 2
-    Wood Framing - 2x4,    !- Layer 3
-<% end %>
-    PLASTERBOARD;            !- Layer 4
-
-  Construction,
-    Ceiling - Cavity,            !- Name
-<% if envelope_eff == "HIGH" %>
-    R-38 Fiberglass Batt - Ceiling,     !- Outside Layer
-    R-19 Fiberglass Batt - Ceiling,     !- Layer 2
-<% elsif envelope_eff == "LOW" %>
-    R-11 Fiberglass Batt,     !- Layer 2
-<% else %>
-    R-19 Fiberglass Batt - Ceiling,     !- Layer 2
-<% end %>
-    PLASTERBOARD;            !- Layer 3
-
-  Construction,
-    Ceiling - Frame,          !- Name
-<% if envelope_eff == "HIGH" %>
-    R-38 Fiberglass Batt - Ceiling,     !- Outside Layer
-    Wood Framing - 2x6,                 !- Layer 2
-<% elsif envelope_eff == "LOW" %>
-    Wood Framing - 2x4,         !- Outside Layer (assumed to be same thickness as Slab Insulation layer)
-<% else %>
-    Wood Framing - 2x6,        !- Outside Layer
-<% end %>
-    PLASTERBOARD;            !- Layer 2
-
-  Construction,
-    Attic floor - Cavity,        !- Name
-    PLASTERBOARD,                !- Outside Layer
-<% if envelope_eff == "LOW" %>
-    R-11 Fiberglass Batt;     !- Layer 2
-<% elsif envelope_eff == "HIGH" %>
-    R-19 Fiberglass Batt - Ceiling,     !- Layer 2
-    R-38 Fiberglass Batt - Ceiling;     !- Layer 3
-<% else %>
-    R-19 Fiberglass Batt - Ceiling;     !- Layer 2
-<% end %>
-
-  Construction,
-    Attic floor - Frame,      !- Name
-    PLASTERBOARD,            !- Outside Layer
-<% if envelope_eff == "LOW" %>
-    Wood Framing - 2x4;     !- Layer 2
-<% elsif envelope_eff == "HIGH" %>
-    Wood Framing - 2x6,     !- Layer 2
-    R-38 Fiberglass Batt - Ceiling;     !- Layer 3
-<% else %>
-    Wood Framing - 2x6;         !- Layer 2
-<% end %>
-
-Construction,
-  Foundation Footing,               !- Name
-  Poured Concrete - 6in;            !- Outside Layer
-
 <% if foundation_type == "BASEMENT" %>
 
 Material,
   Rim Joist 2x8,           !- Name
   Rough,                   !- Roughness
-  <%= 1.5|'in' %>,    !- Thickness {m} (on the side perpendicular to heat flow direction)
+  <%= 1.5|'in' %>,         !- Thickness {m} (on the side perpendicular to heat flow direction)
   0.11550420356897,        !- Conductivity {W/m-K}
   512.590493468479,        !- Density {kg/m3}
   1380.7200104479,         !- Specific Heat {J/kg-K}
   0.9,                     !- Thermal Absorptance
   0.7,                     !- Solar Absorptance
   0.7;                     !- Visible Absorptance
-
-Construction,
-   Basement Wall,                   !- Name
-   Poured Concrete - 6in;            !- Outside Layer
 
 Construction,
   Rim Joist,               !- Name
@@ -642,20 +443,232 @@ Foundation:Kiva,
   ,                        !- Interior Horizontal Insulation Depth {m}
   ,                        !- Interior Horizontal Insulation Width {m}
   <% if foundation_insulated %>
-  R-11 Fiberglass Batt,              !- Interior Vertical Insulation Material Name
+  R-11 Fiberglass Batt,              !- Interior Vertical Insulation Material Name  TODO: This needs to include framing and needs to be moved to a custom block so it only extends to the slab
   <% else %>
   ,                        !- Interior Vertical Insulation Material Name
   <% end %>
-  <%= 2.5|"ft" %>,         !- Interior Vertical Insulation Depth {m}
+  <%= basement_wall_height %>,         !- Interior Vertical Insulation Depth {m}
   ,                        !- Exterior Horizontal Insulation Material Name
   ,                        !- Exterior Horizontal Insulation Depth {m}
   ,                        !- Exterior Horizontal Insulation Width {m}
   ,                        !- Exterior Vertical Insulation Material Name
   ,                        !- Exterior Vertical Insulation Depth {m}
-  <%= 8.0|'in' %>,                  !- Wall Height Above Grade {m}
+  <%= 8.0|'in' %>,         !- Wall Height Above Grade {m}
   0,                       !- Wall Depth Below Slab {m}
-  Foundation Footing; !- Footing Wall Construction Name
+  ;                        !- Footing Wall Construction Name
 
+<% end %>
+
+
+! Window layers
+WindowMaterial:Glazing,
+  Single Pane Glass,       !- Name
+  SpectralAverage,         !- Optical Data Type
+  ,                        !- Window Glass Spectral Data Set Name
+  2.99720607572673E-03,    !- Thickness {m}
+  0.837,                   !- Solar Transmittance at Normal Incidence
+  0.075,                   !- Front Side Solar Reflectance at Normal Incidence
+  0.075,                   !- Back Side Solar Reflectance at Normal Incidence
+  0.837,                   !- Visible Transmittance at Normal Incidence
+  0.075,                   !- Front Side Visible Reflectance at Normal Incidence
+  0.075,                   !- Back Side Visible Reflectance at Normal Incidence
+  0.0,                     !- Infrared Transmittance at Normal Incidence
+  0.84,                    !- Front Side Infrared Hemispherical Emissivity
+  0.84,                    !- Back Side Infrared Hemispherical Emissivity
+  0.899808027803211;       !- Conductivity {W/m-K}
+
+WindowMaterial:Glazing,
+  Outside Pane Glass,      !- Name
+  SpectralAverage,         !- Optical Data Type
+  ,                        !- Window Glass Spectral Data Set Name
+  2.99720607572673E-03,    !- Thickness {m}
+  0.45,                    !- Solar Transmittance at Normal Incidence
+  0.34,                    !- Front Side Solar Reflectance at Normal Incidence
+  0.34,                    !- Back Side Solar Reflectance at Normal Incidence
+  0.45,                    !- Visible Transmittance at Normal Incidence
+  0.34,                    !- Front Side Visible Reflectance at Normal Incidence
+  0.34,                    !- Back Side Visible Reflectance at Normal Incidence
+  0.0,                     !- Infrared Transmittance at Normal Incidence
+  0.84,                    !- Front Side Infrared Hemispherical Emissivity
+  0.04,                    !- Back Side Infrared Hemispherical Emissivity
+  0.899808027803211;       !- Conductivity {W/m-K}
+
+WindowMaterial:Glazing,
+  Inside Pane Glass,       !- Name
+  SpectralAverage,         !- Optical Data Type
+  ,                        !- Window Glass Spectral Data Set Name
+  2.99720607572673E-03,    !- Thickness {m}
+  0.837,                   !- Solar Transmittance at Normal Incidence
+  0.075,                   !- Front Side Solar Reflectance at Normal Incidence
+  0.075,                   !- Back Side Solar Reflectance at Normal Incidence
+  0.837,                   !- Visible Transmittance at Normal Incidence
+  0.075,                   !- Front Side Visible Reflectance at Normal Incidence
+  0.075,                   !- Back Side Visible Reflectance at Normal Incidence
+  0.0,                     !- Infrared Transmittance at Normal Incidence
+  0.84,                    !- Front Side Infrared Hemispherical Emissivity
+  0.84,                    !- Back Side Infrared Hemispherical Emissivity
+  0.899808027803211;       !- Conductivity {W/m-K}
+
+WindowMaterial:Gas,
+  Argon Gap,               !- Name
+  Argon,                   !- Gas Type
+  1.27000257446048E-02;    !- Thickness {m}
+
+WindowProperty:FrameAndDivider,
+  Window Frame,         !- Name
+  <%= 2.75|'in' %>,        !- Frame Width {m}
+  ,                        !- Frame Outside Projection {m}
+  ,                        !- Frame Inside Projection {m}
+  <%= win_frame_u %>,      !- Frame Conductance {W/m2-K}
+  1,                       !- Ratio of Frame-Edge Glass Conductance to Center-Of-Glass Conductance
+  0.6,                     !- Frame Solar Absorptance
+  0,                       !- Frame Visible Absorptance
+  0.9,                     !- Frame Thermal Hemispherical Emissivity
+  DividedLite,             !- Divider Type
+  <%= 2.75|'in' %>,        !- Divider Width {m}
+  1,                       !- Number of Horizontal Dividers
+  ,                        !- Number of Vertical Dividers
+  ,                        !- Divider Outside Projection {m}
+  ,                        !- Divider Inside Projection {m}
+  <%= win_frame_u %>,      !- Divider Conductance {W/m2-K}
+  1,                       !- Ratio of Divider-Edge Glass Conductance to Center-Of-Glass Conductance
+  0.6,                     !- Divider Solar Absorptance
+  0,                       !- Divider Visible Absorptance
+  0.9;                     !- Divider Thermal Hemispherical Emissivity
+
+!--- Construction Assembly Section ---
+Construction,
+ Window Construction,      !- Name
+<% if win_panes == 1 %>
+ Single Pane Glass;       !- Outside Layer
+<% else %>
+ Outside Pane Glass,       !- Outside Layer
+ Argon Gap,                !- Layer 2
+ Inside Pane Glass;        !- Layer 3
+<% end %>
+
+Construction,
+ Interior Wall - Cavity,       !- Name
+ Plasterboard,            !- Outside Layer
+ Air Gap,                  !- Layer 2
+ Plasterboard;            !- Layer 3
+
+Construction,
+  Interior Wall - Frame,    !- Name
+  Plasterboard,            !- Outside Layer
+  Wood Framing - 2x4,      !- Layer 2
+  Plasterboard;            !- Layer 3
+
+Construction,
+ Door,                    !- Name
+ Solid Core Door;         !- Outside Layer
+
+Construction,
+  Floor Slab,           !- Name
+<% if foundation_type == "SLAB" %>
+  Carpet with Fibrous Pad,
+<% end %>
+  Poured Concrete - 4in;                 !- Outside Layer
+
+Construction,
+  Raised Floor - Cavity,      !- Name
+<% if envelope_eff != "LOW" and foundation_type != "BASEMENT" %>
+  R-11 Fiberglass Batt,         !- Outside Layer
+<% end %>
+  Plywood - 3/4 in,          !- Layer 2
+  Carpet with Fibrous Pad;   !- Layer 3
+
+Construction,
+  Raised Floor - Frame,       !- Name
+<% if envelope_eff != "LOW" and foundation_type != "BASEMENT" %>
+  Wood Framing - 2x4,         !- Outside Layer
+<% end %>
+  Plywood - 3/4 in,          !- Layer 2
+  Carpet with Fibrous Pad;   !- Layer 3
+
+Construction,
+  Roof,                    !- Name
+  Asphalt Shingle,         !- Outside Layer
+  Plywood - 1/2 in;          !- Layer 2
+
+Construction,
+  Gable Wall,               !- Name
+  Hardboard Siding,         !- Outside Layer
+  Plywood - 1/2 in;           !- Layer 2
+
+Construction,
+  Exterior Wall - Cavity, !- Name
+  Hardboard Siding,!- Outside Layer
+<% if envelope_eff == "HIGH" %>
+  Polyisocyanurate board insulation,  !- Layer 2
+  R-18 Fiberglass Batt,     !- Layer 3
+<% elsif envelope_eff == "LOW" %>
+  Fiberboard Sheathing,    !- Layer 2
+  Air Gap,                  !- Layer 3
+<% else %>
+  Fiberboard Sheathing,    !- Layer 2
+  R-11 Fiberglass Batt,         !- Layer 3
+<% end %>
+  Plasterboard;            !- Layer 4
+
+  Construction,
+    Exterior Wall - Frame,    !- Name
+    Hardboard Siding,         !- Outside Layer
+<% if envelope_eff == "HIGH" %>
+    Polyisocyanurate board insulation,  !- Layer 2
+    Wood Framing - 2x6,         !- Layer 3
+<% else %>
+    Fiberboard Sheathing,    !- Layer 2
+    Wood Framing - 2x4,    !- Layer 3
+<% end %>
+    Plasterboard;            !- Layer 4
+
+  Construction,
+    Ceiling - Cavity,            !- Name
+<% if envelope_eff == "HIGH" %>
+    R-38 Fiberglass Batt - Ceiling,     !- Outside Layer
+    R-19 Fiberglass Batt - Ceiling,     !- Layer 2
+<% elsif envelope_eff == "LOW" %>
+    R-11 Fiberglass Batt,     !- Layer 2
+<% else %>
+    R-19 Fiberglass Batt - Ceiling,     !- Layer 2
+<% end %>
+    Plasterboard;            !- Layer 3
+
+  Construction,
+    Ceiling - Frame,          !- Name
+<% if envelope_eff == "HIGH" %>
+    R-38 Fiberglass Batt - Ceiling,     !- Outside Layer
+    Wood Framing - 2x6,                 !- Layer 2
+<% elsif envelope_eff == "LOW" %>
+    Wood Framing - 2x4,         !- Outside Layer (assumed to be same thickness as Slab Insulation layer)
+<% else %>
+    Wood Framing - 2x6,        !- Outside Layer
+<% end %>
+    Plasterboard;            !- Layer 2
+
+  Construction,
+    Attic floor - Cavity,        !- Name
+    Plasterboard,                !- Outside Layer
+<% if envelope_eff == "LOW" %>
+    R-11 Fiberglass Batt;     !- Layer 2
+<% elsif envelope_eff == "HIGH" %>
+    R-19 Fiberglass Batt - Ceiling,     !- Layer 2
+    R-38 Fiberglass Batt - Ceiling;     !- Layer 3
+<% else %>
+    R-19 Fiberglass Batt - Ceiling;     !- Layer 2
+<% end %>
+
+  Construction,
+    Attic floor - Frame,      !- Name
+    Plasterboard,            !- Outside Layer
+<% if envelope_eff == "LOW" %>
+    Wood Framing - 2x4;     !- Layer 2
+<% elsif envelope_eff == "HIGH" %>
+    Wood Framing - 2x6,     !- Layer 2
+    R-38 Fiberglass Batt - Ceiling;     !- Layer 3
+<% else %>
+    Wood Framing - 2x6;         !- Layer 2
 <% end %>
 
 <%
@@ -665,13 +678,11 @@ else
   framing_factor_floor = framing_factor_other
 end
 
-surfaces_cond = [
-   {:name=>"North Wall",:type=>"Wall",:length=>width,:azm=>0,:windows=>north_windows,:framing_factor=>framing_factor_walls,:doors=>1,:start_x=>width,:start_y=>depth},
-   {:name=>"East Wall",:type=>"Wall",:length=>depth,:azm=>90,:windows=>east_windows,:framing_factor=>framing_factor_walls,:doors=>0,:start_x=>width,:start_y=>0},
-   {:name=>"South Wall",:type=>"Wall",:length=>width,:azm=>180,:windows=>south_windows,:framing_factor=>framing_factor_walls,:doors=>1,:start_x=>0,:start_y=>0},
-   {:name=>"West Wall",:type=>"Wall",:length=>depth,:azm=>270,:windows=>west_windows,:framing_factor=>framing_factor_walls,:doors=>0,:start_x=>0,:start_y=>depth},
-   {:name=>"Ceiling",:type=>"Ceiling",:area=>floor_area,:windows=>0,:framing_factor=>framing_factor_other,:doors=>0},
-   {:name=>"Floor",:type=>"Floor",:area=>floor_area,:windows=>0,:framing_factor=>framing_factor_floor,:doors=>0}
+walls_main = [
+   {:name=>"North Wall",:direction=>:north},
+   {:name=>"East Wall",:direction=>:east},
+   {:name=>"South Wall",:direction=>:south},
+   {:name=>"West Wall",:direction=>:west}
 ]
 %>
 !--- Main Zone Section ---
@@ -691,123 +702,228 @@ Zone,
   Yes;                     !- Part of Total Floor Area
 
 !--- Main Zone Surfaces Section ---
-<% for surface in surfaces_cond %>
-  <% if surface[:type] == "Wall" %>
-Wall:Exterior,
-  <%= surface[:name] %>-Cav,     !- Name
+<% for wall in walls_main %>
+
+BuildingSurface:Detailed,
+  <%= wall[:name] %>,     !- Name
+  Wall,                      !- Surface Type
   Exterior Wall - Cavity,          !- Construction Name
   Main Zone,                       !- Zone Name
-  <%= surface[:azm] %>,     !- Azimuth Angle {deg}
-  90,                              !- Tilt Angle {deg]}
-  <%= surface[:start_x] %>,     !- Starting X Coordinate {m}
-  <%= surface[:start_y] %>,     !- Starting Y Coordinate {m}
-  <%= z_main_bottom %>,                               !- Starting Z Coordinate {m}
-  <%= surface[:length] %>,     !- Length {m}
-  <%= height_cond %>;     !- Height {m}
+  Outdoors,                !- Outside Boundary Condition
+  ,                       !- Outside Boundary Condition Object
+  SunExposed,                !- Sun Exposure
+  WindExposed,               !- Wind Exposure
+  autocalculate,             !- View Factor to Ground
+  4,             !- Number of Vertices
+  <%= footprint[wall[:direction]][0][0] %>,<%= footprint[wall[:direction]][0][1] %>,<%= z_attic_bottom %>,              !- Vertex coordinate {m}
+  <%= footprint[wall[:direction]][0][0] %>,<%= footprint[wall[:direction]][0][1] %>,<%= z_main_bottom %>,              !- Vertex coordinate {m}
+  <%= footprint[wall[:direction]][1][0] %>,<%= footprint[wall[:direction]][1][1] %>,<%= z_main_bottom %>,              !- Vertex coordinate {m}
+  <%= footprint[wall[:direction]][1][0] %>,<%= footprint[wall[:direction]][1][1] %>,<%= z_attic_bottom %>;              !- Vertex coordinate {m}
 
-<%
+<% end %>
 
-# The following variables a, b, c and d are intermediary variables used to dynamicaly define the doors
-# and windows X,Y,Z coordinates. Windows are placed 1m far from each wall edge.
-
-if surface[:name] == "North Wall"
-  b = -1.0
-  a = 0
-elsif surface[:name] == "South Wall"
-  b = 1.0
-  a = 0
-elsif surface[:name] == "West Wall"
-  a = -1.0
-  b = 0
-elsif surface[:name] == "East Wall"
-  a = 1.0
-  b = 0
-end
-
-%>
-    <% if surface[:windows] > 0 %>
-
+<% north_windows.each_with_index do |start, number| %>
 FenestrationSurface:Detailed,
-  <%= surface[:name] %>-Windows,     !- Name
+  North Wall Window <%= number + 1 %>,  !- Name
   Window,                               !- Surface Type
-  WINDOW CONSTRUCTION,                  !- Construction Name
-  <%= surface[:name] %>-Cav,     !- Building Surface Name
+  Window Construction,                  !- Construction Name
+  North Wall,                           !- Building Surface Name
   ,                                     !- Outside Boundary Condition Object
   autocalculate,                        !- View Factor to Ground
-  Frame-Divider_1,                      !- Frame and Divider Name
-  <%= surface[:windows] %>,     !- Multiplier
+  Window Frame,                         !- Frame and Divider Name
+  1,                                    !- Multiplier
   autocalculate,                        !- Number of Vertices
-  <%= surface[:start_x] + b  %>,     !- Vertex 1 X-coordinate {m}
-  <%= surface[:start_y] + a %>,     !- Vertex 1 Y-coordinate {m}
-  <%= 0.5 + win_height + z_main_bottom %>,     !- Vertex 1 Z-coordinate {m}
-  <%= surface[:start_x] + b  %>,     !- Vertex 2 X-coordinate {m}
-  <%= surface[:start_y] + a %>,     !- Vertex 2 Y-coordinate {m}
-  <%= 0.5 + z_main_bottom %>,                !- Vertex 2 Z-coordinate {m}
-  <%= surface[:start_x] + b + b*win_width  %>,     !- Vertex 3 X-coordinate {m}
-  <%= surface[:start_y] + a + a*win_width %>,     !- Vertex 3 Y-coordinate {m}
-  <%= 0.5 + z_main_bottom %>,                                  !- Vertex 3 Z-coordinate {m}
-  <%= surface[:start_x] + b + b*win_width  %>,     !- Vertex 4 X-coordinate {m}
-  <%= surface[:start_y] + a + a*win_width  %>,     !- Vertex 4 Y-coordinate {m}
-  <%= 0.5 + win_height + z_main_bottom %>;     !- Vertex 4 Z-coordinate {m}
-    <% end %>
+  <%= width - start - win_frame_width %>,  !- Vertex 1 X-coordinate {m}
+  <%= depth %>,                         !- Vertex 1 Y-coordinate {m}
+  <%= z_win_top %>,                     !- Vertex 1 Z-coordinate {m}
+  <%= width - start - win_frame_width %>,  !- Vertex 2 X-coordinate {m}
+  <%= depth %>,                         !- Vertex 2 Y-coordinate {m}
+  <%= z_win_bottom %>,                  !- Vertex 2 Z-coordinate {m}
+  <%= width - start - win_frame_width - glazing_width %>,  !- Vertex 3 X-coordinate {m}
+  <%= depth %>,                         !- Vertex 3 Y-coordinate {m}
+  <%= z_win_bottom %>,                  !- Vertex 3 Z-coordinate {m}
+  <%= width - start - win_frame_width - glazing_width %>,  !- Vertex 4 X-coordinate {m}
+  <%= depth %>,                         !- Vertex 4 Y-coordinate {m}
+  <%= z_win_top %>;                     !- Vertex 4 Z-coordinate {m}
+<% end %>
 
-    <% if surface[:doors] > 0 %>
+<% north_doors.each_with_index do |start, number| %>
 FenestrationSurface:Detailed,
-  <%= surface[:name] %>-Door,     !- Name
-  Door,                       !- Surface Type
-  DOOR,                       !- Construction Name
-  <%= surface[:name] %>-Cav,     !- Building Surface Name
-  ,                           !- Outside Boundary Condition Object
-  autocalculate,              !- View Factor to Ground
-  ,                           !- Frame and Divider Name
-  ,                           !- Multiplier
-  autocalculate,              !- Number of Vertices
-  <%= surface[:start_x] + win_door*b  %>,     !- Vertex 1 X-coordinate {m}
-  <%= surface[:start_y] + win_door*a %>,     !- Vertex 1 Y-coordinate {m}
-  <%= door_height + z_main_bottom%>,     !- Vertex 1 Z-coordinate {m}
-  <%= surface[:start_x] + win_door*b  %>,     !- Vertex 2 X-coordinate {m}
-  <%= surface[:start_y] + win_door*a %>,     !- Vertex 2 Y-coordinate {m}
-  <%= z_main_bottom %>,                          !- Vertex 2 Z-coordinate {m}
-  <%= surface[:start_x] + win_door*b + b*door_width  %>,     !- Vertex 3 X-coordinate {m}
-  <%= surface[:start_y] + win_door*a + a*door_width %>,     !- Vertex 3 Y-coordinate {m}
-  <%= z_main_bottom %>,                          !- Vertex 3 Z-coordinate {m}
-  <%= surface[:start_x] + win_door*b + b*door_width  %>,     !- Vertex 4 X-coordinate {m}
-  <%= surface[:start_y] + win_door*a + a*door_width  %>,     !- Vertex 4 Y-coordinate {m}
-  <%= door_height + z_main_bottom %>;     !- Vertex 4 Z-coordinate {m}
-    <% end %>
+  North Wall Door <%= number + 1 %>,    !- Name
+  Door,                                 !- Surface Type
+  Door,                                 !- Construction Name
+  North Wall,                           !- Building Surface Name
+  ,                                     !- Outside Boundary Condition Object
+  autocalculate,                        !- View Factor to Ground
+  ,                                     !- Frame and Divider Name
+  1,                                    !- Multiplier
+  autocalculate,                        !- Number of Vertices
+  <%= width - start %>,                 !- Vertex 1 X-coordinate {m}
+  <%= depth %>,                         !- Vertex 1 Y-coordinate {m}
+  <%= z_door_top %>,                    !- Vertex 1 Z-coordinate {m}
+  <%= width - start %>,                 !- Vertex 2 X-coordinate {m}
+  <%= depth %>,                         !- Vertex 2 Y-coordinate {m}
+  <%= z_main_bottom %>,                 !- Vertex 2 Z-coordinate {m}
+  <%= width - start - door_width %>,    !- Vertex 3 X-coordinate {m}
+  <%= depth %>,                         !- Vertex 3 Y-coordinate {m}
+  <%= z_main_bottom %>,                 !- Vertex 3 Z-coordinate {m}
+  <%= width - start - door_width %>,    !- Vertex 4 X-coordinate {m}
+  <%= depth %>,                         !- Vertex 4 Y-coordinate {m}
+  <%= z_door_top %>;                    !- Vertex 4 Z-coordinate {m}
+<% end %>
 
-  <% elsif surface[:type] == "Ceiling" %>
-Ceiling:Interzone,
-  <%= surface[:name] %>-Cav,     !- Name
-  Ceiling - Cavity,                !- Construction Name
-  Main Zone,                       !- Zone Name
-  Attic Zone,                      !- Outside Boundary Condition Object
-  0,                               !- Azimuth
-  0,                               !- Tilt Angle
-  <%= width %>, <%= depth %>, <%= height_cond + z_main_bottom %>,     !- Starting Coordinates {m}
-  <%= width %>,     !- Length
-  <%= depth %>;     !- Width
+<% south_windows.each_with_index do |start, number| %>
+FenestrationSurface:Detailed,
+  South Wall Window <%= number + 1 %>,  !- Name
+  Window,                               !- Surface Type
+  Window Construction,                  !- Construction Name
+  South Wall,                           !- Building Surface Name
+  ,                                     !- Outside Boundary Condition Object
+  autocalculate,                        !- View Factor to Ground
+  Window Frame,                         !- Frame and Divider Name
+  1,                                    !- Multiplier
+  autocalculate,                        !- Number of Vertices
+  <%= start + win_frame_width %>,       !- Vertex 1 X-coordinate {m}
+  0,                                    !- Vertex 1 Y-coordinate {m}
+  <%= z_win_top %>,                     !- Vertex 1 Z-coordinate {m}
+  <%= start + win_frame_width %>,       !- Vertex 2 X-coordinate {m}
+  0,                                    !- Vertex 2 Y-coordinate {m}
+  <%= z_win_bottom %>,                  !- Vertex 2 Z-coordinate {m}
+  <%= start + win_frame_width + glazing_width %>,  !- Vertex 3 X-coordinate {m}
+  0,                                    !- Vertex 3 Y-coordinate {m}
+  <%= z_win_bottom %>,                  !- Vertex 3 Z-coordinate {m}
+  <%= start + win_frame_width + glazing_width %>,  !- Vertex 4 X-coordinate {m}
+  0,                                    !- Vertex 4 Y-coordinate {m}
+  <%= z_win_top %>;                     !- Vertex 4 Z-coordinate {m}
+<% end %>
 
-  <% elsif surface[:type] == "Floor" %>
+<% south_doors.each_with_index do |start, number| %>
+FenestrationSurface:Detailed,
+  South Wall Door <%= number + 1 %>,    !- Name
+  Door,                                 !- Surface Type
+  Door,                                 !- Construction Name
+  South Wall,                           !- Building Surface Name
+  ,                                     !- Outside Boundary Condition Object
+  autocalculate,                        !- View Factor to Ground
+  ,                                     !- Frame and Divider Name
+  1,                                    !- Multiplier
+  autocalculate,                        !- Number of Vertices
+  <%= start %>,                         !- Vertex 1 X-coordinate {m}
+  0,                                    !- Vertex 1 Y-coordinate {m}
+  <%= z_door_top %>,                    !- Vertex 1 Z-coordinate {m}
+  <%= start %>,                         !- Vertex 2 X-coordinate {m}
+  0,                                    !- Vertex 2 Y-coordinate {m}
+  <%= z_main_bottom %>,                 !- Vertex 2 Z-coordinate {m}
+  <%= start + door_width %>,            !- Vertex 3 X-coordinate {m}
+  0,                                    !- Vertex 3 Y-coordinate {m}
+  <%= z_main_bottom %>,                 !- Vertex 3 Z-coordinate {m}
+  <%= start + door_width %>,            !- Vertex 4 X-coordinate {m}
+  0,                                    !- Vertex 4 Y-coordinate {m}
+  <%= z_door_top %>;                    !- Vertex 4 Z-coordinate {m}
+<% end %>
+
+<% east_windows.each_with_index do |start, number| %>
+FenestrationSurface:Detailed,
+  East Wall Window <%= number + 1 %>,  !- Name
+  Window,                               !- Surface Type
+  Window Construction,                  !- Construction Name
+  East Wall,                           !- Building Surface Name
+  ,                                     !- Outside Boundary Condition Object
+  autocalculate,                        !- View Factor to Ground
+  Window Frame,                         !- Frame and Divider Name
+  1,                                    !- Multiplier
+  autocalculate,                        !- Number of Vertices
+  <%= width %>,                         !- Vertex 1 X-coordinate {m}
+  <%= start + win_frame_width %>,       !- Vertex 1 Y-coordinate {m}
+  <%= z_win_top %>,                     !- Vertex 1 Z-coordinate {m}
+  <%= width %>,                         !- Vertex 2 X-coordinate {m}
+  <%= start + win_frame_width %>,       !- Vertex 2 Y-coordinate {m}
+  <%= z_win_bottom %>,                  !- Vertex 2 Z-coordinate {m}
+  <%= width %>,                         !- Vertex 3 X-coordinate {m}
+  <%= start + win_frame_width + glazing_width %>,  !- Vertex 3 Y-coordinate {m}
+  <%= z_win_bottom %>,                  !- Vertex 3 Z-coordinate {m}
+  <%= width %>,                         !- Vertex 4 X-coordinate {m}
+  <%= start + win_frame_width + glazing_width %>,  !- Vertex 4 Y-coordinate {m}
+  <%= z_win_top %>;                     !- Vertex 4 Z-coordinate {m}
+<% end %>
+
+<% west_windows.each_with_index do |start, number| %>
+FenestrationSurface:Detailed,
+  West Wall Window <%= number + 1 %>,  !- Name
+  Window,                               !- Surface Type
+  Window Construction,                  !- Construction Name
+  West Wall,                           !- Building Surface Name
+  ,                                     !- Outside Boundary Condition Object
+  autocalculate,                        !- View Factor to Ground
+  Window Frame,                         !- Frame and Divider Name
+  1,                                    !- Multiplier
+  autocalculate,                        !- Number of Vertices
+  0,                         !- Vertex 1 X-coordinate {m}
+  <%= depth - start - win_frame_width %>,       !- Vertex 1 Y-coordinate {m}
+  <%= z_win_top %>,                     !- Vertex 1 Z-coordinate {m}
+  0,                         !- Vertex 2 X-coordinate {m}
+  <%= depth - start - win_frame_width %>,       !- Vertex 2 Y-coordinate {m}
+  <%= z_win_bottom %>,                  !- Vertex 2 Z-coordinate {m}
+  0,                         !- Vertex 3 X-coordinate {m}
+  <%= depth - start - win_frame_width - glazing_width %>,  !- Vertex 3 Y-coordinate {m}
+  <%= z_win_bottom %>,                  !- Vertex 3 Z-coordinate {m}
+  0,                         !- Vertex 4 X-coordinate {m}
+  <%= depth - start - win_frame_width - glazing_width %>,  !- Vertex 4 Y-coordinate {m}
+  <%= z_win_top %>;                     !- Vertex 4 Z-coordinate {m}
+<% end %>
+
+
 BuildingSurface:Detailed,
-  <%= surface[:name] %>-Cav,     !- Name
+  Ceiling,                    !- Name
+  Ceiling,                    !- Surface Type
+  Ceiling - Cavity,           !- Construction Name
+  Main Zone,                  !- Zone Name
+  Surface,                    !- Outside Boundary Condition
+  Attic Floor,                !- Outside Boundary Condition Object
+  NoSun,                      !- Sun Exposure
+  NoWind,                     !- Wind Exposure
+  autocalculate,              !- View Factor to Ground
+  4,                          !- Number of Vertices
+  <%= footprint[:north][0][0] %>,<%= footprint[:north][0][1] %>,<%= z_attic_bottom %>,              !- Vertex coordinate {m}
+  <%= footprint[:west][0][0] %>,<%= footprint[:west][0][1] %>,<%= z_attic_bottom %>,              !- Vertex coordinate {m}
+  <%= footprint[:south][0][0] %>,<%= footprint[:south][0][1] %>,<%= z_attic_bottom %>,              !- Vertex coordinate {m}
+  <%= footprint[:east][0][0] %>,<%= footprint[:east][0][1] %>,<%= z_attic_bottom %>;              !- Vertex coordinate {m}
+
+BuildingSurface:Detailed,
+  Attic Floor,                !- Name
+  Floor,                      !- Surface Type
+  Attic floor - Cavity,       !- Construction Name
+  Attic Zone,                 !- Zone Name
+  Surface,                    !- Outside Boundary Condition
+  Ceiling,                    !- Outside Boundary Condition Object
+  NoSun,                      !- Sun Exposure
+  NoWind,                     !- Wind Exposure
+  autocalculate,              !- View Factor to Ground
+  4,                          !- Number of Vertices
+  <%= footprint[:north][0][0] %>,<%= footprint[:north][0][1] %>,<%= z_attic_bottom %>,              !- Vertex coordinate {m}
+  <%= footprint[:east][0][0] %>,<%= footprint[:east][0][1] %>,<%= z_attic_bottom %>,              !- Vertex coordinate {m}
+  <%= footprint[:south][0][0] %>,<%= footprint[:south][0][1] %>,<%= z_attic_bottom %>,              !- Vertex coordinate {m}
+  <%= footprint[:west][0][0] %>,<%= footprint[:west][0][1] %>,<%= z_attic_bottom %>;              !- Vertex coordinate {m}
+
+BuildingSurface:Detailed,
+  Floor,                       !- Name
   Floor,                       !- Surface Type
-    <% if foundation_type != "SLAB" %>
+<% if foundation_type != "SLAB" %>
   Raised Floor - Cavity,       !- Construction Name
-    <% else %>
+<% else %>
   Floor Slab,                  !- Construction Name
-    <% end %>
+<% end %>
   Main Zone,                   !- Zone Name
-    <% if foundation_type == "RAISED" %>
+<% if foundation_type == "RAISED" %>
   Outdoors,                    !- Outside Boundary Condition
   ,                            !- Outside Boundary Condition Object
-    <% elsif foundation_type == "SLAB" %>
+<% elsif foundation_type == "SLAB" %>
   Foundation,                  !- Outside Boundary Condition
   Slab Foundation,             !- Outside Boundary Condition Object
-    <% elsif foundation_type == "BASEMENT" %>
+<% elsif foundation_type == "BASEMENT" %>
   Zone,                        !- Outside Boundary Condition
   Basement Zone,               !- Outside Boundary Condition Object
-    <% end %>
+<% end %>
   NoSun,                       !- Sun Exposure
   NoWind,                      !- Wind Exposure
   autocalculate,               !- View Factor to Ground
@@ -817,14 +933,12 @@ BuildingSurface:Detailed,
   <%= width %>, <%= depth %>, <%= z_main_bottom %>,     !- Vertex 1 Z-coordinate {m}
   <%= width %>, 0, <%= z_main_bottom %>;                       !- Vertex 2 X-coordinate {m}
 
-    <% if foundation_type == "SLAB" %>
+<% if foundation_type == "SLAB" %>
 SurfaceProperty:ExposedFoundationPerimeter,
   <%= surface[:name] %>-Cav,          !- Surface Name
   ExposedPerimeterFraction,           !- Exposed Perimeter Calculation Method
   ,                                   !- Total Exposed Perimeter
   1;                                  !- Exposed Perimeter Fraction
-    <% end %>
-  <% end %>
 <% end %>
 
 !--- Main Zone Internal Mass for Interior Wall Section ---
@@ -832,7 +946,7 @@ InternalMass,
   Interior Wall - Cavity,      !- Name
   Interior Wall - Cavity,      !- Construction Name
   Main Zone,                   !- Zone or ZoneList Name
-  171.222167776412;            !- Surface Area {m2}
+  171.222167776412;            !- Surface Area {m2}  TODO: Check (should be 2x area)
 
 InternalMass,
   Interior Wall - Frame,       !- Name
@@ -842,9 +956,9 @@ InternalMass,
 
 !--- Main Zone Internal Gains Section ---
 ElectricEquipment,
-  INTERNAL GAINS,          !- Name
+  Internal Gains,          !- Name
   Main Zone,               !- Zone or ZoneList Name
-  INTERNAL LOADS YEAR,     !- Schedule Name
+  Internal Gains Schedule, !- Schedule Name
   EquipmentLevel,          !- Design Level Calculation Method
   <%= int_load %>,         !- Design Level {W}
   ,                        !- Watts per Zone Floor Area {W/m2}
@@ -855,7 +969,7 @@ ElectricEquipment,
   General;                 !- End-Use Subcategory
 
 Schedule:Compact,
-  INTERNAL LOADS YEAR,     !- Name
+  Internal Gains Schedule, !- Name
   Any Number,              !- Schedule Type Limits Name
   Through: 12/31,          !- Field 1
   For: AllDays,            !- Field 2
@@ -878,7 +992,7 @@ Schedule:Compact,
 
 !--- Main Zone Infiltration Section ---
 ZoneInfiltration:DesignFlowRate,
-  Main Zone INFILTRATION,  !- Name
+  Main Zone Infiltration,  !- Name
   Main Zone,               !- Zone or ZoneList Name
   ALWAYS 1,                !- Schedule Name
   AirChanges/Hour,         !- Design Flow Rate Calculation Method
@@ -971,10 +1085,10 @@ Schedule:Compact,
 # Surfaces in Unconditioned Attic Zone
 # Constructions for gable walls and roofs are continuous without framing
 surfaces_attic = [
-  {:name=>"East Attic Gable Wall",:type=>"Wall",:area=>0.5*depth*height_attic,:azm=>90,:windows=>0},
-  {:name=>"West Attic Gable Wall",:type=>"Wall",:area=>0.5*depth*height_attic,:azm=>270,:windows=>0},
-  {:name=>"North Roof",:type=>"Roof",:area=>roof_pitch*width,:azm=>0,:windows=>0},
-  {:name=>"South Roof",:type=>"Roof",:area=>roof_pitch*width,:azm=>180,:windows=>0}
+  {:name=>"East Attic Gable Wall",:type=>"Wall",:area=>0.5*depth*height_attic,:direction=>:east,:windows=>0},
+  {:name=>"West Attic Gable Wall",:type=>"Wall",:area=>0.5*depth*height_attic,:direction=>:west,:windows=>0},
+  {:name=>"North Roof",:type=>"Roof",:area=>roof_pitch*width,:direction=>:north,:windows=>0},
+  {:name=>"South Roof",:type=>"Roof",:area=>roof_pitch*width,:direction=>:south,:windows=>0}
 ]
 %>
 
@@ -997,8 +1111,9 @@ Zone,
 !--- Attic Zone Surfaces Section ---
 <% for surface in surfaces_attic %>
   <% if surface[:type] == "Wall" %>
-Wall:Detailed,
-  <%= surface[:name] %>,     !- Name
+BuildingSurface:Detailed,
+  <%= surface[:name] %>-Cav,     !- Name
+  Wall,                       !- Surface Type
   Gable Wall,                !- Construction Name
   Attic Zone,                !- Zone Name
   Outdoors,                  !- Outside Boundary Condition
@@ -1007,20 +1122,20 @@ Wall:Detailed,
   WindExposed,               !- Wind Exposure
   autocalculate,             !- View Factor to Ground
   3,                         !- Number of Vertices
-   <% if surface[:name].include?("West") %>
+   <% if surface[:direction] == :west %>
   <%= width %>,         !- Vertex 1 X-coordinate {m}
   <%= depth/2.0 %>,     !- Vertex 1 Y-coordinate {m}
-  <%= height_attic + z_attic_bottom %>,     !- Vertex 1 Z-coordinate {m}
+  <%= z_attic_top %>,     !- Vertex 1 Z-coordinate {m}
   <%= width %>,     !- Vertex 2 X-coordinate {m}
   0,     !- Vertex 2 Y-coordinate {m}
   <%= z_attic_bottom %>,     !- Vertex 2 Z-coordinate {m}
   <%= width %>,     !- Vertex 3 X-coordinate {m}
   <%= depth %>,     !- Vertex 3 Y-coordinate {m}
   <%= z_attic_bottom %>;        !- Vertex 3 Z-coordinate {m}
-    <% elsif surface[:name].include?("East") %>
+    <% elsif surface[:direction] == :east %>
   0,     !- Vertex 1 X-coordinate {m}
   <%= depth/2.0 %>,     !- Vertex 1 Y-coordinate {m}
-  <%= height_attic + z_attic_bottom %>,     !- Vertex 1 Z-coordinate {m}
+  <%= z_attic_top %>,     !- Vertex 1 Z-coordinate {m}
   0,     !- Vertex 2 X-coordinate {m}
   <%= depth %>,     !- Vertex 2 Y-coordinate {m}
   <%= z_attic_bottom %>,     !- Vertex 2 Z-coordinate {m}
@@ -1028,22 +1143,47 @@ Wall:Detailed,
   0,     !- Vertex 3 Y-coordinate {m}
   <%= z_attic_bottom %>;        !- Vertex 3 Z-coordinate {m}
     <% end %>
-  <% elsif surface[:type] == "Roof" %>
-Roof,
-  <%= surface[:name] %>,     !- Name
-  ROOF,                       !- Construction Name
-  Attic Zone,                 !- Zone Name
-  <%= surface[:azm] %>,     !- Azimuth Angle
-    <% if surface[:name].include?("North") %>
-  <%= roof_tilt %>,     !- Tilt Angle
-  <%= width %>, <%= depth %>, <%= z_attic_bottom %>,     !- Starting Coordinates {m}
-    <% else %>
-  <%= roof_tilt %>,     !- Tilt Angle
-  0, 0, <%= z_attic_bottom %>,     !- Starting Coordinates {m}
-    <% end %>
-  <%= width %>,     !- Length
-  <%= roof_pitch|'ft' %>; !- Width
 
+  <% elsif surface[:type] == "Roof" %>
+
+BuildingSurface:Detailed,
+  <%= surface[:name] %>,     !- Name
+  Roof,                      !- Surface Type
+  Roof,                      !- Construction Name
+  Attic Zone,                !- Zone Name
+  Outdoors,                  !- Outside Boundary Condition
+  ,                          !- Outside Boundary Condition Object
+  SunExposed,                !- Sun Exposure
+  WindExposed,               !- Wind Exposure
+  autocalculate,             !- View Factor to Ground
+  4,                         !- Number of Vertices
+    <% if surface[:direction] == :north %>
+  <%= width %>,              !- Vertex 1 X-coordinate {m}
+  <%= depth/2.0 %>,          !- Vertex 1 Y-coordinate {m}
+  <%= z_attic_top %>,        !- Vertex 1 Z-coordinate {m}
+  <%= width %>,              !- Vertex 2 X-coordinate {m}
+  <%= depth %>,              !- Vertex 2 Y-coordinate {m}
+  <%= z_attic_bottom %>,     !- Vertex 2 Z-coordinate {m}
+  0,                         !- Vertex 3 X-coordinate {m}
+  <%= depth %>,              !- Vertex 3 Y-coordinate {m}
+  <%= z_attic_bottom %>,     !- Vertex 3 Z-coordinate {m}
+  0,                         !- Vertex 4 X-coordinate {m}
+  <%= depth/2.0 %>,          !- Vertex 4 Y-coordinate {m}
+  <%= z_attic_top %>;        !- Vertex 4 Z-coordinate {m}
+    <% elsif surface[:direction] == :south %>
+  0,                         !- Vertex 1 X-coordinate {m}
+  <%= depth/2.0 %>,          !- Vertex 1 Y-coordinate {m}
+  <%= z_attic_top %>,        !- Vertex 1 Z-coordinate {m}
+  0,                         !- Vertex 2 X-coordinate {m}
+  0,                         !- Vertex 2 Y-coordinate {m}
+  <%= z_attic_bottom %>,     !- Vertex 2 Z-coordinate {m}
+  <%= width %>,              !- Vertex 3 X-coordinate {m}
+  0,                         !- Vertex 3 Y-coordinate {m}
+  <%= z_attic_bottom %>,     !- Vertex 3 Z-coordinate {m}
+  <%= width %>,              !- Vertex 4 X-coordinate {m}
+  <%= depth/2.0 %>,          !- Vertex 4 Y-coordinate {m}
+  <%= z_attic_top %>;        !- Vertex 4 Z-coordinate {m}
+    <% end %>
   <% end %>
 <% end %>
 
@@ -1117,16 +1257,16 @@ ZoneInfiltration:DesignFlowRate,
     {:name=>"South Basement Sill Plate",:type=>"Wall",:direction=>:south,:ext_cond=>"Ambient",:con=>"Sill Plate",
       :z_bottom=>z_sill_plate_bottom, :z_top=>z_rim_joist_bottom
     },
-    {:name=>"East Basement Wall",:type=>"Wall",:direction=>:east,:ext_cond=>"Ground",:con=>"Basement Wall",
+    {:name=>"East Basement Wall",:type=>"Wall",:direction=>:east,:ext_cond=>"Ground",:con=>"Foundation Wall",
       :z_bottom=>z_basement_bottom, :z_top=>z_sill_plate_bottom
     },
-    {:name=>"West Basement Wall",:type=>"Wall",:direction=>:west,:ext_cond=>"Ground",:con=>"Basement Wall",
+    {:name=>"West Basement Wall",:type=>"Wall",:direction=>:west,:ext_cond=>"Ground",:con=>"Foundation Wall",
       :z_bottom=>z_basement_bottom, :z_top=>z_sill_plate_bottom
     },
-    {:name=>"North Basement Wall",:type=>"Wall",:direction=>:north,:ext_cond=>"Ground",:con=>"Basement Wall",
+    {:name=>"North Basement Wall",:type=>"Wall",:direction=>:north,:ext_cond=>"Ground",:con=>"Foundation Wall",
       :z_bottom=>z_basement_bottom, :z_top=>z_sill_plate_bottom
     },
-    {:name=>"South Basement Wall",:type=>"Wall",:direction=>:south,:ext_cond=>"Ground",:con=>"Basement Wall",
+    {:name=>"South Basement Wall",:type=>"Wall",:direction=>:south,:ext_cond=>"Ground",:con=>"Foundation Wall",
       :z_bottom=>z_basement_bottom, :z_top=>z_sill_plate_bottom
     },
     {:name=>"Basement Floor",:type=>"Floor",:ext_cond=>"Foundation",:con=>"Floor Slab"}
@@ -1134,8 +1274,9 @@ ZoneInfiltration:DesignFlowRate,
   %>
   <% for surface in surfaces_bsmt %>
     <% if surface[:type] == "Wall" %>
-Wall:Detailed,
+BuildingSurface:Detailed,
   <%= surface[:name] %>,     !- Name
+  Wall,                      !- Surface Type
   <%= surface[:con] %>,             !- Construction Name
   Basement Zone,                       !- Zone Name
       <% if surface[:ext_cond] == "Ambient" %>
@@ -1146,19 +1287,20 @@ Wall:Detailed,
       <% else %>
   Foundation,                !- Outside Boundary Condition
   Basement Foundation,       !- Outside Boundary Condition Object
-  SunExposed,                !- Sun Exposure
-  WindExposed,               !- Wind Exposure
+  NoSun,                     !- Sun Exposure
+  NoWind,                    !- Wind Exposure
       <% end %>
   autocalculate,             !- View Factor to Ground
   4,             !- Number of Vertices
-  <%= box[surface[:direction]][0][0] %>,<%= box[surface[:direction]][0][1] %>,<%= surface[:z_top] %>,              !- Vertex coordinate {m}
-  <%= box[surface[:direction]][0][0] %>,<%= box[surface[:direction]][0][1] %>,<%= surface[:z_bottom] %>,              !- Vertex coordinate {m}
-  <%= box[surface[:direction]][1][0] %>,<%= box[surface[:direction]][1][1] %>,<%= surface[:z_bottom] %>,              !- Vertex coordinate {m}
-  <%= box[surface[:direction]][1][0] %>,<%= box[surface[:direction]][1][1] %>,<%= surface[:z_top] %>;              !- Vertex coordinate {m}
+  <%= footprint[surface[:direction]][0][0] %>,<%= footprint[surface[:direction]][0][1] %>,<%= surface[:z_top] %>,              !- Vertex coordinate {m}
+  <%= footprint[surface[:direction]][0][0] %>,<%= footprint[surface[:direction]][0][1] %>,<%= surface[:z_bottom] %>,              !- Vertex coordinate {m}
+  <%= footprint[surface[:direction]][1][0] %>,<%= footprint[surface[:direction]][1][1] %>,<%= surface[:z_bottom] %>,              !- Vertex coordinate {m}
+  <%= footprint[surface[:direction]][1][0] %>,<%= footprint[surface[:direction]][1][1] %>,<%= surface[:z_top] %>;              !- Vertex coordinate {m}
 
     <% elsif surface[:type] == "Floor" %>
-Floor:Detailed,
-  <%= surface[:name] %>,                       !- Name
+BuildingSurface:Detailed,
+  <%= surface[:name] %>,     !- Name
+  Floor,                      !- Surface Type
   <%= surface[:con] %>,                       !- Construction Name
   Basement Zone,                        !- Zone Name
   <%= surface[:ext_cond] %>,                       !- Outside Boundary Condition
