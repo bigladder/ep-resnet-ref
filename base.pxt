@@ -46,6 +46,8 @@ floor_area = width*depth # Floor area for both conditioned and attic zones in sq
 zone_vol_cond = floor_area*height_cond # Conditioned zone volume in cubic feet
 zone_vol_attic = 0.5*floor_area*height_attic # Unconditioned attic zone volume in cubic feet
 
+interior_wall_area = 1024|'ft2'
+
 sill_plate_height = 1.5|'in'
 rim_joist_height = 7.5|'in'
 basement_below_grade = (6|'ft') + (7.0|'in')
@@ -927,7 +929,7 @@ InternalMass,
   Interior Wall - Cavity,      !- Name
   Interior Wall - Cavity,      !- Construction Name
   Main Zone,                   !- Zone or ZoneList Name
-  171.222167776412;            !- Surface Area {m2}  TODO: Check (should be 2x area)
+  <%= interior_wall_area*2 %>;            !- Surface Area {m2}
 
 InternalMass,
   Interior Wall - Frame,       !- Name
