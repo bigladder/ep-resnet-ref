@@ -35,7 +35,6 @@ elsif climate == "COOLING"
   cool_power = 3413000|'btuh' # 3.413 million Btu/hr, required by Section 7.2.1.15
 end
 
-
 # Dimensions
 width = 57.0|'ft' # East-to-West dimension in feet
 depth = 27.0|'ft' # North-to-South dimension in feet
@@ -60,10 +59,8 @@ win_frame_width = 2.75|'in'
 glazing_width = win_width - 2*win_frame_width
 glazing_height = win_height - 2*win_frame_width
 
-
 door_width = 3.0|'ft' # Door width
 door_height = (6.00 + (8.00 / 12.00) )|'ft' # Door height
-
 
 overhang_depth = 2.5|'ft' # Depth of overhang
 overhang_height = 8.0|'ft' # Height of gap between main zone floor and bottom of overhang
@@ -168,16 +165,16 @@ nsteps = 6
 ! Air gaps
   Material:AirGap,
    Air Gap,                  !- Name
-   0.177871290333931;       !- Thermal Resistance {m2-K/W}
+   0.177871290333931;       !- Thermal Resistance {m2-K/W} based on 3.5" gap
 
-! Insulation
+! Cavity Insulation
   Material,
    R-11 Fiberglass Batt,     !- Name
    Rough,                   !- Roughness
    <%= 3.5|'in' %>,    !- Thickness {m}
-   4.59277014191222E-02,    !- Conductivity {W/m-K}
-   9.61107175253399,        !- Density {kg/m3}
-   836.800006332062,        !- Specific Heat {J/kg-K}
+   <%= 0.0265|'k-ip' %>,    !- Conductivity {W/m-K}
+   <%= 0.6|'lb/ft3' %>,        !- Density {kg/m3}
+   <%= 0.20|'cp-ip' %>,        !- Specific Heat {J/kg-K}
    0.9,                     !- Thermal Absorptance
    0.6,                     !- Solar Absorptance
    0.6;                     !- Visible Absorptance
@@ -186,9 +183,9 @@ nsteps = 6
    R-18 Fiberglass Batt,     !- Name
    Rough,                   !- Roughness
    <%= 5.5|'in' %>,       !- Thickness {m}
-   4.77302014748178E-02,    !- Conductivity {W/m-K}
-   10.8925479862052,        !- Density {kg/m3}
-   836.800006332062,        !- Specific Heat {J/kg-K}
+   <%= 0.0255|'k-ip' %>,    !- Conductivity {W/m-K}
+   <%= 0.68|'lb/ft3' %>,        !- Density {kg/m3}
+   <%= 0.20|'cp-ip' %>,        !- Specific Heat {J/kg-K}
    0.9,                     !- Thermal Absorptance
    0.6,                     !- Solar Absorptance
    0.6;                     !- Visible Absorptance
@@ -197,9 +194,9 @@ nsteps = 6
    R-19 Fiberglass Batt - Ceiling,     !- Name
    Rough,                   !- Roughness
    <%= 6.25|'in' %>,        !- Thickness {m}
-   4.77302014748178E-02,    !- Conductivity {W/m-K}
-   9.61107175253399,        !- Density {kg/m3}
-   836.800006332062,        !- Specific Heat {J/kg-K}
+   <%= 0.0274|'k-ip' %>,    !- Conductivity {W/m-K}
+   <%= 0.6|'lb/ft3' %>,        !- Density {kg/m3}
+   <%= 0.20|'cp-ip' %>,        !- Specific Heat {J/kg-K}
    0.9,                     !- Thermal Absorptance
    0.6,                     !- Solar Absorptance
    0.6;                     !- Visible Absorptance
@@ -208,20 +205,21 @@ nsteps = 6
    R-38 Fiberglass Batt - Ceiling,     !- Name
    Rough,                   !- Roughness
    <%= 12|'in' %>,       !- Thickness {m}
-   4.49904013901606E-02,    !- Conductivity {W/m-K}
-   9.61107175253399,        !- Density {kg/m3}
-   836.800006332062,        !- Specific Heat {J/kg-K}
+   <%= 0.0263|'k-ip' %>,    !- Conductivity {W/m-K}
+   <%= 0.6|'lb/ft3' %>,        !- Density {kg/m3}
+   <%= 0.20|'cp-ip' %>,        !- Specific Heat {J/kg-K}
    0.9,                     !- Thermal Absorptance
    0.6,                     !- Solar Absorptance
    0.6;
 
+! Continuous Insulation
  Material,
    Polyisocyanurate board insulation,  !- Name
    Rough,                   !- Roughness
    <%= 1|'in' %>,    !- Thickness {m}
-   2.00438006193344E-02,    !- Conductivity {W/m-K}
-   32.03690584178,          !- Density {kg/m3}
-   920.480006965268,        !- Specific Heat {J/kg-K}
+   <%= 0.0116|'k-ip' %>,    !- Conductivity {W/m-K}
+   <%= 2.0|'lb/ft3' %>,        !- Density {kg/m3}
+   <%= 0.22|'cp-ip' %>,        !- Specific Heat {J/kg-K}
    0.9,                     !- Thermal Absorptance
    0.7,                     !- Solar Absorptance
    0.7;                     !- Visible Absorptance
@@ -231,9 +229,9 @@ nsteps = 6
    Wood Framing - 2x4,      !- Name
    Rough,                   !- Roughness
    <%= 3.5|'in' %>,         !- Thickness {m}
-   0.115648403573426,       !- Conductivity {W/m-K}
-   512.590493468479,        !- Density {kg/m3}
-   1380.7200104479,         !- Specific Heat {J/kg-K}
+   <%= 0.0667|'k-ip' %>,    !- Conductivity {W/m-K}
+   <%= 32.0|'lb/ft3' %>,        !- Density {kg/m3}
+   <%= 0.33|'cp-ip' %>,        !- Specific Heat {J/kg-K}
    0.9,                     !- Thermal Absorptance
    0.6,                     !- Solar Absorptance
    0.6;                     !- Visible Absorptance
@@ -242,44 +240,45 @@ nsteps = 6
    Wood Framing - 2x6,      !- Name
    Rough,                   !- Roughness
    <%= 5.5|'in' %>,         !- Thickness {m}
-   0.115648403573426,       !- Conductivity {W/m-K}
-   512.590493468479,        !- Density {kg/m3}
-   1380.7200104479,         !- Specific Heat {J/kg-K}
+   <%= 0.0667|'k-ip' %>,    !- Conductivity {W/m-K}
+   <%= 32.0|'lb/ft3' %>,        !- Density {kg/m3}
+   <%= 0.33|'cp-ip' %>,        !- Specific Heat {J/kg-K}
    0.9,                     !- Thermal Absorptance
    0.6,                     !- Solar Absorptance
    0.6;                     !- Visible Absorptance
 
-! Wall finishes
+! Inside face finish
  Material,
    Plasterboard,            !- Name
    Rough,                   !- Roughness
    <%= 0.5|'in' %>,         !- Thickness {m}
-   0.160206204950219,       !- Conductivity {W/m-K}
-   800.922646044499,        !- Density {kg/m3}
-   1087.84000823168,        !- Specific Heat {J/kg-K}
+   <%= 0.0926|'k-ip' %>,    !- Conductivity {W/m-K}
+   <%= 50.0|'lb/ft3' %>,        !- Density {kg/m3}
+   <%= 0.26|'cp-ip' %>,        !- Specific Heat {J/kg-K}
    0.9,                     !- Thermal Absorptance
    0.6,                     !- Solar Absorptance
    0.6;                     !- Visible Absorptance
 
+! Outside Wall Finish
  Material,
    Hardboard Siding,!- Name
    Rough,                   !- Roughness
    <%= (7.0/16.0)|'in' %>,    !- Thickness {m}
-   9.45952029229017E-02,    !- Conductivity {W/m-K}
-   640.738116835599,        !- Density {kg/m3}
-   1171.52000886489,        !- Specific Heat {J/kg-K}
+   <%= 0.0544|'k-ip' %>,    !- Conductivity {W/m-K}
+   <%= 40.0|'lb/ft3' %>,        !- Density {kg/m3}
+   <%= 0.28|'cp-ip' %>,        !- Specific Heat {J/kg-K}
    0.9,                     !- Thermal Absorptance
    <%= ext_sol_abs_exposed %>,                     !- Solar Absorptance
    <%= ext_sol_abs_exposed %>;                     !- Visible Absorptance
 
-! Roof
+! Plywood
  Material,
    Plywood - 1/2 in,          !- Name
    Rough,                   !- Roughness
    <%= 0.5|'in' %>,    !- Thickness {m}
-   0.11550420356897,        !- Conductivity {W/m-K}
-   544.627399310259,        !- Density {kg/m3}
-   1213.36000918149,        !- Specific Heat {J/kg-K}
+   <%= 0.0667|'k-ip' %>,    !- Conductivity {W/m-K}
+   <%= 34.0|'lb/ft3' %>,        !- Density {kg/m3}
+   <%= 0.29|'cp-ip' %>,        !- Specific Heat {J/kg-K}
    0.9,                     !- Thermal Absorptance
    0.6,                     !- Solar Absorptance
    0.6;                     !- Visible Absorptance
@@ -288,20 +287,21 @@ nsteps = 6
    Plywood - 3/4 in,          !- Name
    Rough,                   !- Roughness
    <%= 0.75|'in' %>,    !- Thickness {m}
-   0.115360003564514,       !- Conductivity {W/m-K}
-   544.627399310259,        !- Density {kg/m3}
-   1213.36000918149,        !- Specific Heat {J/kg-K}
+   <%= 0.0667|'k-ip' %>,    !- Conductivity {W/m-K}
+   <%= 34.0|'lb/ft3' %>,        !- Density {kg/m3}
+   <%= 0.29|'cp-ip' %>,        !- Specific Heat {J/kg-K}
    0.9,                     !- Thermal Absorptance
    0.6,                     !- Solar Absorptance
    0.6;                     !- Visible Absorptance
 
+! Outside Roof Finish
  Material,
    Asphalt Shingle,  !- Name
    Rough,                   !- Roughness
    <%= 0.25|'in' %>,     !- Thickness {m}
-   8.19056025308051E-02,    !- Conductivity {W/m-K}
-   1121.2917044623,         !- Density {kg/m3}
-   1255.20000949809,        !- Specific Heat {J/kg-K}
+   <%= 0.0473|'k-ip' %>,    !- Conductivity {W/m-K}
+   <%= 70.0|'lb/ft3' %>,        !- Density {kg/m3}
+   <%= 0.30|'cp-ip' %>,        !- Specific Heat {J/kg-K}
    0.9,                     !- Thermal Absorptance
    <%= ext_sol_abs_exposed %>,                     !- Solar Absorptance
    <%= ext_sol_abs_exposed %>;                     !- Visible Absorptance
@@ -311,9 +311,9 @@ Material,
   Solid Core Door,                    !- Name
   Rough,                   !- Roughness
   <%= 1.75|'in' %>,    !- Thickness {m}
-  0.115792603577881,       !- Conductivity {W/m-K}
-  512.590493468479,        !- Density {kg/m3}
-  1380.7200104479,         !- Specific Heat {J/kg-K}
+  <%= 0.0669|'k-ip' %>,    !- Conductivity {W/m-K}
+  <%= 32.0|'lb/ft3' %>,        !- Density {kg/m3}
+  <%= 0.33|'cp-ip' %>,        !- Specific Heat {J/kg-K}
   0.9,                     !- Thermal Absorptance
   <%= ext_sol_abs_exposed %>,                     !- Solar Absorptance
   <%= ext_sol_abs_exposed %>;                     !- Visible Absorptance
@@ -323,9 +323,9 @@ Material,
     Fiberboard Sheathing,    !- Name
     Rough,                   !- Roughness
     <%= 0.5|'in' %>,    !- Thickness {m}
-    5.46518016886886E-02,    !- Conductivity {W/m-K}
-    288.33215257602,         !- Density {kg/m3}
-    1297.0400098147,         !- Specific Heat {J/kg-K}
+    <%= 0.0316|'k-ip' %>,    !- Conductivity {W/m-K}
+    <%= 18.0|'lb/ft3' %>,        !- Density {kg/m3}
+    <%= 0.31|'cp-ip' %>,        !- Specific Heat {J/kg-K}
     0.9,                     !- Thermal Absorptance
     0.7,                     !- Solar Absorptance
     0.7;                     !- Visible Absorptance
@@ -334,10 +334,10 @@ Material,
   Material,
     Carpet with Fibrous Pad,            !- Name
     Rough,                   !- Roughness
-    0.0128,                  !- Thickness {m}
-    0.034591544112,        !- Conductivity {W/m-K}
-    54.462775471464,         !- Density {kg/m3}
-    1339.776,        !- Specific Heat {J/kg-K}
+    <%= 0.5|'in' %>,    !- Thickness {m}
+    <%= 0.020|'k-ip' %>,    !- Conductivity {W/m-K}
+    <%= 3.4|'lb/ft3' %>,        !- Density {kg/m3}
+    <%= 0.32|'cp-ip' %>,        !- Specific Heat {J/kg-K}
     ,                     !- Thermal Absorptance
     ,                     !- Solar Absorptance
     ;                     !- Visible Absorptance
@@ -347,9 +347,9 @@ Material,
   Poured Concrete - 4in,            !- Name
   Rough,                   !- Roughness
   <%= 4|'in' %>,       !- Thickness {m}
-  1.80221165568662,        !- Conductivity {W/m-K}
-  2242.5834089246,         !- Density {kg/m3}
-  836.800006332062,        !- Specific Heat {J/kg-K}
+  <%= 1.0417|'k-ip' %>,    !- Conductivity {W/m-K}
+  <%= 140.0|'lb/ft3' %>,        !- Density {kg/m3}
+  <%= 0.20|'cp-ip' %>,        !- Specific Heat {J/kg-K}
   0.9,                     !- Thermal Absorptance
   0.7,                     !- Solar Absorptance
   0.7;                     !- Visible Absorptance
@@ -359,17 +359,12 @@ Material,
   Poured Concrete - 6in,            !- Name
   Rough,                   !- Roughness
   <%= 6|'in' %>,       !- Thickness {m}
-  1.80221165568662,        !- Conductivity {W/m-K}
-  2242.5834089246,         !- Density {kg/m3}
-  836.800006332062,        !- Specific Heat {J/kg-K}
+  <%= 1.0417|'k-ip' %>,    !- Conductivity {W/m-K}
+  <%= 140.0|'lb/ft3' %>,        !- Density {kg/m3}
+  <%= 0.20|'cp-ip' %>,        !- Specific Heat {J/kg-K}
   0.9,                     !- Thermal Absorptance
   0.7,                     !- Solar Absorptance
   0.7;                     !- Visible Absorptance
-
-Construction,
-  Foundation Wall,               !- Name
-  Poured Concrete - 6in;            !- Outside Layer
-
 
 <% if foundation_type == "SLAB" %>
 Foundation:Kiva,
@@ -407,14 +402,13 @@ Material,
 <% end %>
 
 <% if foundation_type == "BASEMENT" %>
-
 Material,
   Rim Joist 2x8,           !- Name
   Rough,                   !- Roughness
   <%= 1.5|'in' %>,         !- Thickness {m} (on the side perpendicular to heat flow direction)
-  0.11550420356897,        !- Conductivity {W/m-K}
-  512.590493468479,        !- Density {kg/m3}
-  1380.7200104479,         !- Specific Heat {J/kg-K}
+  <%= 0.0667|'k-ip' %>,        !- Conductivity {W/m-K}
+  <%= 32.0|'lb/ft3' %>,        !- Density {kg/m3}
+  <%= 0.33|'cp-ip' %>,         !- Specific Heat {J/kg-K}
   0.9,                     !- Thermal Absorptance
   0.7,                     !- Solar Absorptance
   0.7;                     !- Visible Absorptance
@@ -459,29 +453,12 @@ Foundation:Kiva,
 
 <% end %>
 
-
 ! Window layers
-WindowMaterial:Glazing,
-  Single Pane Glass,       !- Name
-  SpectralAverage,         !- Optical Data Type
-  ,                        !- Window Glass Spectral Data Set Name
-  2.99720607572673E-03,    !- Thickness {m}
-  0.837,                   !- Solar Transmittance at Normal Incidence
-  0.075,                   !- Front Side Solar Reflectance at Normal Incidence
-  0.075,                   !- Back Side Solar Reflectance at Normal Incidence
-  0.837,                   !- Visible Transmittance at Normal Incidence
-  0.075,                   !- Front Side Visible Reflectance at Normal Incidence
-  0.075,                   !- Back Side Visible Reflectance at Normal Incidence
-  0.0,                     !- Infrared Transmittance at Normal Incidence
-  0.84,                    !- Front Side Infrared Hemispherical Emissivity
-  0.84,                    !- Back Side Infrared Hemispherical Emissivity
-  0.899808027803211;       !- Conductivity {W/m-K}
-
 WindowMaterial:Glazing,
   Outside Pane Glass,      !- Name
   SpectralAverage,         !- Optical Data Type
   ,                        !- Window Glass Spectral Data Set Name
-  2.99720607572673E-03,    !- Thickness {m}
+  <%= 0.118|'in' %>,    !- Thickness {m}
   0.45,                    !- Solar Transmittance at Normal Incidence
   0.34,                    !- Front Side Solar Reflectance at Normal Incidence
   0.34,                    !- Back Side Solar Reflectance at Normal Incidence
@@ -491,13 +468,13 @@ WindowMaterial:Glazing,
   0.0,                     !- Infrared Transmittance at Normal Incidence
   0.84,                    !- Front Side Infrared Hemispherical Emissivity
   0.04,                    !- Back Side Infrared Hemispherical Emissivity
-  0.899808027803211;       !- Conductivity {W/m-K}
+  <%= 0.520|'k-ip' %>;       !- Conductivity {W/m-K}
 
 WindowMaterial:Glazing,
   Inside Pane Glass,       !- Name
   SpectralAverage,         !- Optical Data Type
   ,                        !- Window Glass Spectral Data Set Name
-  2.99720607572673E-03,    !- Thickness {m}
+  <%= 0.118|'in' %>,    !- Thickness {m}
   0.837,                   !- Solar Transmittance at Normal Incidence
   0.075,                   !- Front Side Solar Reflectance at Normal Incidence
   0.075,                   !- Back Side Solar Reflectance at Normal Incidence
@@ -507,12 +484,12 @@ WindowMaterial:Glazing,
   0.0,                     !- Infrared Transmittance at Normal Incidence
   0.84,                    !- Front Side Infrared Hemispherical Emissivity
   0.84,                    !- Back Side Infrared Hemispherical Emissivity
-  0.899808027803211;       !- Conductivity {W/m-K}
+  <%= 0.520|'k-ip' %>;       !- Conductivity {W/m-K}
 
 WindowMaterial:Gas,
   Argon Gap,               !- Name
   Argon,                   !- Gas Type
-  1.27000257446048E-02;    !- Thickness {m}
+  <%= 0.500|'in' %>;    !- Thickness {m}
 
 WindowProperty:FrameAndDivider,
   Window Frame,         !- Name
@@ -540,7 +517,7 @@ WindowProperty:FrameAndDivider,
 Construction,
  Window Construction,      !- Name
 <% if win_panes == 1 %>
- Single Pane Glass;       !- Outside Layer
+ Inside Pane Glass;       !- Outside Layer
 <% else %>
  Outside Pane Glass,       !- Outside Layer
  Argon Gap,                !- Layer 2
@@ -569,6 +546,10 @@ Construction,
   Carpet with Fibrous Pad,
 <% end %>
   Poured Concrete - 4in;                 !- Outside Layer
+
+Construction,
+  Foundation Wall,               !- Name
+  Poured Concrete - 6in;            !- Outside Layer
 
 Construction,
   Raised Floor - Cavity,      !- Name
