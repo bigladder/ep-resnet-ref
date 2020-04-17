@@ -22,6 +22,7 @@
   parameter "framing_factor_walls", :default=>0.25 # Note 3 in Table 7.1 specifies 0.25 framing factor for exterior walls
   parameter "framing_factor_other", :default=>0.1 # Note 5 in Table 7.1 specifies 0.1 framing factor for ceiling and floor
   parameter "envelope_eff", :default=>"TYPICAL" # choices: TYPICAL, LOW, HIGH
+  parameter "framing_approach", :default=>"COMPOSITE" # choices: COMPOSITE (lump framing section into cavity section), DETAILED (draw separate surfaces for framing and cavity sections)
 
 %>
 
@@ -92,6 +93,28 @@ z_attic_top = z_attic_bottom + height_attic
 nsteps = 6
 %>
 
+<%
+# method to calculate properties of composite layer that combines framing + cavity layers
+def make_composite_layer(thickness, r_others, framing_factor, cavity_material, framing_material)
+  r_cavity = thickness / cavity_material[:k]
+  r_cavity_path = r_others + r_cavity
+  r_framing = thickness / framing_material[:k]
+  r_framing_path = r_others + r_framing
+  u_assembly = (framing_factor/r_framing_path) + (1-framing_factor)/r_cavity_path
+  r_assembly = 1/u_assembly
+  r_composite = r_assembly - r_others
+
+  k_composite = thickness / r_composite
+
+  mass_framing = framing_factor*framing_material[:rho]
+  mass_cavity = (1 - framing_factor)*cavity_material[:rho]
+  rho_composite = mass_framing + mass_cavity
+
+  cp_composite = (mass_framing*framing_material[:cp] + mass_cavity*cavity_material[:cp]) / (mass_framing + mass_cavity)
+
+  return {:k=>k_composite,:rho=>rho_composite,:cp=>cp_composite}
+end
+%>
   VERSION,9.3;
 
   Building,
@@ -180,6 +203,18 @@ nsteps = 6
    0.6;                     !- Visible Absorptance
 
  Material,
+   R-38 Fiberglass Batt - Ceiling,     !- Name
+   Rough,                   !- Roughness
+   <%= 12|'in' %>,       !- Thickness {m}
+   <%= 0.0263|'k-ip' %>,    !- Conductivity {W/m-K}
+   <%= 0.6|'lb/ft3' %>,        !- Density {kg/m3}
+   <%= 0.20|'cp-ip' %>,        !- Specific Heat {J/kg-K}
+   0.9,                     !- Thermal Absorptance
+   0.6,                     !- Solar Absorptance
+   0.6;
+
+<% if framing_approach == "DETAILED" %>
+ Material,
    R-18 Fiberglass Batt,     !- Name
    Rough,                   !- Roughness
    <%= 5.5|'in' %>,       !- Thickness {m}
@@ -201,16 +236,7 @@ nsteps = 6
    0.6,                     !- Solar Absorptance
    0.6;                     !- Visible Absorptance
 
- Material,
-   R-38 Fiberglass Batt - Ceiling,     !- Name
-   Rough,                   !- Roughness
-   <%= 12|'in' %>,       !- Thickness {m}
-   <%= 0.0263|'k-ip' %>,    !- Conductivity {W/m-K}
-   <%= 0.6|'lb/ft3' %>,        !- Density {kg/m3}
-   <%= 0.20|'cp-ip' %>,        !- Specific Heat {J/kg-K}
-   0.9,                     !- Thermal Absorptance
-   0.6,                     !- Solar Absorptance
-   0.6;
+<% end %>
 
 ! Continuous Insulation
  Material,
@@ -236,6 +262,7 @@ nsteps = 6
    0.6,                     !- Solar Absorptance
    0.6;                     !- Visible Absorptance
 
+<% if framing_approach == "DETAILED" %>
  Material,
    Wood Framing - 2x6,      !- Name
    Rough,                   !- Roughness
@@ -246,6 +273,7 @@ nsteps = 6
    0.9,                     !- Thermal Absorptance
    0.6,                     !- Solar Absorptance
    0.6;                     !- Visible Absorptance
+<% end %>
 
 ! Inside face finish
  Material,
@@ -437,7 +465,7 @@ Foundation:Kiva,
   ,                        !- Interior Horizontal Insulation Depth {m}
   ,                        !- Interior Horizontal Insulation Width {m}
   <% if foundation_insulated %>
-  R-11 Fiberglass Batt,              !- Interior Vertical Insulation Material Name  TODO: This needs to include framing and needs to be moved to a custom block so it only extends to the slab
+  Basement Wall Composite (Frame + Cavity),              !- Interior Vertical Insulation Material Name  TODO: This needs to be moved to a custom block so it only extends to the slab
   <% else %>
   ,                        !- Interior Vertical Insulation Material Name
   <% end %>
@@ -451,6 +479,113 @@ Foundation:Kiva,
   0,                       !- Wall Depth Below Slab {m}
   ;                        !- Footing Wall Construction Name
 
+<% end %>
+
+<% if framing_approach == "COMPOSITE" %>
+! Composite layers (framing combined with cavity)
+<%
+  # Main Zone External Wall
+  if envelope_eff == "HIGH"
+    thickness = 5.5|'in'
+    r_others = (0.685 + 0.45 + 7.20 + 0.67 + 0.174)|'r-ip'
+    cavity_material = {:k=>0.0255|'k-ip',:rho=>0.68|'lb/ft3',:cp=>0.20|'cp-ip'}
+  else
+    if envelope_eff == "LOW"
+      # using properties for air at 1atm and 75F
+      cavity_material = {:k=>(3.5/12/1.01)|'k-ip',:rho=>0.074|'lb/ft3',:cp=>0.24|'cp-ip'}
+    else
+      cavity_material = {:k=>0.0265|'k-ip',:rho=>0.6|'lb/ft3',:cp=>0.20|'cp-ip'}
+    end
+    r_others = (0.685 + 0.45 + 1.32 + 0.67 + 0.174)|'r-ip'
+    thickness = 3.5|'in'
+  end
+  framing_factor = framing_factor_walls
+  framing_material = {:k=>0.0667|'k-ip',:rho=>32.0|'lb/ft3',:cp=>0.33|'cp-ip'}
+  composite_layer = make_composite_layer(thickness, r_others, framing_factor, cavity_material, framing_material)
+%>
+  Material,
+   External Wall Composite (Frame + Cavity),     !- Name
+   Rough,                   !- Roughness
+   <%= thickness %>,    !- Thickness {m}
+   <%= composite_layer[:k] %>,    !- Conductivity {W/m-K}
+   <%= composite_layer[:rho] %>,        !- Density {kg/m3}
+   <%= composite_layer[:cp] %>,        !- Specific Heat {J/kg-K}
+   0.9,                     !- Thermal Absorptance
+   0.6,                     !- Solar Absorptance
+   0.6;                     !- Visible Absorptance
+
+<%
+  # Main Zone Raised Floor
+  thickness = 3.5|'in'
+  r_others = (0.765 + 2.080 + 0.937 + 0.455)|'r-ip'
+  framing_factor = framing_factor_other
+  cavity_material = {:k=>0.0265|'k-ip',:rho=>0.6|'lb/ft3',:cp=>0.20|'cp-ip'}
+  framing_material = {:k=>0.0667|'k-ip',:rho=>32.0|'lb/ft3',:cp=>0.33|'cp-ip'}
+  composite_layer = make_composite_layer(thickness, r_others, framing_factor, cavity_material, framing_material)
+%>
+  Material,
+   Raised Floor Composite (Frame + Cavity),     !- Name
+   Rough,                   !- Roughness
+   <%= thickness %>,    !- Thickness {m}
+   <%= composite_layer[:k] %>,    !- Conductivity {W/m-K}
+   <%= composite_layer[:rho] %>,        !- Density {kg/m3}
+   <%= composite_layer[:cp] %>,        !- Specific Heat {J/kg-K}
+   0.9,                     !- Thermal Absorptance
+   0.6,                     !- Solar Absorptance
+   0.6;                     !- Visible Absorptance
+
+<%
+  # Main Zone Ceiling
+  if envelope_eff == "LOW"
+    thickness = 3.5|'in'
+    r_others = (0.765 + 0.450 + 0.765)|'r-ip'
+    cavity_material = {:k=>0.0265|'k-ip',:rho=>0.6|'lb/ft3',:cp=>0.20|'cp-ip'}
+  else
+    thickness = 5.5|'in'
+    if envelope_eff == "HIGH"
+      r_others = (0.765 + 0.450 + 38.000 + 0.765)|'r-ip'
+    else
+      r_others = (0.765 + 0.450 + 0.765)|'r-ip'
+    end
+    cavity_material = {:k=>0.0274|'k-ip',:rho=>0.6|'lb/ft3',:cp=>0.20|'cp-ip'}
+  end
+  framing_factor = framing_factor_other
+  framing_material = {:k=>0.0667|'k-ip',:rho=>32.0|'lb/ft3',:cp=>0.33|'cp-ip'}
+  composite_layer = make_composite_layer(thickness, r_others, framing_factor, cavity_material, framing_material)
+%>
+  Material,
+   Ceiling Composite (Frame + Cavity),     !- Name
+   Rough,                   !- Roughness
+   <%= thickness %>,    !- Thickness {m}
+   <%= composite_layer[:k] %>,    !- Conductivity {W/m-K}
+   <%= composite_layer[:rho] %>,        !- Density {kg/m3}
+   <%= composite_layer[:cp] %>,        !- Specific Heat {J/kg-K}
+   0.9,                     !- Thermal Absorptance
+   0.6,                     !- Solar Absorptance
+   0.6;                     !- Visible Absorptance
+
+<% end %>
+
+<% if foundation_type == "BASEMENT" and foundation_insulated %>
+<%
+  # Basement Zone Wall with Insulation
+  thickness = 3.5|'in'
+  r_others = (0.685 + 0.450 + 0.480 + 0.174)|'r-ip'
+  cavity_material = {:k=>0.0265|'k-ip',:rho=>0.6|'lb/ft3',:cp=>0.20|'cp-ip'}
+  framing_factor = framing_factor_other
+  framing_material = {:k=>0.0667|'k-ip',:rho=>32.0|'lb/ft3',:cp=>0.33|'cp-ip'}
+  composite_layer = make_composite_layer(thickness, r_others, framing_factor, cavity_material, framing_material)
+%>
+  Material,
+   Basement Wall Composite (Frame + Cavity),     !- Name
+   Rough,                   !- Roughness
+   <%= thickness %>,    !- Thickness {m}
+   <%= composite_layer[:k] %>,    !- Conductivity {W/m-K}
+   <%= composite_layer[:rho] %>,        !- Density {kg/m3}
+   <%= composite_layer[:cp] %>,        !- Specific Heat {J/kg-K}
+   0.9,                     !- Thermal Absorptance
+   0.6,                     !- Solar Absorptance
+   0.6;                     !- Visible Absorptance
 <% end %>
 
 ! Window layers
@@ -536,6 +671,141 @@ Construction,
   Wood Framing - 2x4,      !- Layer 2
   Plasterboard;            !- Layer 3
 
+<% if framing_approach == "DETAILED" %>
+Construction,
+  Raised Floor - Cavity,      !- Name
+  <% if envelope_eff != "LOW" and foundation_type != "BASEMENT" %>
+  R-11 Fiberglass Batt,         !- Outside Layer
+  <% end %>
+  Plywood - 3/4 in,          !- Layer 2
+  Carpet with Fibrous Pad;   !- Layer 3
+
+Construction,
+  Raised Floor - Frame,       !- Name
+  <% if envelope_eff != "LOW" and foundation_type != "BASEMENT" %>
+  Wood Framing - 2x4,         !- Outside Layer
+  <% end %>
+  Plywood - 3/4 in,          !- Layer 2
+  Carpet with Fibrous Pad;   !- Layer 3
+
+Construction,
+  Exterior Wall - Cavity, !- Name
+  Hardboard Siding,!- Outside Layer
+  <% if envelope_eff == "HIGH" %>
+  Polyisocyanurate board insulation,  !- Layer 2
+  R-18 Fiberglass Batt,     !- Layer 3
+  <% elsif envelope_eff == "LOW" %>
+  Fiberboard Sheathing,    !- Layer 2
+  Air Gap,                  !- Layer 3
+  <% else %>
+  Fiberboard Sheathing,    !- Layer 2
+  R-11 Fiberglass Batt,         !- Layer 3
+  <% end %>
+  Plasterboard;            !- Layer 4
+
+Construction,
+  Exterior Wall - Frame,    !- Name
+  Hardboard Siding,         !- Outside Layer
+  <% if envelope_eff == "HIGH" %>
+  Polyisocyanurate board insulation,  !- Layer 2
+  Wood Framing - 2x6,         !- Layer 3
+  <% else %>
+  Fiberboard Sheathing,    !- Layer 2
+  Wood Framing - 2x4,    !- Layer 3
+  <% end %>
+  Plasterboard;            !- Layer 4
+
+Construction,
+  Ceiling - Cavity,            !- Name
+  <% if envelope_eff == "HIGH" %>
+  R-38 Fiberglass Batt - Ceiling,     !- Outside Layer
+  R-19 Fiberglass Batt - Ceiling,     !- Layer 2
+  <% elsif envelope_eff == "LOW" %>
+  R-11 Fiberglass Batt,     !- Layer 2
+  <% else %>
+  R-19 Fiberglass Batt - Ceiling,     !- Layer 2
+  <% end %>
+  Plasterboard;            !- Layer 3
+
+Construction,
+  Ceiling - Frame,          !- Name
+  <% if envelope_eff == "HIGH" %>
+  R-38 Fiberglass Batt - Ceiling,     !- Outside Layer
+  Wood Framing - 2x6,                 !- Layer 2
+  <% elsif envelope_eff == "LOW" %>
+  Wood Framing - 2x4,         !- Outside Layer (assumed to be same thickness as Slab Insulation layer) TODO: COMMENT BELONG SOMEWHERE ELSE?
+  <% else %>
+  Wood Framing - 2x6,        !- Outside Layer
+  <% end %>
+  Plasterboard;            !- Layer 2
+
+Construction,
+  Attic floor - Cavity,        !- Name
+  Plasterboard,                !- Outside Layer
+  <% if envelope_eff == "LOW" %>
+  R-11 Fiberglass Batt;     !- Layer 2
+  <% elsif envelope_eff == "HIGH" %>
+  R-19 Fiberglass Batt - Ceiling,     !- Layer 2
+  R-38 Fiberglass Batt - Ceiling;     !- Layer 3
+  <% else %>
+  R-19 Fiberglass Batt - Ceiling;     !- Layer 2
+  <% end %>
+
+Construction,
+  Attic floor - Frame,      !- Name
+  Plasterboard,            !- Outside Layer
+  <% if envelope_eff == "LOW" %>
+  Wood Framing - 2x4;     !- Layer 2
+  <% elsif envelope_eff == "HIGH" %>
+  Wood Framing - 2x6,     !- Layer 2
+  R-38 Fiberglass Batt - Ceiling;     !- Layer 3
+  <% else %>
+  Wood Framing - 2x6;         !- Layer 2
+  <% end %>
+
+<% elsif framing_approach == "COMPOSITE" %>
+Construction,
+  Raised Floor,      !- Name
+  <% if envelope_eff != "LOW" and foundation_type != "BASEMENT" %>
+  Raised Floor Composite (Frame + Cavity),         !- Outside Layer
+  <% end %>
+  Plywood - 3/4 in,          !- Layer 2
+  Carpet with Fibrous Pad;   !- Layer 3
+
+Construction,
+  Exterior Wall, !- Name
+  Hardboard Siding,!- Outside Layer
+  <% if envelope_eff == "HIGH" %>
+  Polyisocyanurate board insulation,  !- Layer 2
+  <% else %>
+  Fiberboard Sheathing,    !- Layer 2
+  <% end %>
+  External Wall Composite (Frame + Cavity),         !- Layer 3
+  Plasterboard;            !- Layer 4
+
+Construction,
+  Ceiling,            !- Name
+  <% if envelope_eff == "HIGH" %>
+  R-38 Fiberglass Batt - Ceiling,         !- Outside Layer
+  Ceiling Composite (Frame + Cavity),     !- Layer 2
+  Plasterboard;                           !- Layer 3
+  <% else %>
+  Ceiling Composite (Frame + Cavity),     !- Outside Layer
+  Plasterboard;                           !- Layer 2
+  <% end %>
+
+Construction,
+  Attic floor,        !- Name
+  Plasterboard,                !- Outside Layer
+  <% if envelope_eff == "HIGH" %>
+  Ceiling Composite (Frame + Cavity),     !- Layer 2
+  R-38 Fiberglass Batt - Ceiling;     !- Layer 3
+  <% else %>
+  Ceiling Composite (Frame + Cavity);     !- Layer 2
+  <% end %>
+
+<% end %>
+
 Construction,
  Door,                    !- Name
  Solid Core Door;         !- Outside Layer
@@ -552,22 +822,6 @@ Construction,
   Poured Concrete - 6in;            !- Outside Layer
 
 Construction,
-  Raised Floor - Cavity,      !- Name
-<% if envelope_eff != "LOW" and foundation_type != "BASEMENT" %>
-  R-11 Fiberglass Batt,         !- Outside Layer
-<% end %>
-  Plywood - 3/4 in,          !- Layer 2
-  Carpet with Fibrous Pad;   !- Layer 3
-
-Construction,
-  Raised Floor - Frame,       !- Name
-<% if envelope_eff != "LOW" and foundation_type != "BASEMENT" %>
-  Wood Framing - 2x4,         !- Outside Layer
-<% end %>
-  Plywood - 3/4 in,          !- Layer 2
-  Carpet with Fibrous Pad;   !- Layer 3
-
-Construction,
   Roof,                    !- Name
   Asphalt Shingle,         !- Outside Layer
   Plywood - 1/2 in;          !- Layer 2
@@ -576,81 +830,6 @@ Construction,
   Gable Wall,               !- Name
   Hardboard Siding,         !- Outside Layer
   Plywood - 1/2 in;           !- Layer 2
-
-Construction,
-  Exterior Wall - Cavity, !- Name
-  Hardboard Siding,!- Outside Layer
-<% if envelope_eff == "HIGH" %>
-  Polyisocyanurate board insulation,  !- Layer 2
-  R-18 Fiberglass Batt,     !- Layer 3
-<% elsif envelope_eff == "LOW" %>
-  Fiberboard Sheathing,    !- Layer 2
-  Air Gap,                  !- Layer 3
-<% else %>
-  Fiberboard Sheathing,    !- Layer 2
-  R-11 Fiberglass Batt,         !- Layer 3
-<% end %>
-  Plasterboard;            !- Layer 4
-
-  Construction,
-    Exterior Wall - Frame,    !- Name
-    Hardboard Siding,         !- Outside Layer
-<% if envelope_eff == "HIGH" %>
-    Polyisocyanurate board insulation,  !- Layer 2
-    Wood Framing - 2x6,         !- Layer 3
-<% else %>
-    Fiberboard Sheathing,    !- Layer 2
-    Wood Framing - 2x4,    !- Layer 3
-<% end %>
-    Plasterboard;            !- Layer 4
-
-  Construction,
-    Ceiling - Cavity,            !- Name
-<% if envelope_eff == "HIGH" %>
-    R-38 Fiberglass Batt - Ceiling,     !- Outside Layer
-    R-19 Fiberglass Batt - Ceiling,     !- Layer 2
-<% elsif envelope_eff == "LOW" %>
-    R-11 Fiberglass Batt,     !- Layer 2
-<% else %>
-    R-19 Fiberglass Batt - Ceiling,     !- Layer 2
-<% end %>
-    Plasterboard;            !- Layer 3
-
-  Construction,
-    Ceiling - Frame,          !- Name
-<% if envelope_eff == "HIGH" %>
-    R-38 Fiberglass Batt - Ceiling,     !- Outside Layer
-    Wood Framing - 2x6,                 !- Layer 2
-<% elsif envelope_eff == "LOW" %>
-    Wood Framing - 2x4,         !- Outside Layer (assumed to be same thickness as Slab Insulation layer)
-<% else %>
-    Wood Framing - 2x6,        !- Outside Layer
-<% end %>
-    Plasterboard;            !- Layer 2
-
-  Construction,
-    Attic floor - Cavity,        !- Name
-    Plasterboard,                !- Outside Layer
-<% if envelope_eff == "LOW" %>
-    R-11 Fiberglass Batt;     !- Layer 2
-<% elsif envelope_eff == "HIGH" %>
-    R-19 Fiberglass Batt - Ceiling,     !- Layer 2
-    R-38 Fiberglass Batt - Ceiling;     !- Layer 3
-<% else %>
-    R-19 Fiberglass Batt - Ceiling;     !- Layer 2
-<% end %>
-
-  Construction,
-    Attic floor - Frame,      !- Name
-    Plasterboard,            !- Outside Layer
-<% if envelope_eff == "LOW" %>
-    Wood Framing - 2x4;     !- Layer 2
-<% elsif envelope_eff == "HIGH" %>
-    Wood Framing - 2x6,     !- Layer 2
-    R-38 Fiberglass Batt - Ceiling;     !- Layer 3
-<% else %>
-    Wood Framing - 2x6;         !- Layer 2
-<% end %>
 
 <%
 if foundation_type == "SLAB"
@@ -688,7 +867,11 @@ Zone,
 BuildingSurface:Detailed,
   <%= wall[:name] %>,     !- Name
   Wall,                      !- Surface Type
+  <% if framing_approach == "DETAILED" %>
   Exterior Wall - Cavity,          !- Construction Name
+  <% elsif framing_approach == "COMPOSITE" %>
+  Exterior Wall,          !- Construction Name
+  <% end %>
   Main Zone,                       !- Zone Name
   Outdoors,                !- Outside Boundary Condition
   ,                       !- Outside Boundary Condition Object
@@ -857,7 +1040,11 @@ FenestrationSurface:Detailed,
 BuildingSurface:Detailed,
   Ceiling,                    !- Name
   Ceiling,                    !- Surface Type
+<% if framing_approach == "DETAILED" %>
   Ceiling - Cavity,           !- Construction Name
+<% elsif framing_approach == "COMPOSITE" %>
+  Ceiling,           !- Construction Name
+<% end %>
   Main Zone,                  !- Zone Name
   Surface,                    !- Outside Boundary Condition
   Attic Floor,                !- Outside Boundary Condition Object
@@ -873,7 +1060,11 @@ BuildingSurface:Detailed,
 BuildingSurface:Detailed,
   Attic Floor,                !- Name
   Floor,                      !- Surface Type
+<% if framing_approach == "DETAILED" %>
   Attic floor - Cavity,       !- Construction Name
+<% elsif framing_approach == "COMPOSITE" %>
+  Attic floor,       !- Construction Name
+<% end %>
   Attic Zone,                 !- Zone Name
   Surface,                    !- Outside Boundary Condition
   Ceiling,                    !- Outside Boundary Condition Object
@@ -890,7 +1081,11 @@ BuildingSurface:Detailed,
   Main Zone Floor,                       !- Name
   Floor,                       !- Surface Type
 <% if foundation_type != "SLAB" %>
+  <% if framing_approach == "DETAILED" %>
   Raised Floor - Cavity,       !- Construction Name
+  <% elsif framing_approach == "COMPOSITE" %>
+  Raised Floor,       !- Construction Name
+  <% end %>
 <% else %>
   Floor Slab,                  !- Construction Name
 <% end %>
@@ -1093,7 +1288,7 @@ Zone,
 <% for surface in surfaces_attic %>
   <% if surface[:type] == "Wall" %>
 BuildingSurface:Detailed,
-  <%= surface[:name] %>-Cav,     !- Name
+  <%= surface[:name] %>,     !- Name
   Wall,                       !- Surface Type
   Gable Wall,                !- Construction Name
   Attic Zone,                !- Zone Name
