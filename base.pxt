@@ -1124,13 +1124,13 @@ InternalMass,
   Interior Wall - Cavity,      !- Name
   Interior Wall - Cavity,      !- Construction Name
   Main Zone,                   !- Zone or ZoneList Name
-  <%= interior_wall_area*2 %>;            !- Surface Area {m2}
+  <%= 0.9*interior_wall_area*2 %>;      !- Surface Area {m2} 10% is framed
 
 InternalMass,
   Interior Wall - Frame,       !- Name
   Interior Wall - Frame,       !- Construction Name
   Main Zone,                   !- Zone or ZoneList Name
-  19.0246853084902;            !- Surface Area {m2}
+  <%= 0.1*interior_wall_area*2 %>;     !- Surface Area {m2} 10% is framed
 
 !--- Main Zone Internal Gains Section ---
 ElectricEquipment,
