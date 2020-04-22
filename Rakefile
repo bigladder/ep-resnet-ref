@@ -60,67 +60,97 @@ def sim(c)
   return success
 end
 
-def results(cases)
+def results(sql_outputs)
+  # check if any file in sql_outputs is more recent that results CSVs
   output_dir = 'results/'
+  target = [output_dir + 'results_CO.csv', output_dir + 'results_LV.csv']
+  sql_update_CO = false
+  sql_update_LV = false
 
-  # write list of SQL output files in each location to batch files
-  sql_files_CO = output_dir + 'sql-batch-CO.txt'
-  sql_files_LV = output_dir + 'sql-batch-LV.txt'
-  File.write(sql_files_CO, "")
-  File.write(sql_files_LV, "")
+  src = [output_dir + 'results.txt']
+  sql_files_CO = []
+  sql_files_LV = []
 
-  src = [output_dir + '/results.txt']
-
-  for c in cases
-    file_base = File.basename(c,".*")
-    sql_file = 'output/' + file_base + '/in-out.sql'
-    src << sql_file
-    if file_base[-1] == "C"
-      File.write(sql_files_CO, "#{sql_file}\n", mode: "a")
-    elsif file_base[-1] == "L"
-      File.write(sql_files_LV, "#{sql_file}\n", mode: "a")
-    else
-      success = false
-      puts "  can't find SQL output file."
-      return success
+  for sql in sql_outputs
+    case_name = File.dirname(sql)
+    if case_name[-1] == "C"
+      sql_files_CO << sql
+    elsif case_name[-1] == "L"
+      sql_files_LV << sql
     end
   end
 
-  target = [output_dir + '/results_CO.csv', output_dir + '/results_LV.csv']
-
-  puts "================="
-  puts "Making results"
-  puts "=================\n"
-
-  success_CO = nil
-  success_LV = nil
-  if !(FileUtils.uptodate?(target[0], src))
-    puts "\nResults CSVs for heating cases not up-to-date...\n"
-    if File.size(sql_files_CO) > 0
-      puts "  Heating cases in Colorado Springs ..."
-      success_CO = system(%Q|modelkit-energyplus energyplus-sql --query=#{src[0]} --output=#{target[0]} --batch=#{sql_files_CO}|)
-    else
-      puts "No SQL output files for CO locations."
-    end
+  if !(FileUtils.uptodate?(target[0], src + sql_files_CO))
+    puts "Results CSVs for heating cases not up-to-date...\n"
+    sql_update_CO = true
   else
     puts "\n ...results CSVs for heating cases already up-to-date.\n"
-    success_CO = true
   end
-  if !(FileUtils.uptodate?(target[1], src))
-    puts "\nResults CSVs for cooling cases not up-to-date...\n"
-    if File.size(sql_files_LV) > 0
-      puts "  Cooling cases in Las Vegas ..."
-      success_LV = system(%Q|modelkit-energyplus energyplus-sql --query=#{src[0]} --output=#{target[1]} --batch=#{sql_files_LV}|)
-    else
-      puts "No SQL output files for LV locations."
-    end
+  if !(FileUtils.uptodate?(target[1], src + sql_files_LV))
+    puts "Results CSVs for cooling cases not up-to-date...\n"
+    sql_update_LV = true
   else
     puts "\n ...results CSVs for cooling cases already up-to-date.\n"
-    success_LV = true
   end
 
-  success = success_CO and success_LV
-  return success
+  if sql_update_CO or sql_update_LV
+    # write list of SQL output files in each location to batch files
+    sql_batch_CO = output_dir + 'sql-batch-CO.txt'
+    sql_batch_LV = output_dir + 'sql-batch-LV.txt'
+    File.write(sql_batch_CO, "")
+    File.write(sql_batch_LV, "")
+
+    src_CO = [output_dir + 'results.txt']
+    src_LV = [output_dir + 'results.txt']
+
+    for sql in sql_outputs
+      case_name = File.dirname(sql)
+      if case_name[-1] == "C"
+        src_CO << sql
+        File.write(sql_batch_CO, "#{sql}\n", mode: "a")
+      elsif case_name[-1] == "L"
+        src_LV << sql
+        File.write(sql_batch_LV, "#{sql}\n", mode: "a")
+      else
+        success = false
+        puts "  can't find SQL output file."
+        return success
+      end
+    end
+
+    puts "================="
+    puts "Making results"
+    puts "=================\n"
+
+    target = [output_dir + '/results_CO.csv', output_dir + '/results_LV.csv']
+    success_CO = nil
+    success_LV = nil
+    if sql_update_CO
+      if File.size(sql_batch_CO) > 0
+        puts "  Heating cases in Colorado Springs ..."
+        success_CO = system(%Q|modelkit-energyplus energyplus-sql --query=#{src[0]} --output=#{target[0]} --batch=#{sql_batch_CO}|)
+      else
+        puts "No SQL output files for CO locations."
+      end
+    else
+      success_CO = true
+    end
+    if sql_update_LV
+      if File.size(sql_batch_LV) > 0
+        puts "  Cooling cases in Las Vegas ..."
+        success_LV = system(%Q|modelkit-energyplus energyplus-sql --query=#{src[0]} --output=#{target[1]} --batch=#{sql_batch_LV}|)
+      else
+        puts "No SQL output files for LV locations."
+      end
+    else
+      success_LV = true
+    end
+    success = success_CO and success_LV
+    return success
+  else
+    puts "\n ...results CSVs for all cases already up-to-date.\n"
+    return true
+  end
 end
 
 desc "Compose and simulate cases"
@@ -137,7 +167,8 @@ task :sim, [:filter] do |t, args|
       exit
     end
   end
-  if !results(cases)
+  sql_outputs = Dir['output/*/in-out.sql']
+  if !results(sql_outputs)
     puts "\nERROR: Making results failed..."
     exit
   end
