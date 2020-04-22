@@ -181,9 +181,7 @@ task :clean_output, [:filter] do |t, args|
   args.with_defaults(:filter=>'*')
   outputs = Dir['output/' + args.filter]
   puts "Cleaning output..."
-  # cases = Dir['cases/*']
   for o in outputs
-    working_dir = File.dirname(o)
     FileUtils.remove_dir(o)
   end
   puts "Cleaning output completed."
