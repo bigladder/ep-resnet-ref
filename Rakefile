@@ -44,13 +44,13 @@ def sim(c)
   output_dir = 'output/' + file_base
 
   src = [output_dir + '/in.idf']
-  target = [output_dir + '/eplusout.err', output_dir + '/eplusout.csv']
+  target = [output_dir + '/in-out.err', output_dir + '/in-var.csv']
 
   success = nil
   if !(FileUtils.uptodate?(target[0], src)) or !(FileUtils.uptodate?(target[1], src))
     puts "\nsimulating..."
     Dir.chdir(output_dir){
-      success = system(%Q|C:\\EnergyPlusV9-3-0\\energyplus -r -w "#{weather_file}" in.idf|)
+      success = system(%Q|modelkit-energyplus energyplus-run -r -w "#{weather_file}" in.idf -o 'eplusout.err; eplusout.rdd; eplusout.sql; eplustbl.htm; eplusvar.csv; eplusvar.eso'|)
     }
     puts "\n"
   else
@@ -73,7 +73,7 @@ def results(cases)
 
   for c in cases
     file_base = File.basename(c,".*")
-    sql_file = 'output/' + file_base + '/eplusout.sql'
+    sql_file = 'output/' + file_base + '/in-out.sql'
     src << sql_file
     if file_base[-1] == "C"
       File.write(sql_files_CO, "#{sql_file}\n", mode: "a")
@@ -123,6 +123,7 @@ def results(cases)
   return success
 end
 
+desc "Compose and simulate cases"
 task :sim, [:filter] do |t, args|
   args.with_defaults(:filter=>'*')
   cases = Dir['cases/' + args.filter + '.*']
