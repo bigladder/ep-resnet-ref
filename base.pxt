@@ -24,6 +24,10 @@
   parameter "envelope_eff", :default=>"TYPICAL" # choices: TYPICAL, LOW, HIGH
   parameter "framing_approach", :default=>"COMPOSITE" # choices: COMPOSITE (lump framing section into cavity section), DETAILED (draw separate surfaces for framing and cavity sections)
 
+# use for testing simple glazing system
+  parameter "window_model", :default=>"DETAILED" # choices: SIMPLE (simple glazing system to set window assembly properties), DETAILED (all window layers defined individually)
+  parameter "win_u", :default=>1.039|'U-IP'
+  parameter "win_shgc", :default=>0.670
 %>
 
 <%
@@ -58,7 +62,11 @@ zone_vol_bsmt = floor_area*(sill_plate_height + rim_joist_height + basement_wall
 
 win_width = 3.0|'ft' # Window width
 win_height = 5.0|'ft' # Window height
-win_frame_width = 2.75|'in'
+if window_model == "DETAILED"
+  win_frame_width = 2.75|'in'
+elsif window_model == "SIMPLE"
+  win_frame_width = 0|'in'
+end
 glazing_width = win_width - 2*win_frame_width
 glazing_height = win_height - 2*win_frame_width
 
@@ -590,6 +598,7 @@ Foundation:Kiva,
    0.6;                     !- Visible Absorptance
 <% end %>
 
+<% if window_model == "DETAILED" %>
 ! Window layers
 WindowMaterial:Glazing,
   Outside Pane Glass,      !- Name
@@ -650,15 +659,27 @@ WindowProperty:FrameAndDivider,
   0,                       !- Divider Visible Absorptance
   0.9;                     !- Divider Thermal Hemispherical Emissivity
 
+<% elsif window_model == "SIMPLE" %>
+WindowMaterial:SimpleGlazingSystem,
+  Simple Window,                       !- Name
+  <%= win_u %>,                       !- U-Factor {W/m2-K}
+  <%= win_shgc %>;                       !- Solar Heat Gain Coefficient
+
+<% end %>
+
 !--- Construction Assembly Section ---
 Construction,
  Window Construction,      !- Name
-<% if win_panes == 1 %>
+<% if window_model == "DETAILED" %>
+  <% if win_panes == 1 %>
  Inside Pane Glass;       !- Outside Layer
-<% else %>
+  <% else %>
  Outside Pane Glass,       !- Outside Layer
  Argon Gap,                !- Layer 2
  Inside Pane Glass;        !- Layer 3
+  <% end %>
+<% elsif window_model == "SIMPLE" %>
+ Simple Window;       !- Outside Layer
 <% end %>
 
 Construction,
@@ -896,7 +917,11 @@ FenestrationSurface:Detailed,
   North Wall,                           !- Building Surface Name
   ,                                     !- Outside Boundary Condition Object
   autocalculate,                        !- View Factor to Ground
+  <% if window_model == "DETAILED" %>
   Window Frame,                         !- Frame and Divider Name
+  <% elsif window_model == "SIMPLE" %>
+  ,                                     !- Frame and Divider Name
+  <% end %>
   1,                                    !- Multiplier
   autocalculate,                        !- Number of Vertices
   <%= width - start - win_frame_width %>,  !- Vertex 1 X-coordinate {m}
@@ -946,7 +971,11 @@ FenestrationSurface:Detailed,
   South Wall,                           !- Building Surface Name
   ,                                     !- Outside Boundary Condition Object
   autocalculate,                        !- View Factor to Ground
+  <% if window_model == "DETAILED" %>
   Window Frame,                         !- Frame and Divider Name
+  <% elsif window_model == "SIMPLE" %>
+  ,                                     !- Frame and Divider Name
+  <% end %>
   1,                                    !- Multiplier
   autocalculate,                        !- Number of Vertices
   <%= start + win_frame_width %>,       !- Vertex 1 X-coordinate {m}
@@ -996,7 +1025,11 @@ FenestrationSurface:Detailed,
   East Wall,                           !- Building Surface Name
   ,                                     !- Outside Boundary Condition Object
   autocalculate,                        !- View Factor to Ground
+  <% if window_model == "DETAILED" %>
   Window Frame,                         !- Frame and Divider Name
+  <% elsif window_model == "SIMPLE" %>
+  ,                                     !- Frame and Divider Name
+  <% end %>
   1,                                    !- Multiplier
   autocalculate,                        !- Number of Vertices
   <%= width %>,                         !- Vertex 1 X-coordinate {m}
@@ -1021,7 +1054,11 @@ FenestrationSurface:Detailed,
   West Wall,                           !- Building Surface Name
   ,                                     !- Outside Boundary Condition Object
   autocalculate,                        !- View Factor to Ground
+  <% if window_model == "DETAILED" %>
   Window Frame,                         !- Frame and Divider Name
+  <% elsif window_model == "SIMPLE" %>
+  ,                                     !- Frame and Divider Name
+  <% end %>
   1,                                    !- Multiplier
   autocalculate,                        !- Number of Vertices
   0,                         !- Vertex 1 X-coordinate {m}

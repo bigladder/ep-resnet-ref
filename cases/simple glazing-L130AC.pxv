@@ -1,0 +1,5 @@
+:case_name=>"L130AC",
+:climate=>"HEATING",
+:window_model=>"SIMPLE",
+:win_u=>0.3|'U-IP',
+:win_shgc=>0.335
