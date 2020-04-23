@@ -2,12 +2,12 @@
   parameter "case_name"
   parameter "climate"
   parameter "ach", :default=>0.67
-  parameter "int_load", :default=>2930.711
-  parameter "win_frame_u", :default=>51.649480578971 # W/m2K Surface to surface conductance from Table 7-4
+# Max internal total (sensible + latent) loads set to 10,000 Btu/hr even though actual max value in Table 7-9 is 5,818 Btu/hr
+# This makes it easier to interpret hourly total loads from applied schedule
+  parameter "int_load", :default=>10000|'btuh'
+  parameter "win_frame_u", :default=>9.096|'U-IP' # Surface-to-surface frame conductance from Table 7-4
   parameter "win_panes", :default=>1 # number of windows panes
   parameter "ext_sol_abs_exposed", :default=>0.6 # applied to exterior face of exposed surfaces (exterior walls, roofs, end gables, doors)
-  parameter "f_factor", :default=>1.68536980053971 # W/m.K, GARD approach for modeling the slab
-  parameter "c_factor", :default=>0.967008195096609 # W/m.K
   parameter "north_windows", :default=>[5|'ft',14|'ft',28|'ft',34|'ft',41|'ft',46|'ft'] # 6 windows in North exterior wall (measured from the left side of the wall)
   parameter "south_windows", :default=>[5|'ft',14|'ft',19|'ft',24|'ft',29|'ft',44|'ft'] # 6 windows in South exterior wall (measured from the left side of the wall)
   parameter "east_windows", :default=>[5|'ft',12|'ft',19|'ft'] # 3 windows in East exterior wall (measured from the left side of the wall)
