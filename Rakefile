@@ -3,14 +3,14 @@ require 'fileutils'
 def compose(c)
   file_base = File.basename(c,".*")
 
-  output_dir = 'output/' + file_base
+  output_dir = "output/#{file_base}"
   #Create output directory
   unless File.directory?(output_dir)
     FileUtils.mkdir_p(output_dir)
   end
 
   src = ['base.pxt', c]
-  target = output_dir + '/in.idf'
+  target = "#{output_dir}/in.idf"
 
   puts "================="
   puts "Running case " + file_base + ":"
@@ -20,7 +20,7 @@ def compose(c)
   success = nil
   if !(FileUtils.uptodate?(target, src))
     puts "\ncomposing...\n\n"
-    success = system(%Q|modelkit template-compose -f "#{c}" -o "#{output_dir + '/in.idf'}"  base.pxt|)
+    success = system(%Q|modelkit template-compose -f "#{c}" -o "#{output_dir}/in.idf"  base.pxt|)
   else
     puts "  ...input already up-to-date."
     success = true
@@ -41,10 +41,10 @@ def sim(c)
     return success
   end
 
-  output_dir = 'output/' + file_base
+  output_dir = "output/#{file_base}"
 
-  src = [output_dir + '/in.idf']
-  target = [output_dir + '/in-out.err', output_dir + '/in-var.csv']
+  src = ["#{output_dir}/in.idf"]
+  target = ["#{output_dir}/in-out.err", "#{output_dir}/in-var.csv"]
 
   success = nil
   if !(FileUtils.uptodate?(target[0], src)) or !(FileUtils.uptodate?(target[1], src))
@@ -62,12 +62,12 @@ end
 
 def results(sql_outputs)
   # check if any file in sql_outputs is more recent that results CSVs
-  output_dir = 'results/'
-  target = [output_dir + 'results_CO.csv', output_dir + 'results_LV.csv']
+  output_dir = "results/"
+  target = ["#{output_dir}/results_CO.csv", "#{output_dir}/results_LV.csv"]
   sql_update_CO = false
   sql_update_LV = false
 
-  src = [output_dir + 'results.txt']
+  src = ["#{output_dir}/results.txt"]
   sql_files_CO = []
   sql_files_LV = []
 
@@ -95,13 +95,13 @@ def results(sql_outputs)
 
   if sql_update_CO or sql_update_LV
     # write list of SQL output files in each location to batch files
-    sql_batch_CO = output_dir + 'sql-batch-CO.txt'
-    sql_batch_LV = output_dir + 'sql-batch-LV.txt'
+    sql_batch_CO = "#{output_dir}/sql-batch-CO.txt"
+    sql_batch_LV = "#{output_dir}/sql-batch-LV.txt"
     File.write(sql_batch_CO, "")
     File.write(sql_batch_LV, "")
 
-    src_CO = [output_dir + 'results.txt']
-    src_LV = [output_dir + 'results.txt']
+    src_CO = ["#{output_dir}/results.txt"]
+    src_LV = ["#{output_dir}/results.txt"]
 
     for sql in sql_outputs
       case_name = File.dirname(sql)
@@ -122,7 +122,7 @@ def results(sql_outputs)
     puts "Making results"
     puts "=================\n"
 
-    target = [output_dir + '/results_CO.csv', output_dir + '/results_LV.csv']
+    target = ["#{output_dir}/results_CO.csv", "#{output_dir}/results_LV.csv"]
     success_CO = nil
     success_LV = nil
     if sql_update_CO
@@ -155,8 +155,8 @@ end
 
 desc "Compose and simulate cases"
 task :sim, [:filter] do |t, args|
-  args.with_defaults(:filter=>'*')
-  cases = Dir['cases/' + args.filter + '.*']
+  args.with_defaults(:filter=>"*")
+  cases = Dir["cases/#{args.filter}.*"]
   for c in cases
     if !compose(c)
       puts "\nERROR: Composition failed..."
@@ -178,8 +178,8 @@ task :default, [:filter] => [:sim]
 
 desc "Clean the output directory and results CSVs"
 task :clean_output, [:filter] do |t, args|
-  args.with_defaults(:filter=>'*')
-  outputs = Dir['output/' + args.filter]
+  args.with_defaults(:filter=>"*")
+  outputs = Dir["output/#{args.filter}"]
   puts "Cleaning output..."
   for o in outputs
     FileUtils.remove_dir(o)
@@ -197,5 +197,5 @@ task :clean_results do
   puts "Cleaning results CSVs completed."
 end
 
-desc "Clean outputs and results CSVs"
-task :clean => [:clean_output, :clean_results]
+desc "Clean all outputs and results CSVs"
+task :clean_all => [:clean_output, :clean_results]
