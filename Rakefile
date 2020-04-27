@@ -1,9 +1,9 @@
 require 'fileutils'
 
-def compose(c)
+def compose(c, tests)
   file_base = File.basename(c,".*")
 
-  output_dir = "output/#{file_base}"
+  output_dir = "output/#{tests}/#{file_base}"
   #Create output directory
   unless File.directory?(output_dir)
     FileUtils.mkdir_p(output_dir)
@@ -28,20 +28,20 @@ def compose(c)
   return success
 end
 
-def sim(c)
+def sim(c, tests)
   file_base = File.basename(c,".*")
 
   if file_base[-1] == "C"
-    weather_file = "../../TMY-Colorad-v5.0.epw"
+    weather_file = "../../../TMY-Colorad-v5.0.epw"
   elsif file_base[-1] == "L"
-    weather_file = "../../TMY-Lasvega-v5.0.epw"
+    weather_file = "../../../TMY-Lasvega-v5.0.epw"
   else
     success = false
     puts "  unknown weather file."
     return success
   end
 
-  output_dir = "output/#{file_base}"
+  output_dir = "output/#{tests}/#{file_base}"
 
   src = ["#{output_dir}/in.idf"]
   target = ["#{output_dir}/in-out.err", "#{output_dir}/in-var.csv"]
@@ -153,21 +153,25 @@ def results(sql_outputs)
   end
 end
 
+# example: 'rake sim[section-7, L100AC]' for just one case
+# example: 'rake sim[section-7]' for all cases of a test suite
+# example: 'rake sim' for all cases of all test suites
 desc "Compose and simulate cases"
-task :sim, [:filter] do |t, args|
-  args.with_defaults(:filter=>"*")
-  cases = Dir["cases/#{args.filter}.*"]
+task :sim, [:tests, :filter] do |t, args|
+  args.with_defaults(:tests=>"*", :filter=>"*")
+  tests = args.tests # 'section-7', 'hvac', 'dse'
+  cases = Dir["cases/#{tests}/#{args.filter}.pxv"]
   for c in cases
-    if !compose(c)
+    if !compose(c, tests)
       puts "\nERROR: Composition failed..."
       exit
     end
-    if !sim(c)
+    if !sim(c, tests)
       puts "\nERROR: Simulation failed..."
       exit
     end
   end
-  sql_outputs = Dir['output/*/in-out.sql']
+  sql_outputs = Dir["output/#{tests}/*/in-out.sql"]
   if !results(sql_outputs)
     puts "\nERROR: Making results failed..."
     exit
@@ -177,9 +181,9 @@ end
 task :default, [:filter] => [:sim]
 
 desc "Clean the output directory and results CSVs"
-task :clean_output, [:filter] do |t, args|
-  args.with_defaults(:filter=>"*")
-  outputs = Dir["output/#{args.filter}"]
+task :clean_output, [:tests, :filter] do |t, args|
+  args.with_defaults(:tests=>"*", :filter=>"*")
+  outputs = Dir["output/#{args.tests}/#{args.filter}"]
   puts "Cleaning output..."
   for o in outputs
     FileUtils.remove_dir(o)
