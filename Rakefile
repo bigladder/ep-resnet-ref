@@ -63,9 +63,9 @@ def sim(c)
   return success
 end
 
-def results(sql_outputs)
+def results(sql_outputs, tests)
   # check if any file in sql_outputs is more recent that results CSVs
-  output_dir = "results/"
+  output_dir = "results/#{tests}"
   target = ["#{output_dir}/results_CO.csv", "#{output_dir}/results_LV.csv"]
   sql_update_CO = false
   sql_update_LV = false
@@ -176,10 +176,14 @@ task :sim, [:tests, :filter] do |t, args|
         exit
       end
     end
-    sql_outputs = Dir["output/#{tests}/*/in-out.sql"]
-    if !results(sql_outputs)
-      puts "\nERROR: Making results failed..."
-      exit
+    output_dir = Dir["output/#{tests}"]
+    for o in output_dir
+      t = Pathname(o).basename
+      sql_outputs = Dir["#{o}/*/in-out.sql"]
+      if !results(sql_outputs, t)
+        puts "\nERROR: Making results failed..."
+        exit
+      end
     end
   end
 end
