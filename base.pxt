@@ -28,6 +28,10 @@
   parameter "window_model", :default=>"DETAILED" # choices: SIMPLE (simple glazing system to set window assembly properties), DETAILED (all window layers defined individually)
   parameter "win_u", :default=>1.039|'U-IP'
   parameter "win_shgc", :default=>0.670
+
+# testing isolation of features
+  parameter "isolate_attic", :default=>false
+  parameter "interior_walls", :default=>true
 %>
 
 <%
@@ -259,6 +263,18 @@ end
    0.9,                     !- Thermal Absorptance
    0.7,                     !- Solar Absorptance
    0.7;                     !- Visible Absorptance
+
+ Material,
+   Superinsulation,  !- Name
+   Rough,                   !- Roughness
+   <%= 3|'ft' %>,    !- Thickness {m}
+   <%= 0.0116|'k-ip' %>,    !- Conductivity {W/m-K}
+   <%= 2.0|'lb/ft3' %>,        !- Density {kg/m3}
+   <%= 0.22|'cp-ip' %>,        !- Specific Heat {J/kg-K}
+   0.9,                     !- Thermal Absorptance
+   0.7,                     !- Solar Absorptance
+   0.7;                     !- Visible Absorptance
+
 
 ! Wood Framing
  Material,
@@ -748,6 +764,9 @@ Construction,
   <% else %>
   R-19 Fiberglass Batt - Ceiling,     !- Layer 2
   <% end %>
+  <% if isolate_attic %>
+  Superinsulation,         !- Layer
+  <% end %>
   Plasterboard;            !- Layer 3
 
 Construction,
@@ -760,11 +779,17 @@ Construction,
   <% else %>
   Wood Framing - 2x6,        !- Outside Layer
   <% end %>
+  <% if isolate_attic %>
+  Superinsulation,         !- Layer
+  <% end %>
   Plasterboard;            !- Layer 2
 
 Construction,
   Attic floor - Cavity,        !- Name
   Plasterboard,                !- Outside Layer
+  <% if isolate_attic %>
+  Superinsulation,         !- Layer
+  <% end %>
   <% if envelope_eff == "LOW" %>
   R-11 Fiberglass Batt;     !- Layer 2
   <% elsif envelope_eff == "HIGH" %>
@@ -777,6 +802,9 @@ Construction,
 Construction,
   Attic floor - Frame,      !- Name
   Plasterboard,            !- Outside Layer
+  <% if isolate_attic %>
+  Superinsulation,         !- Layer
+  <% end %>
   <% if envelope_eff == "LOW" %>
   Wood Framing - 2x4;     !- Layer 2
   <% elsif envelope_eff == "HIGH" %>
@@ -810,16 +838,19 @@ Construction,
   Ceiling,            !- Name
   <% if envelope_eff == "HIGH" %>
   R-38 Fiberglass Batt - Ceiling,         !- Outside Layer
-  Ceiling Composite (Frame + Cavity),     !- Layer 2
-  Plasterboard;                           !- Layer 3
-  <% else %>
-  Ceiling Composite (Frame + Cavity),     !- Outside Layer
-  Plasterboard;                           !- Layer 2
   <% end %>
+  Ceiling Composite (Frame + Cavity),     !- Layer 2
+  <% if isolate_attic %>
+  Superinsulation,         !- Layer
+  <% end %>
+  Plasterboard;                           !- Layer 3
 
 Construction,
   Attic floor,        !- Name
   Plasterboard,                !- Outside Layer
+  <% if isolate_attic %>
+  Superinsulation,         !- Layer
+  <% end %>
   <% if envelope_eff == "HIGH" %>
   Ceiling Composite (Frame + Cavity),     !- Layer 2
   R-38 Fiberglass Batt - Ceiling;     !- Layer 3
@@ -1156,18 +1187,20 @@ SurfaceProperty:ExposedFoundationPerimeter,
   1;                                  !- Exposed Perimeter Fraction
 <% end %>
 
+<% if interior_walls %>
 !--- Main Zone Internal Mass for Interior Wall Section ---
 InternalMass,
   Interior Wall - Cavity,      !- Name
   Interior Wall - Cavity,      !- Construction Name
   Main Zone,                   !- Zone or ZoneList Name
-  <%= 0.9*interior_wall_area*2 %>;      !- Surface Area {m2} 10% is framed
+  <%= (1.0 - framing_factor_other)*interior_wall_area*2 %>;      !- Surface Area {m2} 10% is framed
 
 InternalMass,
   Interior Wall - Frame,       !- Name
   Interior Wall - Frame,       !- Construction Name
   Main Zone,                   !- Zone or ZoneList Name
-  <%= 0.1*interior_wall_area*2 %>;     !- Surface Area {m2} 10% is framed
+  <%= framing_factor_other*interior_wall_area*2 %>;     !- Surface Area {m2} 10% is framed
+<% end %>
 
 !--- Main Zone Internal Gains Section ---
 ElectricEquipment,
