@@ -205,9 +205,11 @@ task :clean_output, [:tests, :filter] do |t, args|
 end
 
 desc "Clean the results CSVs"
-task :clean_results do
+task :clean_results, [:tests] do |t, args|
+  args.with_defaults(:tests=>'*')
+  tests = args.tests # 'section-7', 'hvac', 'dse'
+  results = Dir["results/#{tests}/*.csv"]
   puts "Cleaning results CSVs..."
-  results = Dir['results/*.csv']
   for csv in results
     FileUtils.rm(csv)
   end
