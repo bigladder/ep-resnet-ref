@@ -1294,7 +1294,10 @@ ZoneHVAC:IdealLoadsAirSystem,
   <%= heat_power %>,       !- Maximum Sensible Heating Capacity {W}
   LimitCapacity,           !- Cooling Limit
   ,                        !- Maximum Cooling Air Flow Rate {m3/s}
-  <%= cool_power %>;       !- Maximum Total Cooling Capacity {W}
+  <%= cool_power %>,       !- Maximum Total Cooling Capacity {W}
+  ,                        !- Heating Availability Schedule Name
+  ,                        !- Cooling Availability Schedule Name
+  None;                    !- Dehumidification Control Type
 
 ZoneControl:Thermostat,
   Main Zone Thermostat,     !- Name
@@ -1610,7 +1613,10 @@ ZoneHVAC:IdealLoadsAirSystem,
     <%= heat_power %>,       !- Maximum Sensible Heating Capacity {W}
     LimitCapacity,           !- Cooling Limit
     ,                        !- Maximum Cooling Air Flow Rate {m3/s}
-    <%= cool_power %>;       !- Maximum Total Cooling Capacity {W}
+    <%= cool_power %>,       !- Maximum Total Cooling Capacity {W}
+    ,                        !- Heating Availability Schedule Name
+    ,                        !- Cooling Availability Schedule Name
+    None;                    !- Dehumidification Control Type
 <% end %>
 
 !--- Outputs Section ---
