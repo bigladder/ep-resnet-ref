@@ -1,7 +1,8 @@
 :case_name=>"L130AC",
 :climate=>"HEATING",
 :win_panes=>2,
-:win_frame_u=>( 1 / ( (1/0.446) - (1/4.256) - (1/1.460) ) )|'U-IP'
+:win_frame_u=>( 1 / ( (1/0.446) - (1/4.256) - (1/1.460) ) )|'U-IP',
+:win_edge_u_ratio=>0.265/0.238
 # calculating win_frame_u by subtracting air films from combined conductance
 # values taken from Table 7-19 for frame with air films and Table 7-20 for air films
 # originally 6.47322 W/m2-K

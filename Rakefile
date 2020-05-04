@@ -1,9 +1,11 @@
 require 'fileutils'
+require 'pathname'
 
-def compose(c, tests)
+def compose(c)
   file_base = File.basename(c,".*")
+  file_dir = Pathname(c).parent.basename
 
-  output_dir = "output/#{tests}/#{file_base}"
+  output_dir = "output/#{file_dir}/#{file_base}"
   #Create output directory
   unless File.directory?(output_dir)
     FileUtils.mkdir_p(output_dir)
@@ -28,8 +30,9 @@ def compose(c, tests)
   return success
 end
 
-def sim(c, tests)
+def sim(c)
   file_base = File.basename(c,".*")
+  file_dir = Pathname(c).parent.basename
 
   if file_base[-1] == "C" or file_base[-2] == "2"
     weather_file = "../../../TMY-Colorad-v5.0.epw"
@@ -41,7 +44,7 @@ def sim(c, tests)
     return success
   end
 
-  output_dir = "output/#{tests}/#{file_base}"
+  output_dir = "output/#{file_dir}/#{file_base}"
 
   src = ["#{output_dir}/in.idf"]
   target = ["#{output_dir}/in-out.err", "#{output_dir}/in-var.csv"]
@@ -50,7 +53,7 @@ def sim(c, tests)
   if !(FileUtils.uptodate?(target[0], src)) or !(FileUtils.uptodate?(target[1], src))
     puts "\nsimulating..."
     Dir.chdir(output_dir){
-      success = system(%Q|modelkit-energyplus energyplus-run -r -w "#{weather_file}" in.idf -o 'eplusout.err; eplusout.rdd; eplusout.sql; eplustbl.htm; eplusvar.csv; eplusvar.eso'|)
+      success = system(%Q|modelkit-energyplus energyplus-run -r -w "#{weather_file}" in.idf -o 'eplusout.err; eplusout.rdd; eplusout.sql; eplustbl.htm; eplusvar.csv; eplusvar.eso; eplusout.eio'|)
     }
     puts "\n"
   else
@@ -60,9 +63,9 @@ def sim(c, tests)
   return success
 end
 
-def results(sql_outputs)
+def results(sql_outputs, tests)
   # check if any file in sql_outputs is more recent that results CSVs
-  output_dir = "results/"
+  output_dir = "results/#{tests}"
   target = ["#{output_dir}/results_CO.csv", "#{output_dir}/results_LV.csv"]
   sql_update_CO = false
   sql_update_LV = false
@@ -160,41 +163,53 @@ desc "Compose and simulate cases"
 task :sim, [:tests, :filter] do |t, args|
   args.with_defaults(:tests=>"*", :filter=>"*")
   tests = args.tests # 'section-7', 'hvac', 'dse'
-  cases = Dir["cases/#{tests}/#{args.filter}.pxv"]
-  for c in cases
-    if !compose(c, tests)
-      puts "\nERROR: Composition failed..."
-      exit
+  tests_dir = Dir["cases/#{tests}"] # 'section-7', 'hvac', 'dse'
+  for t in tests_dir
+    cases = Dir["#{t}/#{args.filter}.pxv"]
+    for c in cases
+      if !compose(c)
+        puts "\nERROR: Composition failed..."
+        exit
+      end
+      if !sim(c)
+        puts "\nERROR: Simulation failed..."
+        exit
+      end
     end
-    if !sim(c, tests)
-      puts "\nERROR: Simulation failed..."
-      exit
+    output_dir = Dir["output/#{tests}"]
+    for o in output_dir
+      t = Pathname(o).basename
+      sql_outputs = Dir["#{o}/*/in-out.sql"]
+      if !results(sql_outputs, t)
+        puts "\nERROR: Making results failed..."
+        exit
+      end
     end
-  end
-  sql_outputs = Dir["output/#{tests}/*/in-out.sql"]
-  if !results(sql_outputs)
-    puts "\nERROR: Making results failed..."
-    exit
   end
 end
 
 task :default, [:filter] => [:sim]
 
-desc "Clean the output directory and results CSVs"
+desc "Clean the output directories"
 task :clean_output, [:tests, :filter] do |t, args|
   args.with_defaults(:tests=>"*", :filter=>"*")
-  outputs = Dir["output/#{args.tests}/#{args.filter}"]
+  outputs = Dir["output/#{args.tests}"]
   puts "Cleaning output..."
   for o in outputs
-    FileUtils.remove_dir(o)
+    cases = Dir["#{o}/#{args.filter}"]
+    for c in cases
+      FileUtils.remove_dir(c)
+    end
   end
   puts "Cleaning output completed."
 end
 
 desc "Clean the results CSVs"
-task :clean_results do
+task :clean_results, [:tests] do |t, args|
+  args.with_defaults(:tests=>'*')
+  tests = args.tests # 'section-7', 'hvac', 'dse'
+  results = Dir["results/#{tests}/*.csv"]
   puts "Cleaning results CSVs..."
-  results = Dir['results/*.csv']
   for csv in results
     FileUtils.rm(csv)
   end
