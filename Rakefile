@@ -31,9 +31,9 @@ end
 def sim(c, tests)
   file_base = File.basename(c,".*")
 
-  if file_base[-1] == "C"
+  if file_base[-1] == "C" or file_base[-2] == "2"
     weather_file = "../../../TMY-Colorad-v5.0.epw"
-  elsif file_base[-1] == "L"
+  elsif file_base[-1] == "L" or file_base[-2] == "1"
     weather_file = "../../../TMY-Lasvega-v5.0.epw"
   else
     success = false

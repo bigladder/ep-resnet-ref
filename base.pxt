@@ -24,6 +24,20 @@
   parameter "envelope_eff", :default=>"TYPICAL" # choices: TYPICAL, LOW, HIGH
   parameter "framing_approach", :default=>"COMPOSITE" # choices: COMPOSITE (lump framing section into cavity section), DETAILED (draw separate surfaces for framing and cavity sections)
 
+# HVAC Parameters
+  parameter "hvac_model", :default=>"SIMPLE" # SIMPLE for ideal air loads | DETAILED for unitary system
+  parameter "heating_type", :default=>"GAS" # heat type, choices: GAS | ASHP | ELECTRIC
+  parameter "cooling_type", :default=>"DX" # cool type, choices: DX | ASHP
+  parameter "fan_flow_per_cap", :default=>360 # 'cfm/ton', From table 4.4.3(1) in the standard
+  parameter "cooling_cap", :default=>0 # cooling capacity, W
+  parameter "heating_cap", :default=>0 # heating capacity, W
+  parameter "afue", :default=>0.78 # heating efficiency for gas furnace and electric resistance
+  parameter "seer", :default=>10 # DX cooling SEER
+  parameter "hspf", :default=>6.8 # Heating Seasonal Performance Factor for ASHP
+  parameter "crankcase_heat", :default=>50 # Taken from table 4.4.3(1) in W
+  parameter "crankcase_max_T", :default=>50|'F' # Taken from table 4.4.3(1) in dgrees celcius
+  parameter "defrost_T", :default=>40|'F' # Taken from table 4.4.3(1) in dgrees celcius
+
 # use for testing simple glazing system
   parameter "window_model", :default=>"DETAILED" # choices: SIMPLE (simple glazing system to set window assembly properties), DETAILED (all window layers defined individually)
   parameter "win_u", :default=>1.039|'U-IP'
@@ -101,6 +115,20 @@ z_attic_top = z_attic_bottom + height_attic
 
 # Internal use
 nsteps = 6
+
+# HVAC system
+if hvac_model == "DETAILED"
+  fan_airflow = fan_flow_per_cap * [heating_cap, cooling_cap].max / (12000|'btuh') # multiplying cfm/ton by max of heating or coolig Btu/hr to get cfm
+
+  if seer >= 14 or afue >= 0.9
+    fan_power_per_flow = 0.000375 # 'kW/cfm', Taken from table 4.4.3(1)
+  else
+    fan_power_per_flow = 0.0005 # 'kW/cfm', Taken from table 4.4.3(1)
+  end
+
+  fan_power = fan_airflow * fan_power_per_flow * 1000 # convert kW to W
+  fan_power_per_flow = (fan_power_per_flow * 1000)/(1|'CFM') # convert kW/cfm to W/m3/s
+end
 %>
 
 <%
@@ -150,8 +178,13 @@ end
     Periodic;         !- Calculation Frequency
 
   SimulationControl,
+<% if hvac_model == "DETAILED" %>
+    Yes,                      !- Do Zone Sizing Calculation
+    Yes,                      !- Do System Sizing Calculation
+<% elsif hvac_model == "SIMPLE" %>
     No,                      !- Do Zone Sizing Calculation
     No,                      !- Do System Sizing Calculation
+<% end %>
     No,                      !- Do Plant Sizing Calculation
     No,                      !- Run Simulation for Sizing Periods
     Yes;                     !- Run Simulation for Weather File Run Periods
@@ -189,6 +222,17 @@ end
     Counterclockwise,        !- Vertex Entry Direction
     World;                   !- Coordinate System
 
+<% if hvac_model == "DETAILED" %>
+!--- Sizing Section ---
+
+SizingPeriod:WeatherFileDays,
+  Sizing Period,                       !- Name
+  1,                       !- Begin Month
+  1,                       !- Begin Day of Month
+  12,                       !- End Month
+  31;                       !- End Day of Month
+
+<% end %>
 !--- Schedule Type Limits Section ---
   ScheduleTypeLimits,
     Any Number;              !- Name
@@ -1228,6 +1272,7 @@ Schedule:Compact,
   Until: 24:00,1;          !- Field 3
 
 !--- Main Zone HVAC Section ---
+<% if hvac_model == "SIMPLE" %>
 ZoneHVAC:EquipmentConnections,
   Main Zone,                !- Zone Name
   Main Zone Equipment,      !- Zone Conditioning Equipment List Name
@@ -1295,6 +1340,50 @@ Schedule:Compact,
   Through: 12/31,          !- Field 1
   For: AllDays,            !- Field 2
   Until: 24:00,25.55555;   !- Field 3
+
+<%
+elsif hvac_model == "DETAILED"
+  require './heat_pump.rb'
+  if cooling_type == "DX"
+    COP_result = calc_heat_pump_COPs(seer, 6.8) # 6.8 here is arbitrary because it does not affect COP_cool
+    cooling_coil_cop = COP_result[0]
+    heating_coil_eff = afue
+    cooling_coil_cd = COP_result[2]
+    heating_coil_cd = COP_result[3] # heating_coil_cd only used for ASHP, but needs to be set to something for unitarysystem.imf template to use
+  elsif cooling_type == "ASHP"
+    COP_result = calc_heat_pump_COPs(13,hspf) # 13 here is arbitrary because it does not affect COP_heat
+    cooling_coil_cop = COP_result[0]
+    heating_coil_eff = COP_result[1]
+    cooling_coil_cd = COP_result[2]
+    heating_coil_cd = COP_result[3]
+  end
+
+  insert "unitarysystem.imf",
+    :system_name=>"HVAC",
+    :zone_names=>["Main Zone"],
+    :control_zone_name=>"Main Zone",
+    :heating_coil_type=>heating_type,
+    :cooling_coil_type=>cooling_type,
+    :fan_flow_supply=>fan_airflow|'cfm',
+    :fan_power=>fan_power,
+    :fan_powerperflow=>fan_power_per_flow,
+    :cooling_coil_cap=>cooling_cap,
+    :heating_coil_cap=>heating_cap,
+    :cooling_coil_cop=>cooling_coil_cop,
+    :heating_coil_eff=>heating_coil_eff,
+    :hp_defrost_temp=>defrost_T,
+    :crankcase_cap=>crankcase_heat,
+    :crankcase_max_temp=>crankcase_max_T,
+    :cooling_coil_cd=>cooling_coil_cd,
+    :heating_coil_cd=>heating_coil_cd
+
+  insert "atu.pxt",
+    :zone_name=>"Main Zone",
+    :terminal_max_flow=>fan_airflow|'cfm',
+    :heating_setpoint=>20,
+    :cooling_setpoint=>25.55555
+end
+%>
 
 <%
 # Surfaces in Unconditioned Attic Zone
@@ -1537,6 +1626,7 @@ SurfaceProperty:ExposedFoundationPerimeter,
     <% end %>
   <% end %>
 
+  <% if hvac_model == "SIMPLE" %>
 ZoneControl:Thermostat,
     Basement Zone Thermostat,  !- Name
     Basement Zone,     !- Zone or ZoneList Name
@@ -1578,6 +1668,8 @@ ZoneHVAC:IdealLoadsAirSystem,
     LimitCapacity,           !- Cooling Limit
     ,                        !- Maximum Cooling Air Flow Rate {m3/s}
     <%= cool_power %>;       !- Maximum Total Cooling Capacity {W}
+
+  <% end %>
 <% end %>
 
 !--- Outputs Section ---

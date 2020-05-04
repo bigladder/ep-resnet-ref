@@ -1,0 +1,132 @@
+<%#INITIALIZE
+parameter "zone_name" # name of Zone object in model
+parameter "system_name", :default=>nil # name of Air Loop System that air terminals are connected to
+
+parameter "terminal_type", :default=>"CAV" # (CAV) Type of air terminals to create
+
+parameter "design_heating_sat", :default=>120|'F' # Design heating supply air temp leaving air terminal. Default 113 for CAV / VAV, 140F for induction coil, 86 for DOAS / chilled beam
+parameter "design_cooling_sat", :default=>45|'F' # Design cooling supply air temp leaving air terminal. Default 55 for CAV / VAV / induction coil, 53 for DOAS / chilled beam
+
+parameter "heating_setpoint", :default=>70|'F' # Setpoint temp where thermostat turns on heating.
+parameter "cooling_setpoint", :default=>75|'F' # Setpoint temp where thermostat turns on cooling.
+
+parameter "oa_method", :default=>"Sum" # (Flow/Person | Flow/Area | Flow/Zone | AirChanges/Hour | Sum | Maximum ) Sets how E+ calculates zone OA needs
+parameter "oa_person", :default=>0|'CFM' # Defines zone OA needs per occupant
+parameter "oa_area", :default=>0|'CFM/ft2' # Defines zone OA needs per floor area
+parameter "oa_zone", :default=>0|'CFM' # Defines zone OA needs as absolute CFM
+
+parameter "terminal_min_flow_frac", :default=>1.0 # Fraction of minimum flow to design flow of terminal. Used with all terminals except parallel and series FPB VAV terminals.
+parameter "terminal_max_flow", :default=>"Autosize"
+
+parameter "heating_coil_type", :default=>"NONE"    # (NONE | GAS | ELECTRIC | HOTWATER) Terminal reheat coil type
+
+parameter "upstream_duct_leakage", :default=>0  # Leakage fraction to return plenum in ducts upstream of the terminal unit
+parameter "downstream_duct_leakage", :default=>0  # Leakage fraction to return plenum in ducts downstream of the terminal unit
+
+parameter "operation_schedule", :default=>
+"
+  Through: 12/31,          !- Field 1
+  For: AllDays,            !- Field 2
+  Until: 24:00, 1.0;       !- Field 3
+"
+%>
+
+Sizing:Zone,
+  <%= zone_name %>,        !- Zone or ZoneList Name
+  SupplyAirTemperature,    !- Zone Cooling Design Supply Air Temperature Input Method
+  <%= design_cooling_sat %>,                   !- Zone Cooling Design Supply Air Temperature {C}
+  ,                        !- Zone Cooling Design Supply Air Temperature Difference {deltaC}
+  SupplyAirTemperature,    !- Zone Heating Design Supply Air Temperature Input Method
+  <%= design_heating_sat %>,                      !- Zone Heating Design Supply Air Temperature {C}
+  ,                        !- Zone Heating Design Supply Air Temperature Difference {deltaC}
+  0.0085,                  !- Zone Cooling Design Supply Air Humidity Ratio {kgWater/kgDryAir}
+  0.0080,                  !- Zone Heating Design Supply Air Humidity Ratio {kgWater/kgDryAir}
+  <%= zone_name %> Design OA,  !- Design Specification Outdoor Air Object Name
+  ,                        !- Zone Heating Sizing Factor
+  ,                        !- Zone Cooling Sizing Factor
+  DesignDay,               !- Cooling Design Air Flow Method
+  ,                        !- Cooling Design Air Flow Rate {m3/s}
+  ,                        !- Cooling Minimum Air Flow per Zone Floor Area {m3/s-m2}
+  ,                        !- Cooling Minimum Air Flow {m3/s}
+  ,                        !- Cooling Minimum Air Flow Fraction
+  DesignDay,               !- Heating Design Air Flow Method
+  ,                        !- Heating Design Air Flow Rate {m3/s}
+  ,                        !- Heating Maximum Air Flow per Zone Floor Area {m3/s-m2}
+  ,                        !- Heating Maximum Air Flow {m3/s}
+  ;                        !- Heating Maximum Air Flow Fraction
+
+DesignSpecification:OutdoorAir,
+  <%= zone_name %> Design OA,  !- Name
+  <%= oa_method %>,        !- Outdoor Air Method
+  <%= oa_person %>,        !- Outdoor Air Flow per Person {m3/s-person}
+  <%= oa_area %>,          !- Outdoor Air Flow per Zone Floor Area {m3/s-m2}
+  <%= oa_zone %>;          !- Outdoor Air Flow per Zone {m3/s}
+
+ZoneControl:Thermostat,
+  <%= zone_name %> Thermostat,  !- Name
+  <%= zone_name %>,        !- Zone or ZoneList Name
+  <%= zone_name %> Thermostat Type Sched,  !- Control Type Schedule Name
+  ThermostatSetpoint:DualSetpoint,  !- Control 1 Object Type
+  <%= zone_name %> Setpoints;  !- Control 1 Name
+
+Schedule:Constant,
+  <%= zone_name %> Thermostat Type Sched,  !- Name
+  Control Type,            !- Schedule Type Limits Name
+  4;                       !- Hourly Value
+
+ThermostatSetpoint:DualSetpoint,
+  <%= zone_name %> Setpoints,  !- Name
+  <%= zone_name %> Heating Setpoint Sch,  !- Heating Setpoint Temperature Schedule Name
+  <%= zone_name %> Cooling Setpoint Sch;  !- Cooling Setpoint Temperature Schedule Name
+
+Schedule:Constant,
+  <%= zone_name %> Heating Setpoint Sch,  !- Name
+  Any Number,              !- Schedule Type Limits Name
+  <%= heating_setpoint %>;  !- Hourly Value
+
+Schedule:Constant,
+  <%= zone_name %> Cooling Setpoint Sch,  !- Name
+  Any Number,              !- Schedule Type Limits Name
+  <%= cooling_setpoint %>;  !- Hourly Value
+
+Schedule:Compact,
+  <%= zone_name %> Operation Schedule,  !- Name
+  On/Off,                  !- Schedule Type Limits Name
+<%= operation_schedule %>
+
+ZoneHVAC:EquipmentConnections,
+  <%= zone_name %>,        !- Zone Name
+  <%= zone_name %> Equipment,  !- Zone Conditioning Equipment List Name
+  <%= zone_name %> ATU Outlet Node,  !- Zone Air Inlet Node or NodeList Name
+  ,                        !- Zone Air Exhaust Node or NodeList Name
+  <%= zone_name %> Air Node,  !- Zone Air Node Name
+  <%= zone_name %> Return Node;  !- Zone Return Air Node Name
+
+ZoneHVAC:EquipmentList,
+  <%= zone_name %> Equipment,  !- Name
+  SequentialLoad,  !- Load Distribution Scheme
+  ZoneHVAC:AirDistributionUnit,  !- Zone Equipment 1 Object Type
+  <%= zone_name %> Air Distribution Unit,  !- Zone Equipment 1 Name
+  1,                       !- Zone Equipment 1 Cooling Sequence
+  1,                       !- Zone Equipment 1 Heating or No-Load Sequence
+  ,                        !- Zone Equipment 1 Sequential Cooling Fraction
+  ;                        !- Zone Equipment 1 Sequential Heating Fraction
+
+ZoneHVAC:AirDistributionUnit,
+  <%= zone_name %> Air Distribution Unit,  !- Name
+  <%= zone_name %> ATU Outlet Node,  !- Air Distribution Unit Outlet Node Name
+  AirTerminal:SingleDuct:VAV:NoReheat,  !- Air Terminal Object Type
+  <%= zone_name %> ATU,            !- Air Terminal Name
+  <%= upstream_duct_leakage %>,            !- Nominal Upstream Leakage Fraction
+  <%= downstream_duct_leakage %>;            !- Constant Downstream Leakage Fraction
+
+AirTerminal:SingleDuct:VAV:NoReheat,
+  <%= zone_name %> ATU,    !- Name
+  <%= zone_name %> Operation Schedule,  !- Availability Schedule Name
+  <%= zone_name %> ATU Outlet Node,  !- Air Outlet Node Name
+  <%= zone_name %> ATU Inlet Node,  !- Air Inlet Node Name
+  <%= terminal_max_flow %>,                !- Maximum Air Flow Rate {m3/s}
+  Constant,                !- Zone Minimum Air Flow Input Method
+  <%= terminal_min_flow_frac %>,                        !- Constant Minimum Air Flow Fraction
+  ,                        !- Fixed Minimum Air Flow Rate {m3/s}
+  ;                        !- Minimum Air Flow Fraction Schedule Name

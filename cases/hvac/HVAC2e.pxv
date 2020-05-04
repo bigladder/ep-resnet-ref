@@ -1,0 +1,6 @@
+:case_name=>"HVAC2e",
+:climate=>"HEATING",
+:heating_cap=>56100|'btuh',
+:heating_type=>"ELECTRIC",
+:afue=>1.0,
+:hvac_model=>"DETAILED"
