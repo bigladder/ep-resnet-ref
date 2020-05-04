@@ -6,6 +6,7 @@
 # This makes it easier to interpret hourly total loads from applied schedule
   parameter "int_load", :default=>10000|'btuh'
   parameter "win_frame_u", :default=>9.096|'U-IP' # Surface-to-surface frame conductance from Table 7-4
+  parameter "win_edge_u_ratio", :default=>1.0   # L100A: 1.064/1.064 = 1.0, L130A: 0.265/0.238 = 1.11
   parameter "win_panes", :default=>1 # number of windows panes
   parameter "ext_sol_abs_exposed", :default=>0.6 # applied to exterior face of exposed surfaces (exterior walls, roofs, end gables, doors)
   parameter "north_windows", :default=>[5|'ft',14|'ft',28|'ft',34|'ft',41|'ft',46|'ft'] # 6 windows in North exterior wall (measured from the left side of the wall)
@@ -659,7 +660,7 @@ WindowProperty:FrameAndDivider,
   ,                        !- Frame Outside Projection {m}
   ,                        !- Frame Inside Projection {m}
   <%= win_frame_u %>,      !- Frame Conductance {W/m2-K}
-  1,                       !- Ratio of Frame-Edge Glass Conductance to Center-Of-Glass Conductance
+  <%= win_edge_u_ratio %>,  !- Ratio of Frame-Edge Glass Conductance to Center-Of-Glass Conductance
   0.6,                     !- Frame Solar Absorptance
   0,                       !- Frame Visible Absorptance
   0.9,                     !- Frame Thermal Hemispherical Emissivity
@@ -670,7 +671,7 @@ WindowProperty:FrameAndDivider,
   ,                        !- Divider Outside Projection {m}
   ,                        !- Divider Inside Projection {m}
   <%= win_frame_u %>,      !- Divider Conductance {W/m2-K}
-  1,                       !- Ratio of Divider-Edge Glass Conductance to Center-Of-Glass Conductance
+  <%= win_edge_u_ratio %>,  !- Ratio of Divider-Edge Glass Conductance to Center-Of-Glass Conductance
   0.6,                     !- Divider Solar Absorptance
   0,                       !- Divider Visible Absorptance
   0.9;                     !- Divider Thermal Hemispherical Emissivity
