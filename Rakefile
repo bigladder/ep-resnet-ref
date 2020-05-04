@@ -53,7 +53,7 @@ def sim(c)
   if !(FileUtils.uptodate?(target[0], src)) or !(FileUtils.uptodate?(target[1], src))
     puts "\nsimulating..."
     Dir.chdir(output_dir){
-      success = system(%Q|modelkit-energyplus energyplus-run -r -w "#{weather_file}" in.idf -o 'eplusout.err; eplusout.rdd; eplusout.sql; eplustbl.htm; eplusvar.csv; eplusvar.eso'|)
+      success = system(%Q|modelkit-energyplus energyplus-run -r -w "#{weather_file}" in.idf -o 'eplusout.err; eplusout.rdd; eplusout.sql; eplustbl.htm; eplusvar.csv; eplusvar.eso; eplusout.eio'|)
     }
     puts "\n"
   else

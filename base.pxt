@@ -1627,10 +1627,11 @@ ZoneHVAC:IdealLoadsAirSystem,
     HTML,                    !- Column Separator
     InchPound;               !- Unit Conversion
 
+  Output:Constructions,Constructions;
+
   Output:VariableDictionary,IDF;
 
   Output:Variable,*,Site Outdoor Air Drybulb Temperature,Hourly;
-
   Output:Variable,*,Zone Mean Air Temperature,Hourly;
   Output:Variable,*,Zone Thermostat Heating Setpoint Temperature,Hourly;
   Output:Variable,*,Zone Thermostat Cooling Setpoint Temperature,Hourly;
@@ -1638,5 +1639,7 @@ ZoneHVAC:IdealLoadsAirSystem,
   Output:Variable,*,Zone Ideal Loads Supply Air Total Cooling Energy,Hourly;
   Output:Variable,*,Zone Windows Total Transmitted Solar Radiation Energy,Hourly;
   Output:Variable,*,Zone Infiltration Sensible Heat Loss Energy,Hourly;
+  Output:Variable,*,Zone Windows Total Heat Gain Energy,hourly; !- Zone Sum [J]
+  Output:Variable,*,Zone Windows Total Heat Loss Energy,hourly; !- Zone Sum [J]
 
   Output:SQLite, SimpleAndTabular;  !- Option Type
