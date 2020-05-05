@@ -76,9 +76,9 @@ def results(sql_outputs, tests)
 
   for sql in sql_outputs
     case_name = File.dirname(sql)
-    if case_name[-1] == "C"
+    if case_name[-1] == "C" or case_name[-2] == "2"
       sql_files_CO << sql
-    elsif case_name[-1] == "L"
+    elsif case_name[-1] == "L" or case_name[-2] == "1"
       sql_files_LV << sql
     end
   end
@@ -108,10 +108,10 @@ def results(sql_outputs, tests)
 
     for sql in sql_outputs
       case_name = File.dirname(sql)
-      if case_name[-1] == "C"
+      if case_name[-1] == "C" or case_name[-2] == "2"
         src_CO << sql
         File.write(sql_batch_CO, "#{sql}\n", mode: "a")
-      elsif case_name[-1] == "L"
+      elsif case_name[-1] == "L" or case_name[-2] == "1"
         src_LV << sql
         File.write(sql_batch_LV, "#{sql}\n", mode: "a")
       else
