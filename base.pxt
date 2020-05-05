@@ -1412,7 +1412,8 @@ elsif hvac_model == "DETAILED"
     :crankcase_cap=>crankcase_heat,
     :crankcase_max_temp=>crankcase_max_T,
     :cooling_coil_cd=>cooling_coil_cd,
-    :heating_coil_cd=>heating_coil_cd
+    :heating_coil_cd=>heating_coil_cd,
+    :curve_source=>"open_studio"
 
   insert "atu.pxt",
     :zone_name=>"Main Zone",

@@ -2,6 +2,7 @@
 parameter "system_name"
 parameter "zone_names"
 
+parameter "curve_source", :default=>"big_ladder"
 parameter "control_zone_name", :default=>nil
 
 # Control Type field input for AirLoopHVAC:UnitarySystem object; in general, use "Load" for single-zone systems and "Setpoint" for multi-zone systems
@@ -406,131 +407,249 @@ Coil:Cooling:DX:SingleSpeed,
   ,                        !- Supply Water Storage Tank Name
   ;                        !- Condensate Collection Water Storage Tank Name
 
+ <% if (curve_source == "big_ladder") %>
   <% if (cooling_coil_type == "ASHP") %>
-! Following performance curves taken from single-speed ASHP system in BeOpt
 
-!Curve:Biquadratic,
-!   <%= system_name %> Cool-Cap-fT,   !- Name
-!   1.5573597060000006,-0.0744481692,0.00309859668,0.0014595786,-0.000041148,-0.00042671448,   !- Coefficients (list)
-!   13.88,         !- Minimum Value of x
-!   23.88,         !- Maximum Value of x
-!   18.33,         !- Minimum Value of y
-!   51.66;         !- Maximum Value of y
+  ! Following performance curves taken from single-speed ASHP system in BeOpt
 
-!Curve:Biquadratic,
-!   <%= system_name %> Cool-EIR-fT,   !- Name
-!   -0.3504476949999999,0.116809893,-0.00339950844,-0.001226088,0.0006008094,-0.000466884,   !- Coefficients (List)
-!   13.88,         !- Minimum Value of x
-!   23.88,         !- Maximum Value of x
-!   18.33,         !- Minimum Value of y
-!   51.66;         !- Maximum Value of y
+  !Curve:Biquadratic,
+  !   <%= system_name %> Cool-Cap-fT,   !- Name
+  !   1.5573597060000006,-0.0744481692,0.00309859668,0.0014595786,-0.000041148,-0.00042671448,   !- Coefficients (list)
+  !   13.88,         !- Minimum Value of x
+  !   23.88,         !- Maximum Value of x
+  !   18.33,         !- Minimum Value of y
+  !   51.66;         !- Maximum Value of y
 
-!Curve:Quadratic,
-!   <%= system_name %> Cool-PLF-fPLR,   !- Name
-!   <%= 1 - cooling_coil_cd %>,<%= cooling_coil_cd %>,0,     !- Coefficients (List)
-!   0,               !- Minimum Value of x
-!   1,               !- Maximum Value of x
-!   0.7,             !- Minimum Value of y
-!   1;               !- Maximum Value of y
+  !Curve:Biquadratic,
+  !   <%= system_name %> Cool-EIR-fT,   !- Name
+  !   -0.3504476949999999,0.116809893,-0.00339950844,-0.001226088,0.0006008094,-0.000466884,   !- Coefficients (List)
+  !   13.88,         !- Minimum Value of x
+  !   23.88,         !- Maximum Value of x
+  !   18.33,         !- Minimum Value of y
+  !   51.66;         !- Maximum Value of y
 
-!Curve:Quadratic,
-!   <%= system_name %> Cool-Cap-fFF,  !- Name
-!   0.718664047,0.41797409,-0.136638137,   !- Coefficients (List)
-!   0,                                     !- Minimum Value of x
-!   2,                                     !- Maximum Value of x
-!   0,                                     !- Minimum Value of y
-!   2;                                     !- Maximum Value of y
+  !Curve:Quadratic,
+  !   <%= system_name %> Cool-PLF-fPLR,   !- Name
+  !   <%= 1 - cooling_coil_cd %>,<%= cooling_coil_cd %>,0,     !- Coefficients (List)
+  !   0,               !- Minimum Value of x
+  !   1,               !- Maximum Value of x
+  !   0.7,             !- Minimum Value of y
+  !   1;               !- Maximum Value of y
 
-!Curve:Quadratic,
-!   <%= system_name %> Cool-EIR-fFF,  !- Name
-!   1.143487507,-0.13943972,-0.004047787,   !- Coefficients (List)
-!   0,                                      !- Minimum Value of x
-!   2,                                      !- Maximum Value of x
-!   0,                                      !- Minimum Value of y
-!   2;                                      !- Maximum Value of y
-! Following performance curves taken from single-speed DX system in BeOpt
+  !Curve:Quadratic,
+  !   <%= system_name %> Cool-Cap-fFF,  !- Name
+  !   0.718664047,0.41797409,-0.136638137,   !- Coefficients (List)
+  !   0,                                     !- Minimum Value of x
+  !   2,                                     !- Maximum Value of x
+  !   0,                                     !- Minimum Value of y
+  !   2;                                     !- Maximum Value of y
 
-Curve:Biquadratic,
-   <%= system_name %> Cool-Cap-fT,   !- Name
-   1.5509020010000003,-0.0750500892,0.00309713544,0.00240111,-0.000050544,-0.00042728148,   !- Coefficients (list)
-   13.88,         !- Minimum Value of x
-   23.88,         !- Maximum Value of x
-   18.33,         !- Minimum Value of y
-   51.66;         !- Maximum Value of y
+  !Curve:Quadratic,
+  !   <%= system_name %> Cool-EIR-fFF,  !- Name
+  !   1.143487507,-0.13943972,-0.004047787,   !- Coefficients (List)
+  !   0,                                      !- Minimum Value of x
+  !   2,                                      !- Maximum Value of x
+  !   0,                                      !- Minimum Value of y
+  !   2;                                      !- Maximum Value of y
+  ! Following performance curves taken from single-speed DX system in BeOpt
 
-Curve:Biquadratic,
-   <%= system_name %> Cool-EIR-fT,   !- Name
-   -3.437356399, 0.136656369, -0.001049231, -0.0079378, 0.000185435, -0.0001441,   !- Coefficients (List)
-   13.88,         !- Minimum Value of x
-   23.88,         !- Maximum Value of x
-   18.33,         !- Minimum Value of y
-   51.66;         !- Maximum Value of y
+  Curve:Biquadratic,
+     <%= system_name %> Cool-Cap-fT,   !- Name
+     1.5509020010000003,-0.0750500892,0.00309713544,0.00240111,-0.000050544,-0.00042728148,   !- Coefficients (list)
+     13.88,         !- Minimum Value of x
+     23.88,         !- Maximum Value of x
+     18.33,         !- Minimum Value of y
+     51.66;         !- Maximum Value of y
+
+  Curve:Biquadratic,
+     <%= system_name %> Cool-EIR-fT,   !- Name
+     -3.437356399, 0.136656369, -0.001049231, -0.0079378, 0.000185435, -0.0001441,   !- Coefficients (List)
+     13.88,         !- Minimum Value of x
+     23.88,         !- Maximum Value of x
+     18.33,         !- Minimum Value of y
+     51.66;         !- Maximum Value of y
+
+  Curve:Quadratic,
+     <%= system_name %> Cool-PLF-fPLR,               !- Name
+     <%= 1 - cooling_coil_cd %>,<%= cooling_coil_cd %>,0,     !- Coefficients (List)
+     0,                           !- Minimum Value of x
+     1,                           !- Maximum Value of x
+     0.7,                         !- Minimum Value of y
+     1;                           !- Maximum Value of y
+
+  Curve:Quadratic,
+     <%= system_name %> Cool-Cap-fFF,                           !- Name
+     0.718605468,0.410099989,-0.128705457,   !- Coefficients (List)
+     0,                                      !- Minimum Value of x
+     2,                                      !- Maximum Value of x
+     0,                                      !- Minimum Value of y
+     2;                                      !- Maximum Value of y
+
+  Curve:Quadratic,
+     <%= system_name %> Cool-EIR-fFF,                          !- Name
+     1.32299905,-0.477711207,0.154712157,   !- Coefficients (List)
+     0,                                     !- Minimum Value of x
+     2,                                     !- Maximum Value of x
+     0,                                     !- Minimum Value of y
+     2;                                     !- Maximum Value of y
+    <% elsif (cooling_coil_type == "DX") %>
+  ! Following performance curves taken from single-speed DX system in BeOpt
+
+  Curve:Biquadratic,
+     <%= system_name %> Cool-Cap-fT,   !- Name
+     1.5509020010000003,-0.0750500892,0.00309713544,0.00240111,-0.000050544,-0.00042728148,   !- Coefficients (list)
+     13.88,         !- Minimum Value of x
+     23.88,         !- Maximum Value of x
+     18.33,         !- Minimum Value of y
+     51.66;         !- Maximum Value of y
+
+  Curve:Biquadratic,
+     <%= system_name %> Cool-EIR-fT,   !- Name
+     -3.437356399, 0.136656369, -0.001049231, -0.0079378, 0.000185435, -0.0001441,   !- Coefficients (List)
+     13.88,         !- Minimum Value of x
+     23.88,         !- Maximum Value of x
+     18.33,         !- Minimum Value of y
+     51.66;         !- Maximum Value of y
+
+  Curve:Quadratic,
+     <%= system_name %> Cool-PLF-fPLR,               !- Name
+     <%= 1 - cooling_coil_cd %>,<%= cooling_coil_cd %>,0,     !- Coefficients (List)
+     0,                           !- Minimum Value of x
+     1,                           !- Maximum Value of x
+     0.7,                         !- Minimum Value of y
+     1;                           !- Maximum Value of y
+
+  Curve:Quadratic,
+     <%= system_name %> Cool-Cap-fFF,                           !- Name
+     0.718605468,0.410099989,-0.128705457,   !- Coefficients (List)
+     0,                                      !- Minimum Value of x
+     2,                                      !- Maximum Value of x
+     0,                                      !- Minimum Value of y
+     2;                                      !- Maximum Value of y
+
+  Curve:Quadratic,
+     <%= system_name %> Cool-EIR-fFF,                          !- Name
+     1.32299905,-0.477711207,0.154712157,   !- Coefficients (List)
+     0,                                     !- Minimum Value of x
+     2,                                     !- Maximum Value of x
+     0,                                     !- Minimum Value of y
+     2;                                     !- Maximum Value of y
+    <% end %>
+ <% elsif (curve_source == "open_studio") %>
+  <% if (cooling_coil_type == "ASHP") %>
+
+  Curve:Biquadratic,
+    <%= system_name %> Cool-Cap-fT,                           !- Name
+    1.557359706,                            !- Coefficient1 Constant
+    -0.0744481692,                          !- Coefficient2 x
+    0.00309859668,                          !- Coefficient3 x**2
+    0.0014595786,                           !- Coefficient4 y
+    -4.1148e-005,                           !- Coefficient5 y**2
+    -0.00042671448,                         !- Coefficient6 x*y
+    13.88,                                  !- Minimum Value of x {BasedOnField A2}
+    23.88,                                  !- Maximum Value of x {BasedOnField A2}
+    18.33,                                  !- Minimum Value of y {BasedOnField A3}
+    51.66;                                  !- Maximum Value of y {BasedOnField A3}
+
+  Curve:Quadratic,
+    <%= system_name %> Cool-Cap-fFF,                          !- Name
+    0.718664047,                            !- Coefficient1 Constant
+    0.41797409,                             !- Coefficient2 x
+    -0.136638137,                           !- Coefficient3 x**2
+    0,                                      !- Minimum Value of x {BasedOnField A2}
+    2,                                      !- Maximum Value of x {BasedOnField A2}
+    0,                                      !- Minimum Curve Output {BasedOnField A3}
+    2;                                      !- Maximum Curve Output {BasedOnField A3}
+
+  Curve:Biquadratic,
+    <%= system_name %> Cool-EIR-fT,                           !- Name
+    -0.350447695,                           !- Coefficient1 Constant
+    0.116809893,                            !- Coefficient2 x
+    -0.00339950844,                         !- Coefficient3 x**2
+    -0.001226088,                           !- Coefficient4 y
+    0.0006008094,                           !- Coefficient5 y**2
+    -0.000466884,                           !- Coefficient6 x*y
+    13.88,                                  !- Minimum Value of x {BasedOnField A2}
+    23.88,                                  !- Maximum Value of x {BasedOnField A2}
+    18.33,                                  !- Minimum Value of y {BasedOnField A3}
+    51.66;                                  !- Maximum Value of y {BasedOnField A3}
+
+  Curve:Quadratic,
+    <%= system_name %> Cool-EIR-fFF,                          !- Name
+    1.143487507,                            !- Coefficient1 Constant
+    -0.13943972,                            !- Coefficient2 x
+    -0.004047787,                           !- Coefficient3 x**2
+    0,                                      !- Minimum Value of x {BasedOnField A2}
+    2,                                      !- Maximum Value of x {BasedOnField A2}
+    0,                                      !- Minimum Curve Output {BasedOnField A3}
+    2;                                      !- Maximum Curve Output {BasedOnField A3}
+
+
+  Curve:Quadratic,
+     <%= system_name %> Cool-PLF-fPLR,               !- Name
+     <%= 1 - cooling_coil_cd %>,<%= cooling_coil_cd %>,0,     !- Coefficients (List)
+     0,                           !- Minimum Value of x
+     1,                           !- Maximum Value of x
+     0.7,                         !- Minimum Value of y
+     1;                           !- Maximum Value of y
+
+    <% elsif (cooling_coil_type == "DX") %>
+  ! Following performance curves taken from single-speed DX system in BeOpt
+
+  Curve:Biquadratic,
+     <%= system_name %> Cool-Cap-fT,   !- Name
+    1.550902001,                            !- Coefficient1 Constant
+    -0.0750500892,                          !- Coefficient2 x
+    0.00309713544,                          !- Coefficient3 x**2
+    0.00240111,                             !- Coefficient4 y
+    -5.0544e-005,                           !- Coefficient5 y**2
+    -0.00042728148,                         !- Coefficient6 x*y
+    13.88,                                  !- Minimum Value of x {BasedOnField A2}
+    23.88,                                  !- Maximum Value of x {BasedOnField A2}
+    18.33,                                  !- Minimum Value of y {BasedOnField A3}
+    51.66;                                  !- Maximum Value of y {BasedOnField A3}
+
+  Curve:Biquadratic,
+     <%= system_name %> Cool-EIR-fT,   !- Name
+    -0.304282997000001,                     !- Coefficient1 Constant
+    0.1180477062,                           !- Coefficient2 x
+    -0.00342466704,                         !- Coefficient3 x**2
+    -0.0062619138,                          !- Coefficient4 y
+    0.00069542712,                          !- Coefficient5 y**2
+    -0.00046997496,                         !- Coefficient6 x*y
+    13.88,                                  !- Minimum Value of x {BasedOnField A2}
+    23.88,                                  !- Maximum Value of x {BasedOnField A2}
+    18.33,                                  !- Minimum Value of y {BasedOnField A3}
+    51.66;                                  !- Maximum Value of y {BasedOnField A3}
+
+  Curve:Quadratic,
+     <%= system_name %> Cool-PLF-fPLR,               !- Name
+     <%= 1 - cooling_coil_cd %>,<%= cooling_coil_cd %>,0,     !- Coefficients (List)
+     0,                           !- Minimum Value of x
+     1,                           !- Maximum Value of x
+     0.7,                         !- Minimum Value of y
+     1;                           !- Maximum Value of y
 
 Curve:Quadratic,
-   <%= system_name %> Cool-PLF-fPLR,               !- Name
-   <%= 1 - cooling_coil_cd %>,<%= cooling_coil_cd %>,0,     !- Coefficients (List)
-   0,                           !- Minimum Value of x
-   1,                           !- Maximum Value of x
-   0.7,                         !- Minimum Value of y
-   1;                           !- Maximum Value of y
+     <%= system_name %> Cool-Cap-fFF,                           !- Name
+    0.718605468,                            !- Coefficient1 Constant
+    0.410099989,                            !- Coefficient2 x
+    -0.128705457,                           !- Coefficient3 x**2
+    0,                                      !- Minimum Value of x {BasedOnField A2}
+    2,                                      !- Maximum Value of x {BasedOnField A2}
+    0,                                      !- Minimum Curve Output {BasedOnField A3}
+    2;                                      !- Maximum Curve Output {BasedOnField A3}
 
-Curve:Quadratic,
-   <%= system_name %> Cool-Cap-fFF,                           !- Name
-   0.718605468,0.410099989,-0.128705457,   !- Coefficients (List)
-   0,                                      !- Minimum Value of x
-   2,                                      !- Maximum Value of x
-   0,                                      !- Minimum Value of y
-   2;                                      !- Maximum Value of y
-
-Curve:Quadratic,
-   <%= system_name %> Cool-EIR-fFF,                          !- Name
-   1.32299905,-0.477711207,0.154712157,   !- Coefficients (List)
-   0,                                     !- Minimum Value of x
-   2,                                     !- Maximum Value of x
-   0,                                     !- Minimum Value of y
-   2;                                     !- Maximum Value of y
-  <% elsif (cooling_coil_type == "DX") %>
-! Following performance curves taken from single-speed DX system in BeOpt
-
-Curve:Biquadratic,
-   <%= system_name %> Cool-Cap-fT,   !- Name
-   1.5509020010000003,-0.0750500892,0.00309713544,0.00240111,-0.000050544,-0.00042728148,   !- Coefficients (list)
-   13.88,         !- Minimum Value of x
-   23.88,         !- Maximum Value of x
-   18.33,         !- Minimum Value of y
-   51.66;         !- Maximum Value of y
-
-Curve:Biquadratic,
-   <%= system_name %> Cool-EIR-fT,   !- Name
-   -3.437356399, 0.136656369, -0.001049231, -0.0079378, 0.000185435, -0.0001441,   !- Coefficients (List)
-   13.88,         !- Minimum Value of x
-   23.88,         !- Maximum Value of x
-   18.33,         !- Minimum Value of y
-   51.66;         !- Maximum Value of y
-
-Curve:Quadratic,
-   <%= system_name %> Cool-PLF-fPLR,               !- Name
-   <%= 1 - cooling_coil_cd %>,<%= cooling_coil_cd %>,0,     !- Coefficients (List)
-   0,                           !- Minimum Value of x
-   1,                           !- Maximum Value of x
-   0.7,                         !- Minimum Value of y
-   1;                           !- Maximum Value of y
-
-Curve:Quadratic,
-   <%= system_name %> Cool-Cap-fFF,                           !- Name
-   0.718605468,0.410099989,-0.128705457,   !- Coefficients (List)
-   0,                                      !- Minimum Value of x
-   2,                                      !- Maximum Value of x
-   0,                                      !- Minimum Value of y
-   2;                                      !- Maximum Value of y
-
-Curve:Quadratic,
-   <%= system_name %> Cool-EIR-fFF,                          !- Name
-   1.32299905,-0.477711207,0.154712157,   !- Coefficients (List)
-   0,                                     !- Minimum Value of x
-   2,                                     !- Maximum Value of x
-   0,                                     !- Minimum Value of y
-   2;                                     !- Maximum Value of y
+  Curve:Quadratic,
+     <%= system_name %> Cool-EIR-fFF,                          !- Name
+    1.32299905,                             !- Coefficient1 Constant
+    -0.477711207,                           !- Coefficient2 x
+    0.154712157,                            !- Coefficient3 x**2
+    0,                                      !- Minimum Value of x {BasedOnField A2}
+    2,                                      !- Maximum Value of x {BasedOnField A2}
+    0,                                      !- Minimum Curve Output {BasedOnField A3}
+    2;                                      !- Maximum Curve Output {BasedOnField A3}
+    <% end %>
   <% end %>
 <% end %>
 
@@ -608,55 +727,123 @@ Coil:Heating:DX:SingleSpeed,
   Timed,                          !- Defrost Control
   0.0;                       !- Defrost Time Period Fraction
 
-! Following performance curves taken from single-speed ASHP system in BeOpt
-Curve:Biquadratic,
-  <%= system_name %> HP_Heat-Cap-fT,   !- Name
-  0.566333415, -0.000744164, -0.0000103, 0.009414634, 0.0000506, -0.00000675,   !- Coefficients (list)
-  -100,             !- Minimum Value of x
-  100,              !- Maximum Value of x
-  -100,             !- Minimum Value of y
-  100;              !- Maximum Value of y
+  <% if (curve_source == "big_ladder") %>
+    ! Following performance curves taken from single-speed ASHP system in BeOpt
+    Curve:Biquadratic,
+      <%= system_name %> HP_Heat-Cap-fT,   !- Name
+      0.566333415, -0.000744164, -0.0000103, 0.009414634, 0.0000506, -0.00000675,   !- Coefficients (list)
+      -100,             !- Minimum Value of x
+      100,              !- Maximum Value of x
+      -100,             !- Minimum Value of y
+      100;              !- Maximum Value of y
 
-Curve:Biquadratic,
-  <%= system_name %> HP_Heat-EIR-fT,   !- Name
-  0.718398423, 0.003498178, 0.000142202, -0.005724331, 0.00014085, -0.000215321,   !- Coefficients (List)
-  -100,             !- Minimum Value of x
-  100,              !- Maximum Value of x
-  -100,             !- Minimum Value of y
-  100;              !- Maximum Value of y
+    Curve:Biquadratic,
+      <%= system_name %> HP_Heat-EIR-fT,   !- Name
+      0.718398423, 0.003498178, 0.000142202, -0.005724331, 0.00014085, -0.000215321,   !- Coefficients (List)
+      -100,             !- Minimum Value of x
+      100,              !- Maximum Value of x
+      -100,             !- Minimum Value of y
+      100;              !- Maximum Value of y
 
-Curve:Quadratic,
-  <%= system_name %> HP_Heat-PLF-fPLR,   !- Name
-  <%= 1 - heating_coil_cd %>,<%= heating_coil_cd %>,0,     !- Coefficients (List)
-  0,                  !- Minimum Value of x
-  1,                  !- Maximum Value of x
-  0.7,                !- Minimum Value of y
-  1;                  !- Maximum Value of y
+    Curve:Quadratic,
+      <%= system_name %> HP_Heat-PLF-fPLR,   !- Name
+      <%= 1 - heating_coil_cd %>,<%= heating_coil_cd %>,0,     !- Coefficients (List)
+      0,                  !- Minimum Value of x
+      1,                  !- Maximum Value of x
+      0.7,                !- Minimum Value of y
+      1;                  !- Maximum Value of y
 
-Curve:Quadratic,
-  <%= system_name %> HP_Heat-Cap-fFF,                        !- Name
-  0.694045465,0.474207981,-0.168253446,   !- Coefficients (List)
-  0,                                      !- Minimum Value of x
-  2,                                      !- Maximum Value of x
-  0,                                      !- Minimum Value of y
-  2;                                      !- Maximum Value of y
+    Curve:Quadratic,
+      <%= system_name %> HP_Heat-Cap-fFF,                        !- Name
+      0.694045465,0.474207981,-0.168253446,   !- Coefficients (List)
+      0,                                      !- Minimum Value of x
+      2,                                      !- Maximum Value of x
+      0,                                      !- Minimum Value of y
+      2;                                      !- Maximum Value of y
 
-Curve:Quadratic,
-  <%= system_name %> HP_Heat-EIR-fFF,                        !- Name
-  2.185418751,-1.942827919,0.757409168,   !- Coefficients (List)
-  0,                                      !- Minimum Value of x
-  2,                                      !- Maximum Value of x
-  0,                                      !- Minimum Value of y
-  2;                                      !- Maximum Value of y
+    Curve:Quadratic,
+      <%= system_name %> HP_Heat-EIR-fFF,                        !- Name
+      2.185418751,-1.942827919,0.757409168,   !- Coefficients (List)
+      0,                                      !- Minimum Value of x
+      2,                                      !- Maximum Value of x
+      0,                                      !- Minimum Value of y
+      2;                                      !- Maximum Value of y
 
-Curve:Biquadratic,
-  <%= system_name %> DefrostEIR,         !- Name
-  0.1528,0,0,0,0,0,   !- Coefficients (List)
-  -100,               !- Minimum Value of x
-  100,                !- Maximum Value of x
-  -100,               !- Minimum Value of y
-  100;                !- Maximum Value of y
+    Curve:Biquadratic,
+      <%= system_name %> DefrostEIR,         !- Name
+      0.1528,0,0,0,0,0,   !- Coefficients (List)
+      -100,               !- Minimum Value of x
+      100,                !- Maximum Value of x
+      -100,               !- Minimum Value of y
+      100;                !- Maximum Value of y
+  <% elsif (curve_source == "open_studio") %>
+      Curve:Biquadratic,
+        <%= system_name %> HP_Heat-Cap-fT,   !- Name
+        0.878143655,                            !- Coefficient1 Constant
+        -0.0029148552,                          !- Coefficient2 x
+        -3.3372e-005,                           !- Coefficient3 x**2
+        0.0223866612,                           !- Coefficient4 y
+        0.000163944,                            !- Coefficient5 y**2
+        -2.187e-005,                            !- Coefficient6 x*y
+        -100,                                   !- Minimum Value of x {BasedOnField A2}
+        100,                                    !- Maximum Value of x {BasedOnField A2}
+        -100,                                   !- Minimum Value of y {BasedOnField A3}
+        100;                                    !- Maximum Value of y {BasedOnField A3}
 
+      Curve:Biquadratic,
+        <%= system_name %> HP_Heat-EIR-fT,   !- Name
+        0.716518071,                            !- Coefficient1 Constant
+        0.0102759012,                           !- Coefficient2 x
+        0.00046073448,                          !- Coefficient3 x**2
+        -0.0064803654,                          !- Coefficient4 y
+        0.000456354,                            !- Coefficient5 y**2
+        -0.00069764004,                         !- Coefficient6 x*y
+        -100,                                   !- Minimum Value of x {BasedOnField A2}
+        100,                                    !- Maximum Value of x {BasedOnField A2}
+        -100,                                   !- Minimum Value of y {BasedOnField A3}
+        100;                                    !- Maximum Value of y {BasedOnField A3}
+
+      Curve:Quadratic,
+        <%= system_name %> HP_Heat-PLF-fPLR,   !- Name
+        <%= 1 - heating_coil_cd %>,<%= heating_coil_cd %>,0,     !- Coefficients (List)
+        0,                  !- Minimum Value of x
+        1,                  !- Maximum Value of x
+        0.7,                !- Minimum Value of y
+        1;                  !- Maximum Value of y
+
+      Curve:Quadratic,
+        <%= system_name %> HP_Heat-Cap-fFF,                        !- Name
+        0.694045465,                            !- Coefficient1 Constant
+        0.474207981,                            !- Coefficient2 x
+        -0.168253446,                           !- Coefficient3 x**2
+        0,                                      !- Minimum Value of x {BasedOnField A2}
+        2,                                      !- Maximum Value of x {BasedOnField A2}
+        0,                                      !- Minimum Curve Output {BasedOnField A3}
+        2;                                      !- Maximum Curve Output {BasedOnField A3}
+
+      Curve:Quadratic,
+        <%= system_name %> HP_Heat-EIR-fFF,                        !- Name
+        2.185418751,                            !- Coefficient1 Constant
+        -1.942827919,                           !- Coefficient2 x
+        0.757409168,                            !- Coefficient3 x**2
+        0,                                      !- Minimum Value of x {BasedOnField A2}
+        2,                                      !- Maximum Value of x {BasedOnField A2}
+        0,                                      !- Minimum Curve Output {BasedOnField A3}
+        2;                                      !- Maximum Curve Output {BasedOnField A3}
+
+      Curve:Biquadratic,
+        <%= system_name %> DefrostEIR,         !- Name
+        0.1528,                                 !- Coefficient1 Constant
+        0,                                      !- Coefficient2 x
+        0,                                      !- Coefficient3 x**2
+        0,                                      !- Coefficient4 y
+        0,                                      !- Coefficient5 y**2
+        0,                                      !- Coefficient6 x*y
+        -100,                                   !- Minimum Value of x {BasedOnField A2}
+        100,                                    !- Maximum Value of x {BasedOnField A2}
+        -100,                                   !- Minimum Value of y {BasedOnField A3}
+        100;                                    !- Maximum Value of y {BasedOnField A3}
+  <% end %>
 <% end %>
 
   AirLoopHVAC:SupplyPath,
