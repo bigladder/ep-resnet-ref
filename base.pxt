@@ -1387,7 +1387,7 @@ elsif hvac_model == "DETAILED"
     heating_coil_eff = afue
     cooling_coil_cd = COP_result[2]
     heating_coil_cd = COP_result[3] # heating_coil_cd only used for ASHP, but needs to be set to something for unitarysystem.imf template to use
-  elsif cooling_type == "ASHP"
+  elsif cooling_type == "ASHP" and heating_type == "ASHP"
     COP_result = calc_heat_pump_COPs(13,hspf) # 13 here is arbitrary because it does not affect COP_heat
     cooling_coil_cop = COP_result[0]
     heating_coil_eff = COP_result[1]
@@ -1708,6 +1708,8 @@ ZoneHVAC:IdealLoadsAirSystem,
     ,                        !- Heating Availability Schedule Name
     ,                        !- Cooling Availability Schedule Name
     None;                    !- Dehumidification Control Type
+
+  <% end %>
 <% end %>
 
 !--- Outputs Section ---

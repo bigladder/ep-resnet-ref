@@ -2,4 +2,5 @@
 :climate=>"HEATING",
 :heating_cap=>56100|'btuh',
 :heating_type=>"ASHP",
+:cooling_type=>"ASHP",
 :hvac_model=>"DETAILED"

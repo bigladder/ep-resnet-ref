@@ -32,7 +32,7 @@ parameter "crankcase_cap", :default=>0|'W'
 parameter "sat_low_temp", :default=>45|'F'
 parameter "sat_high_temp", :default=>105|'F'
 
-parameter "fan_type", :default=>"CONSTANT"  # (CONSTANT | VARIABLE | CYCLING)
+parameter "fan_type", :default=>"CYCLING"  # (CONSTANT | VARIABLE | CYCLING)
 parameter "fan_eff_supply", :default=>0.5
 parameter "fan_motor_eff", :default=>0.85
 parameter "fan_rise_supply", :default=>0.5|'in H2O'
