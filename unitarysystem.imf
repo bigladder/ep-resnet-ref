@@ -271,7 +271,7 @@ end
     , !- Fraction of Autosized Design Heating Supply Air Flow Rate
     , !- Design Supply Air Flow Rate Per Unit of Capacity During Heating Operation
     SupplyAirFlowRate, !- Supply Air Flow Rate Method When No Cooling or Heating is Required
-    <%= fan_flow_supply %>, !- Supply Air Flow Rate When No Cooling or Heating is Required {m3/s}
+    0, !- Supply Air Flow Rate When No Cooling or Heating is Required {m3/s}
     , !- Supply Air Flow Rate Per Floor Area When No Cooling or Heating is Required
     , !- Fraction of Autosized Design Cooling Supply Air Flow Rate
     , !- Fraction of Autosized Design Heating Supply Air Flow Rate
@@ -332,7 +332,7 @@ end
   <% end %>
     <%= fan_flow_supply %>,    !- Design Maximum Air Flow Rate {m3/s}
     <%= fan_control_method %>,   !- Speed Control Method
-    0.2,                       !- Electric Power Minimum Flow Rate Fraction
+    0.0,                       !- Electric Power Minimum Flow Rate Fraction
     <%= fan_rise_supply %>,                       !- Design Pressure Rise {Pa}
     <%= fan_motor_eff %>,                       !- Motor Efficiency
     1.0,                       !- Motor In Air Stream Fraction
@@ -352,6 +352,8 @@ end
     ,                                    !- Motor Loss Radiative Fraction
     Fan Energy;                          !- End-Use Subcategory
 
+  <% if (fan_type == "VARIABLE") %>
+    <% if (curve_source == "big_ladder") %>
   Curve:Quartic,
     <%= system_name %> Fan Curve,                      !- Name
     0.0013,                       !- Coefficient1 Constant
@@ -365,6 +367,19 @@ end
     1.0,                                !- Maximum Curve Output
     Dimensionless,                      !- Input Unit Type for X
     Dimensionless;                      !- Output Unit Type
+
+    <% elsif (curve_source == "open_studio") %>
+  Curve:Cubic,
+    <%= system_name %> Fan Curve,            !- Name
+    1,                                      !- Coefficient1 Constant
+    0,                                      !- Coefficient2 x
+    0,                                      !- Coefficient3 x**2
+    0,                                      !- Coefficient4 x**3
+    0,                                      !- Minimum Value of x {BasedOnField A2}
+    1;                                      !- Maximum Value of x {BasedOnField A2}
+
+    <% end %>
+  <% end %>
 
 <% if (cooling_coil_type == "DX" || cooling_coil_type == "ASHP") %>
 
