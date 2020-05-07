@@ -1,5 +1,6 @@
 :case_name=>"HVAC2c",
 :climate=>"HEATING",
+:cooling_cap=>56100|'btuh',
 :heating_cap=>56100|'btuh',
 :heating_type=>"ASHP",
 :cooling_type=>"ASHP",

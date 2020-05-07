@@ -22,13 +22,14 @@ parameter "dx_heat_ratio", :default=>1.0
 parameter "heat_sizing_factor", :default=>1.25
 
 parameter "ashp_type", :default=>"UNITARY"  # ( UNITARY | MINISPLIT ) used to set performance curves
+parameter "hp_supp_heat_max_temp", :default=>50|'F'    # used with ashp
 
 parameter "hp_supply_max_temp", :default=>105|'F'    # used with ashp
-parameter "hp_min_temp", :default=>35|'F'    # used with ashp
+parameter "hp_min_temp", :default=>0|'F'    # used with ashp, based on OpenStudio-ERI
 parameter "hp_defrost_temp", :default=>40|'F'    # used with ashp
 
 parameter "crankcase_max_temp", :default=>50|'F'
-parameter "crankcase_cap", :default=>0|'W'
+parameter "crankcase_cap", :default=>50|'W'
 
 parameter "sat_low_temp", :default=>45|'F'
 parameter "sat_high_temp", :default=>105|'F'
@@ -208,6 +209,9 @@ end
      <%= system_name %> Zone Setpoint Nodes,  !- Name
      <%= system_name %> Supply Fan Outlet Node,  !- Node Name
      <%= system_name %> Cooling Coil Outlet Node,  !- Node Name
+   <% if (heating_coil_type == "ASHP") %>  <%# Adjust for supplemental heating coil %>
+     <%= system_name %> Heating Coil Outlet Node,  !- Node Name
+   <% end %>
      <%= system_name %> Supply Equipment Outlet Node;  !- Node Name
 
 <% elsif (fan_config == "DRAWTHROUGH") %>
@@ -215,6 +219,9 @@ end
      <%= system_name %> Zone Setpoint Nodes,  !- Name
      <%= system_name %> Cooling Coil Outlet Node,  !- Node Name
      <%= system_name %> Heating Coil Outlet Node,  !- Node Name
+   <% if (heating_coil_type == "ASHP") %>  <%# Adjust for supplemental heating coil %>
+     <%= system_name %> Supply Fan Outlet Node,  !- Node Name
+   <% end %>
      <%= system_name %> Supply Equipment Outlet Node;  !- Node Name
 <% end %>
 
@@ -258,8 +265,13 @@ end
     , !- Use DOAS DX Cooling Coil
     , !- DOAS DX Cooling Coil Leaving Minimum Air Temperature
     , !- Latent Load Control
+<% if (heating_coil_type == "ASHP" && cooling_coil_type == "ASHP") %>
+    Coil:Heating:Electric,         !- Supplemental Heating Coil Object Type
+    <%= system_name %> Supp Heating Coil, !- Supplemental Heating Coil Name
+<% else %>
     ,  !- Supplemental Heating Coil Object Type
     ,  !- Supplemental Heating Coil Name
+<% end %>
     SupplyAirFlowRate, !- Supply Air Flow Rate Method During Cooling Operation
     <%= fan_flow_supply %>, !- Supply Air Flow Rate During Cooling Operation {m3/s}
     , !- Supply Air Flow Rate Per Floor Area During Cooling Opertation
@@ -282,7 +294,7 @@ end
 <% else %>
     <%= sat_high_temp %>, !- Maximum Supply Air Temperature {C}
 <% end %>
-    , !- Maximum Outdoor Dry-Bulb Temperature for Supplemental Heater Operation
+    <%= hp_supp_heat_max_temp %>, !- Maximum Outdoor Dry-Bulb Temperature for Supplemental Heater Operation
     , !- Outdoor Dry-Bulb Temperature Sensor Node Name
     , !- Maximum Cycling Rate
     , !- Heat Pump Time Constant
@@ -417,7 +429,11 @@ Coil:Cooling:DX:SingleSpeed,
   ,                          !- Evaporative Condenser Effectiveness
   ,                          !- Evaporative Condenser Air Flow Rate {m^3/s}
   ,                          !- Evaporative Condenser Pump Rated Power Consumption {W}
+  <% if (cooling_coil_type == "DX") %>
   <%= crankcase_cap %>,   !- Crankcase Heater Capacity {W}
+  <% elsif (cooling_coil_type == "ASHP") %>
+  0,   !- Crankcase Heater Capacity {W}
+  <% end %>
   <%= crankcase_max_temp %>,  !- Maximum Outdoor Dry-Bulb Temperature for Crankcase Heater Operation {C}
   ,                        !- Supply Water Storage Tank Name
   ;                        !- Condensate Collection Water Storage Tank Name
@@ -722,11 +738,7 @@ Coil:Heating:DX:SingleSpeed,
   <%= fan_flow_supply %>,         !- Rated Air Flow Rate {m^3/s}
   ,                               !- Rated Evaporator Fan Power Per Volume Flow Rate {W/(m/s)}
   <%= heating_coil_inlet_node %>, !- Air Inlet Node Name
-  <% if (fan_config == "BLOWTHROUGH") %>
-  <%= system_name %> Supply Equipment Outlet Node,  !- Air Outlet Node Name
-  <% elsif (fan_config == "DRAWTHROUGH") %>
   <%= system_name %> Heating Coil Outlet Node,  !- Air Outlet Node Name
-  <% end %>
   <%= system_name %> HP_Heat-Cap-fT,  !- Total Heating Capacity Function of Temperature Curve Name
   <%= system_name %> HP_Heat-Cap-fFF,  !- Total Heating Capacity Function of Flow Fraction Curve Name
   <%= system_name %> HP_Heat-EIR-fT,  !- Energy Input Ratio Function of Temperature Curve Name
@@ -739,8 +751,9 @@ Coil:Heating:DX:SingleSpeed,
   <%= crankcase_cap %>,           !- Crankcase Heater Capacity {W}
   <%= crankcase_max_temp %>,      !- Maximum Outdoor Dry-Bulb Temperature for Crankcase Heater Operation {C}
   ReverseCycle,                   !- Defrost Strategy
-  Timed,                          !- Defrost Control
-  0.0;                       !- Defrost Time Period Fraction
+  OnDemand,                          !- Defrost Control
+  0.166667,                       !- Defrost Time Period Fraction
+  2000;                                   !- Resistive Defrost Heater Capacity {W}
 
   <% if (curve_source == "big_ladder") %>
     ! Following performance curves taken from single-speed ASHP system in BeOpt
@@ -858,6 +871,23 @@ Coil:Heating:DX:SingleSpeed,
         100,                                    !- Maximum Value of x {BasedOnField A2}
         -100,                                   !- Minimum Value of y {BasedOnField A3}
         100;                                    !- Maximum Value of y {BasedOnField A3}
+  <% end %>
+
+  Coil:Heating:Electric,
+    <%= system_name %> Supp Heating Coil,  !- Name
+    <%= system_name %> Always On Schedule,  !- Availability Schedule Name
+    1.0,                     !- Efficiency
+    Autosize,                !- Nominal Capacity
+  <% if (fan_config == "BLOWTHROUGH") %>
+    <%= system_name %> Heating Coil Outlet Node,  !- Air Inlet Node Name
+  <% elsif (fan_config == "DRAWTHROUGH") %>
+    <%= system_name %> Supply Fan Outlet Node,  !- Air Inlet Node Name
+  <% end %>
+  <% if (control_type == "Load") %>
+    <%= system_name %> Supply Equipment Outlet Node;  !- Air Outlet Node Name
+  <% elsif (control_type == "Setpoint") %>
+    <%= system_name %> Supply Equipment Outlet Node,  !- Air Outlet Node Name
+    <%= system_name %> Supply Equipment Outlet Node;  !- Temperature Setpoint Node Name
   <% end %>
 <% end %>
 
