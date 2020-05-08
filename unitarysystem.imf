@@ -254,13 +254,7 @@ end
     , !- Heating Coil Name
     , !- DX Heating Coil Sizing Ratio
 <% end %>
-<% if (cooling_coil_type == "DX") %>
     Coil:Cooling:DX:SingleSpeed,  !- Cooling Coil Object Type
-<% elsif (cooling_coil_type == "ASHP") %>
-    Coil:Cooling:DX:SingleSpeed,  !- Cooling Coil Object Type
-<% elsif (cooling_coil_type == "CHILLEDWATER") %>
-    Coil:Cooling:Water,      !- Cooling Coil Object Type
-<% end %>
     <%= system_name %> Cooling Coil, !- Cooling Coil Name
     , !- Use DOAS DX Cooling Coil
     , !- DOAS DX Cooling Coil Leaving Minimum Air Temperature
@@ -918,3 +912,110 @@ AirLoopHVAC:ZoneMixer,
   <%= zone_name %> Return Node,  !- Inlet Node Name
 <% end %>
   <%= zone_names[-1] %> Return Node;  !- Inlet Node Name
+
+<%# Following EMS objects needed to split fan energy use between heating and cooling %>
+
+EnergyManagementSystem:Sensor,
+  <%= system_name.gsub(" ", "_") %>_clg_coil_sensor,                  !- Name
+  <%= system_name %> Cooling Coil,                    !- Output:Variable or Output:Meter Index Key Name
+  Cooling Coil Total Cooling Rate;           !- Output:Variable or Output:Meter Name
+
+EnergyManagementSystem:Sensor,
+  <%= system_name.gsub(" ", "_") %>_htg_coil_sensor,                     !- Name
+  <%= system_name %> Heating Coil,                       !- Output:Variable or Output:Meter Index Key Name
+  Heating Coil Heating Rate;                !- Output:Variable or Output:Meter Name
+
+EnergyManagementSystem:Sensor,
+  <%= system_name.gsub(" ", "_") %>_supply_fan_sensor,    !- Name
+  <%= system_name %> Supply Fan,      !- Output:Variable or Output:Meter Index Key Name
+  Fan Electric Energy;                    !- Output:Variable or Output:Meter Name
+
+EnergyManagementSystem:Program,
+  <%= system_name.gsub(" ", "_") %>_supply_fan_disaggregate_program, !- Name
+  Set Supply_fan_clg = 0, !- Program Line 1
+  Set Supply_fan_primary_htg = 0, !- Program Line 2
+  Set Supply_fan_clg_htg = 0, !- Program Line 3
+  Set Supply_fan_no_load = 0, !- Program Line 4
+  If <%= system_name.gsub(" ", "_") %>_clg_coil_sensor > 0 && <%= system_name.gsub(" ", "_") %>_htg_coil_sensor > 0,           !- Program Line 5
+    Set Supply_fan_clg_htg = <%= system_name.gsub(" ", "_") %>_supply_fan_sensor, !- Program Line 6
+  ElseIf <%= system_name.gsub(" ", "_") %>_htg_coil_sensor > 0,          !- Program Line 5
+    Set Supply_fan_primary_htg = <%= system_name.gsub(" ", "_") %>_supply_fan_sensor, !- Program Line 6
+  ElseIf <%= system_name.gsub(" ", "_") %>_clg_coil_sensor > 0,          !- Program Line 5
+    Set Supply_fan_clg = <%= system_name.gsub(" ", "_") %>_supply_fan_sensor, !- Program Line 6
+  ElseIf <%= system_name.gsub(" ", "_") %>_clg_coil_sensor == 0 && <%= system_name.gsub(" ", "_") %>_htg_coil_sensor == 0,           !- Program Line 5
+    Set Supply_fan_no_load = <%= system_name.gsub(" ", "_") %>_supply_fan_sensor, !- Program Line 6
+  EndIf;                                  !- Program Line 7
+
+EnergyManagementSystem:ProgramCallingManager,
+  <%= system_name.gsub(" ", "_") %>_supply_fan_disaggregate_program_calling_manager, !- Name
+  EndOfSystemTimestepBeforeHVACReporting, !- EnergyPlus Model Calling Point
+  <%= system_name.gsub(" ", "_") %>_supply_fan_disaggregate_program; !- Program Name 1
+
+EnergyManagementSystem:OutputVariable,
+  <%= system_name.gsub(" ", "_") %> supply fan clg & htg disaggregate, !- Name
+  Supply_fan_clg_htg,  !- EMS Variable Name
+  Summed,                                 !- Type of Data in Variable
+  SystemTimestep,                         !- Update Frequency
+  <%= system_name.gsub(" ", "_") %>_supply_fan_disaggregate_program, !- EMS Program or Subroutine Name
+  J;                                      !- Units
+
+EnergyManagementSystem:OutputVariable,
+  <%= system_name.gsub(" ", "_") %> supply fan clg disaggregate, !- Name
+  Supply_fan_clg,  !- EMS Variable Name
+  Summed,                                 !- Type of Data in Variable
+  SystemTimestep,                         !- Update Frequency
+  <%= system_name.gsub(" ", "_") %>_supply_fan_disaggregate_program, !- EMS Program or Subroutine Name
+  J;                                      !- Units
+
+EnergyManagementSystem:OutputVariable,
+  <%= system_name.gsub(" ", "_") %> supply fan htg primary disaggregate, !- Name
+  Supply_fan_primary_htg, !- EMS Variable Name
+  Summed,                                 !- Type of Data in Variable
+  SystemTimestep,                         !- Update Frequency
+  <%= system_name.gsub(" ", "_") %>_supply_fan_disaggregate_program, !- EMS Program or Subroutine Name
+  J;                                      !- Units
+
+EnergyManagementSystem:OutputVariable,
+  <%= system_name.gsub(" ", "_") %> supply fan no load disaggregate, !- Name
+  Supply_fan_no_load, !- EMS Variable Name
+  Summed,                                 !- Type of Data in Variable
+  SystemTimestep,                         !- Update Frequency
+  <%= system_name.gsub(" ", "_") %>_supply_fan_disaggregate_program, !- EMS Program or Subroutine Name
+  J;                                      !- Units
+
+Output:Variable,
+  *,                                      !- Key Value
+  <%= system_name.gsub(" ", "_") %> supply fan clg & htg disaggregate, !- Variable Name
+  monthly;                                !- Reporting Frequency
+
+Output:Variable,
+  *,                                      !- Key Value
+  <%= system_name.gsub(" ", "_") %> supply fan clg disaggregate, !- Variable Name
+  monthly;                                !- Reporting Frequency
+
+Output:Variable,
+  *,                                      !- Key Value
+  <%= system_name.gsub(" ", "_") %> supply fan htg primary disaggregate, !- Variable Name
+  monthly;                                !- Reporting Frequency
+
+Output:Variable,
+  *,                                      !- Key Value
+  <%= system_name.gsub(" ", "_") %> supply fan no load disaggregate, !- Variable Name
+  monthly;                                !- Reporting Frequency
+
+Output:Table:Annual,
+  Custom Annual Fan Energy Report,  !- Name
+  , !- Filter
+  , !- Schedule Name
+  <%= system_name.gsub(" ", "_") %> supply fan clg & htg disaggregate,  !- Variable, Meter, EMS Int Var, IDF field Name 1
+  SumOrAverage,  !- Aggregation Type for 1
+  2,  !- Digits After Decimal for 1
+  <%= system_name.gsub(" ", "_") %> supply fan clg disaggregate,  !- Variable, Meter, EMS Int Var, IDF field Name 1
+  SumOrAverage,  !- Aggregation Type for 1
+  2,  !- Digits After Decimal for 1
+  <%= system_name.gsub(" ", "_") %> supply fan htg primary disaggregate,  !- Variable, Meter, EMS Int Var, IDF field Name 2
+  SumOrAverage,  !- Aggregation Type for 2
+  2,  !- Digits After Decimal for 2
+  <%= system_name.gsub(" ", "_") %> supply fan no load disaggregate,  !- Variable, Meter, EMS Int Var, IDF field Name 2
+  SumOrAverage,  !- Aggregation Type for 2
+  2;  !- Digits After Decimal for 2

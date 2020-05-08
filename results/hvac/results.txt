@@ -1,4 +1,8 @@
 AnnualBuildingUtilityPerformanceSummary/Entire Facility/End Uses/Electricity/Heating, Elec Heating
 AnnualBuildingUtilityPerformanceSummary/Entire Facility/End Uses/Natural Gas/Heating, Gas Heating
 AnnualBuildingUtilityPerformanceSummary/Entire Facility/End Uses/Electricity/Cooling, Elec Cooling
-AnnualBuildingUtilityPerformanceSummary/Entire Facility/End Uses/Electricity/Fans, Elec Fans
+AnnualBuildingUtilityPerformanceSummary/Entire Facility/End Uses/Electricity/Fans, Total Fan
+CUSTOM ANNUAL FAN ENERGY REPORT/Entire Facility/Custom Annual Report/HVAC supply fan clg & htg disaggregate/EMS, Cooling & Heating Fan
+CUSTOM ANNUAL FAN ENERGY REPORT/Entire Facility/Custom Annual Report/HVAC supply fan clg disaggregate/EMS, Cooling Fan
+CUSTOM ANNUAL FAN ENERGY REPORT/Entire Facility/Custom Annual Report/HVAC supply fan htg primary disaggregate/EMS, Heating Fan
+CUSTOM ANNUAL FAN ENERGY REPORT/Entire Facility/Custom Annual Report/HVAC supply fan no load disaggregate/EMS, No Load Fan
