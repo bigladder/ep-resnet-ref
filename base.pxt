@@ -20,6 +20,9 @@
   parameter "overhangs", :default=>false
   parameter "foundation_insulated", :default=>false
   parameter "foundation_type", :default=>"RAISED" # choices: FLOATING, SLAB, BASEMENT
+  parameter "raised_floor_insulated", :default=>true # whether main zone floor includes cavity insulation
+  parameter "raised_floor_framed", :default=>true # whether main zone floor includes wood framing
+
   parameter "framing_factor_walls", :default=>0.25 # Note 3 in Table 7.1 specifies 0.25 framing factor for exterior walls
   parameter "framing_factor_other", :default=>0.1 # Note 5 in Table 7.1 specifies 0.1 framing factor for ceiling and floor
   parameter "envelope_eff", :default=>"TYPICAL" # choices: TYPICAL, LOW, HIGH
@@ -344,6 +347,17 @@ SizingPeriod:WeatherFileDays,
    0.9,                     !- Thermal Absorptance
    0.6,                     !- Solar Absorptance
    0.6;                     !- Visible Absorptance
+
+ Material,
+   Wood Framing - 2x8,      !- Name
+   Rough,                   !- Roughness
+   <%= 7.25|'in' %>,         !- Thickness {m}
+   <%= 0.0667|'k-ip' %>,    !- Conductivity {W/m-K}
+   <%= 32.0|'lb/ft3' %>,        !- Density {kg/m3}
+   <%= 0.33|'cp-ip' %>,        !- Specific Heat {J/kg-K}
+   0.9,                     !- Thermal Absorptance
+   0.6,                     !- Solar Absorptance
+   0.6;                     !- Visible Absorptance
 <% end %>
 
 ! Inside face finish
@@ -587,7 +601,11 @@ Foundation:Kiva,
 
 <%
   # Main Zone Raised Floor
-  thickness = 3.5|'in'
+  if foundation_type == "BASEMENT"
+    thickness = 7.25|'in' # Assumed to be full thickness of 2"x8" joist
+  else
+    thickness = 3.5|'in' # Floor framing extends to insulation
+  end
   r_others = (0.765 + 2.080 + 0.937 + 0.455)|'r-ip'
   framing_factor = framing_factor_other
   cavity_material = {:k=>0.0265|'k-ip',:rho=>0.6|'lb/ft3',:cp=>0.20|'cp-ip'}
@@ -758,7 +776,7 @@ Construction,
 <% if framing_approach == "DETAILED" %>
 Construction,
   Raised Floor - Cavity,      !- Name
-  <% if envelope_eff != "LOW" and foundation_type != "BASEMENT" %>
+  <% if raised_floor_insulated %>
   R-11 Fiberglass Batt,         !- Outside Layer
   <% end %>
   Plywood - 3/4 in,          !- Layer 2
@@ -766,8 +784,12 @@ Construction,
 
 Construction,
   Raised Floor - Frame,       !- Name
-  <% if envelope_eff != "LOW" and foundation_type != "BASEMENT" %>
-  Wood Framing - 2x4,         !- Outside Layer
+  <% if raised_floor_framed %>
+    <% if foundation_type == "BASEMENT" %>
+  Wood Framing - 2x8,         !- Outside Layer (Assumed to be full thickness of 2"x8" joist)
+    <% else %>
+  Wood Framing - 2x4,         !- Outside Layer (floor framing extends to insulation)
+    <% end %>
   <% end %>
   Plywood - 3/4 in,          !- Layer 2
   Carpet with Fibrous Pad;   !- Layer 3
@@ -862,7 +884,7 @@ Construction,
 <% elsif framing_approach == "COMPOSITE" %>
 Construction,
   Raised Floor,      !- Name
-  <% if envelope_eff != "LOW" and foundation_type != "BASEMENT" %>
+  <% if raised_floor_insulated or raised_floor_framed %>
   Raised Floor Composite (Frame + Cavity),         !- Outside Layer
   <% end %>
   Plywood - 3/4 in,          !- Layer 2
@@ -1735,8 +1757,10 @@ ZoneHVAC:IdealLoadsAirSystem,
   Output:Variable,*,Zone Infiltration Sensible Heat Loss Energy,Hourly;
   Output:Variable,*,Zone Windows Total Heat Gain Energy,hourly; !- Zone Sum [J]
   Output:Variable,*,Zone Windows Total Heat Loss Energy,hourly; !- Zone Sum [J]
+<% if hvac_model == "DETAILED" %>
   Output:Variable,*,Fan Electric Power,timestep; !- Zone Sum [J]
   Output:Variable,*,Unitary System Fan Part Load Ratio,timestep; !- HVAC Average []
   Output:Variable,*,System Node Standard Density Volume Flow Rate,timestep; !- HVAC Average [m3/s]
+<% end %>
 
   Output:SQLite, SimpleAndTabular;  !- Option Type
