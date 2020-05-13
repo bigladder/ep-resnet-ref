@@ -71,7 +71,7 @@ end
     <%= system_name %>,      !- Name
     ,  !- Controller List Name
     <%= system_name %> Availability Manager List,  !- Availability Manager List Name
-    Autosize,                !- Design Supply Air Flow Rate {m3/s}
+    <%= fan_flow_supply %>,                !- Design Supply Air Flow Rate {m3/s}
     <%= system_name %> Branch List,  !- Branch List Name
     ,                        !- Connector List Name
     <%= system_name %> Supply Equipment Inlet Node,  !- Supply Side Inlet Node Name
@@ -89,7 +89,7 @@ end
     11.0,                    !- Precool Design Temperature {C}
     0.008,                   !- Precool Design Humidity Ratio {kg-H2O/kg-Air}
     <%= sat_low_temp %>,     !- Central Cooling Design Supply Air Temperature {C}
-<% if (heating_coil_type == "ASHP") %>
+<% if (heating_coil_type == "ASHP" and cooling_coil_type == "ASHP") %>
     <%= hp_supply_max_temp %>,    !- Central Heating Design Supply Air Temperature {C}
  <% else %>
     <%= sat_high_temp %>,    !- Central Heating Design Supply Air Temperature {C}
@@ -99,6 +99,7 @@ end
     No,                      !- 100% Outdoor Air in Heating
     0.0085,                  !- Central Cooling Design Supply Air Humidity Ratio {kg-H2O/kg-Air}
     0.008,                   !- Central Heating Design Supply Air Humidity Ratio {kg-H2O/kg-Air}
+  <% if fan_flow_supply == "Autosize" %>
     DesignDay,               !- Cooling Design Air Flow Method
     ,                        !- Cooling Design Air Flow Rate {m3/s}
     ,                        !- Supply Air Flow Rate Per Floor Area During Cooling Operation {m3/s-m2}
@@ -106,6 +107,15 @@ end
     ,                        !- Design Supply Air Flow Rate Per Unit Cooling Capacity {m3/s-W}
     DesignDay,  !- Heating Design Air Flow Method
     ,                        !- Heating Design Air Flow Rate {m3/s}
+  <% else %>
+    Flow/System,               !- Cooling Design Air Flow Method
+    <%= fan_flow_supply %>,                        !- Cooling Design Air Flow Rate {m3/s}
+    ,                        !- Supply Air Flow Rate Per Floor Area During Cooling Operation {m3/s-m2}
+    ,                        !- Fraction of Autosized Design Cooling Supply Air Flow Rate
+    ,                        !- Design Supply Air Flow Rate Per Unit Cooling Capacity {m3/s-W}
+    Flow/System,  !- Heating Design Air Flow Method
+    <%= fan_flow_supply %>,                        !- Heating Design Air Flow Rate {m3/s}
+  <% end %>
     ,                        !- Supply Air Flow Rate Per Floor Area During Heating Operation {m3/s-m2}
     ,                        !- Fraction of Autosized Design Heating Supply Air Flow Rate
     ,                        !- Fraction of Autosized Design Cooling Supply Air Flow Rate
@@ -179,7 +189,7 @@ end
     Temperature,             !- Control Variable
     <%= system_name %> Supply Equipment Outlet Node,  !- Reference Setpoint Node Name
     <%= system_name %> Heating Coil Outlet Node, !- Fan Inlet Node Name
-  <% if heating_coil_type == "ASHP" %>
+  <% if heating_coil_type == "ASHP" and cooling_coil_type == "ASHP" %>   <%# Adjust for supplemental heating coil %>
     <%= system_name %> Supply Fan Outlet Node,  !- Fan Outlet Node Name
   <% else %>
     <%= system_name %> Supply Equipment Outlet Node,  !- Fan Outlet Node Name
@@ -209,7 +219,7 @@ end
      <%= system_name %> Zone Setpoint Nodes,  !- Name
      <%= system_name %> Supply Fan Outlet Node,  !- Node Name
      <%= system_name %> Cooling Coil Outlet Node,  !- Node Name
-   <% if (heating_coil_type == "ASHP") %>  <%# Adjust for supplemental heating coil %>
+   <% if (heating_coil_type == "ASHP" and cooling_coil_type == "ASHP") %>  <%# Adjust for supplemental heating coil %>
      <%= system_name %> Heating Coil Outlet Node,  !- Node Name
    <% end %>
      <%= system_name %> Supply Equipment Outlet Node;  !- Node Name
@@ -219,7 +229,7 @@ end
      <%= system_name %> Zone Setpoint Nodes,  !- Name
      <%= system_name %> Cooling Coil Outlet Node,  !- Node Name
      <%= system_name %> Heating Coil Outlet Node,  !- Node Name
-   <% if (heating_coil_type == "ASHP") %>  <%# Adjust for supplemental heating coil %>
+   <% if (heating_coil_type == "ASHP" and cooling_coil_type == "ASHP") %>  <%# Adjust for supplemental heating coil %>
      <%= system_name %> Supply Fan Outlet Node,  !- Node Name
    <% end %>
      <%= system_name %> Supply Equipment Outlet Node;  !- Node Name
@@ -259,7 +269,7 @@ end
     , !- Use DOAS DX Cooling Coil
     , !- DOAS DX Cooling Coil Leaving Minimum Air Temperature
     , !- Latent Load Control
-<% if (heating_coil_type == "ASHP" && cooling_coil_type == "ASHP") %>
+<% if (heating_coil_type == "ASHP" and cooling_coil_type == "ASHP") %>
     Coil:Heating:Electric,         !- Supplemental Heating Coil Object Type
     <%= system_name %> Supp Heating Coil, !- Supplemental Heating Coil Name
 <% else %>
@@ -277,13 +287,13 @@ end
     , !- Fraction of Autosized Design Heating Supply Air Flow Rate
     , !- Design Supply Air Flow Rate Per Unit of Capacity During Heating Operation
     SupplyAirFlowRate, !- Supply Air Flow Rate Method When No Cooling or Heating is Required
-    0, !- Supply Air Flow Rate When No Cooling or Heating is Required {m3/s}
+    <%= fan_flow_supply %>, !- Supply Air Flow Rate When No Cooling or Heating is Required {m3/s}
     , !- Supply Air Flow Rate Per Floor Area When No Cooling or Heating is Required
     , !- Fraction of Autosized Design Cooling Supply Air Flow Rate
     , !- Fraction of Autosized Design Heating Supply Air Flow Rate
     , !- Design Supply Air Flow Rate Per Unit of Capacity During Cooling Operation
     , !- Design Supply Air Flow Rate Per Unit of Capacity During Heating Operation
-<% if (heating_coil_type == "ASHP" && cooling_coil_type == "ASHP") %>
+<% if (heating_coil_type == "ASHP" and cooling_coil_type == "ASHP") %>
     <%= hp_supply_max_temp %>, !- Maximum Supply Air Temperature {C}
 <% else %>
     <%= sat_high_temp %>, !- Maximum Supply Air Temperature {C}
@@ -331,7 +341,7 @@ end
   <% elsif (fan_config == "DRAWTHROUGH") %>
     <%= system_name %> Heating Coil Outlet Node,  !- Air Inlet Node Name
   <% end %>
-  <% if (fan_config == "BLOWTHROUGH" || heating_coil_type == "ASHP") %>
+  <% if (fan_config == "BLOWTHROUGH" or (heating_coil_type == "ASHP" and cooling_coil_type == "ASHP")) %>
     <%= system_name %> Supply Fan Outlet Node,  !- Air Outlet Node Name
   <% else %>
     <%= system_name %> Supply Equipment Outlet Node,   !- Air Outlet Node Name
@@ -678,10 +688,6 @@ Curve:Quadratic,
   <% end %>
 <% end %>
 
-<%
-  heating_coil_inlet_node = system_name + " Cooling Coil Outlet Node"
-%>
-
 <% if (heating_coil_type == "GAS") %>
 
   Coil:Heating:Fuel,
@@ -690,7 +696,7 @@ Curve:Quadratic,
     NaturalGas,              ! Fuel Type
     <%= heating_coil_eff %>,  !- Gas Burner Efficiency
     <%= heating_coil_cap %>, !- Nominal Capacity {W}
-    <%= heating_coil_inlet_node %>, !- Air Inlet Node Name
+    <%= system_name %> Cooling Coil Outlet Node, !- Air Inlet Node Name
   <% if (fan_config == "BLOWTHROUGH") %>
     <%= system_name %> Supply Equipment Outlet Node;  !- Air Outlet Node Name
   <% elsif (fan_config == "DRAWTHROUGH") %>
@@ -704,7 +710,7 @@ Curve:Quadratic,
     <%= system_name %> Always On Schedule,  !- Availability Schedule Name
     <%= heating_coil_eff %>,  !- Efficiency
     <%= heating_coil_cap %>, !- Nominal Capacity {W}
-    <%= heating_coil_inlet_node %>, !- Air Inlet Node Name
+    <%= system_name %> Cooling Coil Outlet Node, !- Air Inlet Node Name
   <% if (fan_config == "BLOWTHROUGH") %>
     <% if (control_type == "Load") %>
       <%= system_name %> Supply Equipment Outlet Node;  !- Air Outlet Node Name
@@ -731,7 +737,7 @@ Coil:Heating:DX:SingleSpeed,
   <%= heating_coil_eff %>,        !- Rated COP
   <%= fan_flow_supply %>,         !- Rated Air Flow Rate {m^3/s}
   ,                               !- Rated Evaporator Fan Power Per Volume Flow Rate {W/(m/s)}
-  <%= heating_coil_inlet_node %>, !- Air Inlet Node Name
+  <%= system_name %> Cooling Coil Outlet Node, !- Air Inlet Node Name
   <%= system_name %> Heating Coil Outlet Node,  !- Air Outlet Node Name
   <%= system_name %> HP_Heat-Cap-fT,  !- Total Heating Capacity Function of Temperature Curve Name
   <%= system_name %> HP_Heat-Cap-fFF,  !- Total Heating Capacity Function of Flow Fraction Curve Name
