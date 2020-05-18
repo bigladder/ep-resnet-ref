@@ -123,6 +123,8 @@ z_attic_top = z_attic_bottom + height_attic
 
 # Internal use
 nsteps = 6
+k_air = (3.5|'in') / (1.01|'r-ip') # conductivity for air in IP units
+# properties for air at 1atm and 75F (3.5" of air yields R-1.01)
 
 # HVAC system
 if hvac_model == "DETAILED"
@@ -141,16 +143,16 @@ end
 
 <%
 # method to calculate properties of composite layer that combines framing + cavity layers
-def make_composite_layer(thickness, r_others, framing_factor, cavity_material, framing_material)
-  r_cavity = thickness / cavity_material[:k]
+def make_composite_layer(r_others, framing_factor, cavity_material, framing_material)
+  r_cavity = cavity_material[:r]
   r_cavity_path = r_others + r_cavity
-  r_framing = thickness / framing_material[:k]
+  r_framing = framing_material[:t] / framing_material[:k]
   r_framing_path = r_others + r_framing
   u_assembly = (framing_factor/r_framing_path) + (1-framing_factor)/r_cavity_path
   r_assembly = 1/u_assembly
   r_composite = r_assembly - r_others
 
-  k_composite = thickness / r_composite
+  k_composite = framing_material[:t] / r_composite
 
   mass_framing = framing_factor*framing_material[:rho]
   mass_cavity = (1 - framing_factor)*cavity_material[:rho]
@@ -250,7 +252,7 @@ SizingPeriod:WeatherFileDays,
 ! Air gaps
   Material:AirGap,
    Air Gap,                  !- Name
-   0.177871290333931;       !- Thermal Resistance {m2-K/W} based on 3.5" gap
+   <%= 1.01|'r-ip' %>;       !- Thermal Resistance {m2-K/W} based on 3.5" gap
 
 ! Cavity Insulation
   Material,
@@ -571,27 +573,28 @@ Foundation:Kiva,
 <%
   # Main Zone External Wall
   if envelope_eff == "HIGH"
-    thickness = 5.5|'in'
+    thickness_framing = 5.5|'in'
     r_others = (0.685 + 0.45 + 7.20 + 0.67 + 0.174)|'r-ip'
-    cavity_material = {:k=>0.0255|'k-ip',:rho=>0.68|'lb/ft3',:cp=>0.20|'cp-ip'}
+    cavity_material = {:r=>18|'r-ip',:rho=>0.68|'lb/ft3',:cp=>0.20|'cp-ip'}
   else
+    thickness_framing = 3.5|'in'
     if envelope_eff == "LOW"
       # using properties for air at 1atm and 75F
-      cavity_material = {:k=>(3.5/12/1.01)|'k-ip',:rho=>0.074|'lb/ft3',:cp=>0.24|'cp-ip'}
+      r_air = thickness_framing / k_air
+      cavity_material = {:r=>r_air,:rho=>0.074|'lb/ft3',:cp=>0.24|'cp-ip'}
     else
-      cavity_material = {:k=>0.0265|'k-ip',:rho=>0.6|'lb/ft3',:cp=>0.20|'cp-ip'}
+      cavity_material = {:r=>11|'r-ip',:rho=>0.6|'lb/ft3',:cp=>0.20|'cp-ip'}
     end
     r_others = (0.685 + 0.45 + 1.32 + 0.67 + 0.174)|'r-ip'
-    thickness = 3.5|'in'
   end
   framing_factor = framing_factor_walls
-  framing_material = {:k=>0.0667|'k-ip',:rho=>32.0|'lb/ft3',:cp=>0.33|'cp-ip'}
-  composite_layer = make_composite_layer(thickness, r_others, framing_factor, cavity_material, framing_material)
+  framing_material = {:t=>thickness_framing,:k=>0.0667|'k-ip',:rho=>32.0|'lb/ft3',:cp=>0.33|'cp-ip'}
+  composite_layer = make_composite_layer(r_others, framing_factor, cavity_material, framing_material)
 %>
   Material,
    External Wall Composite (Frame + Cavity),     !- Name
    Rough,                   !- Roughness
-   <%= thickness %>,    !- Thickness {m}
+   <%= thickness_framing %>,    !- Thickness {m}
    <%= composite_layer[:k] %>,    !- Conductivity {W/m-K}
    <%= composite_layer[:rho] %>,        !- Density {kg/m3}
    <%= composite_layer[:cp] %>,        !- Specific Heat {J/kg-K}
@@ -599,23 +602,30 @@ Foundation:Kiva,
    0.6,                     !- Solar Absorptance
    0.6;                     !- Visible Absorptance
 
+<%  if raised_floor_framed %>
 <%
   # Main Zone Raised Floor
-  if foundation_type == "BASEMENT"
-    thickness = 7.25|'in' # Assumed to be full thickness of 2"x8" joist
-  else
-    thickness = 3.5|'in' # Floor framing extends to insulation
-  end
-  r_others = (0.765 + 2.080 + 0.937 + 0.455)|'r-ip'
-  framing_factor = framing_factor_other
-  cavity_material = {:k=>0.0265|'k-ip',:rho=>0.6|'lb/ft3',:cp=>0.20|'cp-ip'}
-  framing_material = {:k=>0.0667|'k-ip',:rho=>32.0|'lb/ft3',:cp=>0.33|'cp-ip'}
-  composite_layer = make_composite_layer(thickness, r_others, framing_factor, cavity_material, framing_material)
+    if foundation_type == "BASEMENT"
+      thickness_framing = 7.25|'in' # Assumed to be full thickness of 2"x8" joist
+    else
+      thickness_framing = 3.5|'in' # Floor framing extends to insulation
+    end
+    r_others = (0.765 + 2.080 + 0.937 + 0.455)|'r-ip'
+    framing_factor = framing_factor_floor
+    if raised_floor_insulated
+      cavity_material = {:r=>11|'r-ip',:rho=>0.6|'lb/ft3',:cp=>0.20|'cp-ip'}
+    else
+      # using properties for air at 1atm and 75F
+      r_air = thickness_framing / k_air
+      cavity_material = {:r=>r_air,:rho=>0.074|'lb/ft3',:cp=>0.24|'cp-ip'}
+    end
+    framing_material = {:t=>thickness_framing,:k=>0.0667|'k-ip',:rho=>32.0|'lb/ft3',:cp=>0.33|'cp-ip'}
+    composite_layer = make_composite_layer(r_others, framing_factor, cavity_material, framing_material)
 %>
   Material,
    Raised Floor Composite (Frame + Cavity),     !- Name
    Rough,                   !- Roughness
-   <%= thickness %>,    !- Thickness {m}
+   <%= thickness_framing %>,    !- Thickness {m}
    <%= composite_layer[:k] %>,    !- Conductivity {W/m-K}
    <%= composite_layer[:rho] %>,        !- Density {kg/m3}
    <%= composite_layer[:cp] %>,        !- Specific Heat {J/kg-K}
@@ -623,29 +633,30 @@ Foundation:Kiva,
    0.6,                     !- Solar Absorptance
    0.6;                     !- Visible Absorptance
 
+<% end %>
 <%
   # Main Zone Ceiling
   if envelope_eff == "LOW"
-    thickness = 3.5|'in'
+    thickness_framing = 3.5|'in'
     r_others = (0.765 + 0.450 + 0.765)|'r-ip'
-    cavity_material = {:k=>0.0265|'k-ip',:rho=>0.6|'lb/ft3',:cp=>0.20|'cp-ip'}
+    cavity_material = {:r=>11|'r-ip',:rho=>0.6|'lb/ft3',:cp=>0.20|'cp-ip'}
   else
-    thickness = 5.5|'in'
+    thickness_framing = 5.5|'in'
     if envelope_eff == "HIGH"
       r_others = (0.765 + 0.450 + 38.000 + 0.765)|'r-ip'
     else
       r_others = (0.765 + 0.450 + 0.765)|'r-ip'
     end
-    cavity_material = {:k=>0.0274|'k-ip',:rho=>0.6|'lb/ft3',:cp=>0.20|'cp-ip'}
+    cavity_material = {:r=>19|'r-ip',:rho=>0.6|'lb/ft3',:cp=>0.20|'cp-ip'}
   end
   framing_factor = framing_factor_other
-  framing_material = {:k=>0.0667|'k-ip',:rho=>32.0|'lb/ft3',:cp=>0.33|'cp-ip'}
-  composite_layer = make_composite_layer(thickness, r_others, framing_factor, cavity_material, framing_material)
+  framing_material = {:t=>thickness_framing,:k=>0.0667|'k-ip',:rho=>32.0|'lb/ft3',:cp=>0.33|'cp-ip'}
+  composite_layer = make_composite_layer(r_others, framing_factor, cavity_material, framing_material)
 %>
   Material,
    Ceiling Composite (Frame + Cavity),     !- Name
    Rough,                   !- Roughness
-   <%= thickness %>,    !- Thickness {m}
+   <%= thickness_framing %>,    !- Thickness {m}
    <%= composite_layer[:k] %>,    !- Conductivity {W/m-K}
    <%= composite_layer[:rho] %>,        !- Density {kg/m3}
    <%= composite_layer[:cp] %>,        !- Specific Heat {J/kg-K}
@@ -658,17 +669,17 @@ Foundation:Kiva,
 <% if foundation_type == "BASEMENT" and foundation_insulated %>
 <%
   # Basement Zone Wall with Insulation
-  thickness = 3.5|'in'
+  thickness_framing = 3.5|'in'
   r_others = (0.685 + 0.450 + 0.480 + 0.174)|'r-ip'
-  cavity_material = {:k=>0.0265|'k-ip',:rho=>0.6|'lb/ft3',:cp=>0.20|'cp-ip'}
+  cavity_material = {:r=>11|'r-ip',:rho=>0.6|'lb/ft3',:cp=>0.20|'cp-ip'}
   framing_factor = framing_factor_other
-  framing_material = {:k=>0.0667|'k-ip',:rho=>32.0|'lb/ft3',:cp=>0.33|'cp-ip'}
-  composite_layer = make_composite_layer(thickness, r_others, framing_factor, cavity_material, framing_material)
+  framing_material = {:t=>thickness_framing,:k=>0.0667|'k-ip',:rho=>32.0|'lb/ft3',:cp=>0.33|'cp-ip'}
+  composite_layer = make_composite_layer(r_others, framing_factor, cavity_material, framing_material)
 %>
   Material,
    Basement Wall Composite (Frame + Cavity),     !- Name
    Rough,                   !- Roughness
-   <%= thickness %>,    !- Thickness {m}
+   <%= thickness_framing %>,    !- Thickness {m}
    <%= composite_layer[:k] %>,    !- Conductivity {W/m-K}
    <%= composite_layer[:rho] %>,        !- Density {kg/m3}
    <%= composite_layer[:cp] %>,        !- Specific Heat {J/kg-K}
@@ -884,7 +895,7 @@ Construction,
 <% elsif framing_approach == "COMPOSITE" %>
 Construction,
   Raised Floor,      !- Name
-  <% if raised_floor_insulated or raised_floor_framed %>
+  <% if raised_floor_framed %>
   Raised Floor Composite (Frame + Cavity),         !- Outside Layer
   <% end %>
   Plywood - 3/4 in,          !- Layer 2
