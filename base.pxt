@@ -1486,6 +1486,7 @@ elsif hvac_model == "DETAILED"
 
   insert "atu.pxt",
     :zone_name=>"Main Zone",
+    :system_name=>"HVAC",
     :terminal_max_flow=>fan_airflow|'cfm',
     :heating_setpoint=>20,
     :cooling_setpoint=>25.55555
