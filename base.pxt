@@ -1380,7 +1380,7 @@ Schedule:Compact,
 
 <%
 elsif hvac_model == "DETAILED"
-  require './heat_pump.rb'
+  require_relative 'heat_pump.rb'
   if cooling_type == "DX"
     COP_result = calc_heat_pump_COPs(seer, 6.8) # 6.8 here is arbitrary because it does not affect COP_cool
     cooling_coil_cop = COP_result[0]
