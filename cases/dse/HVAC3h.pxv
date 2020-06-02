@@ -1,0 +1,12 @@
+:case_name=>"HVAC3h",
+:climate=>"COOLING",
+:hvac_model=>"DETAILED",
+:cooling_cap=>55000|'btuh',
+:afn_hvac=>true,
+:supply_duct_zone=>"Attic Zone",
+:return_duct_zone=>"Attic Zone",
+:duct_insulation_r_value=>6,
+:duct_ext_air_film_r_value=>1.0,
+:duct_leakage_flow=>250,
+:ela_main=>0.04053736910609036 * (0.67 / 0.66997600844386), # simulated ELA * (desired ACH output / simulated ACH output)
+:ela_attic=>0.03774532437568381 * (2.4 / 2.39967050285878) # default ELA * (desired ACH output / default ACH output)

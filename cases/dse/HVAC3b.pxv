@@ -1,0 +1,11 @@
+:case_name=>"HVAC3b",
+:climate=>"HEATING",
+:foundation_type=>"BASEMENT",
+:framing_factor_floor=>0.13,
+:hvac_model=>"DETAILED",
+:heating_cap=>56000|'btuh',
+:afn_hvac=>true,
+:supply_duct_zone=>"Basement Zone",
+:return_duct_zone=>"Basement Zone",
+:ela_main=>0.03765514874780395 * (0.67 / 0.67885689515214), # simulated ELA * (desired ACH output / simulated ACH output)
+:ela_attic=>0.03913290580025085 * (2.4 / 2.57861033948511) # default ELA * (desired ACH output / default ACH output)

@@ -34,9 +34,9 @@ def sim(c)
   file_base = File.basename(c,".*")
   file_dir = Pathname(c).parent.basename
 
-  if file_base[-1] == "C" or file_base[-2] == "2"
+  if file_base[-1] == "C" or file_base[-2] == "2" or ( file_base[-2] == "3" and ["a","b","c","d"].include?(file_base[-1]) )
     weather_file = "../../../TMY-Colorad-v5.0.epw"
-  elsif file_base[-1] == "L" or file_base[-2] == "1"
+  elsif file_base[-1] == "L" or file_base[-2] == "1" or ( file_base[-2] == "3" and ["e","f","g","h"].include?(file_base[-1]) )
     weather_file = "../../../TMY-Lasvega-v5.0.epw"
   else
     success = false
@@ -76,9 +76,9 @@ def results(sql_outputs, tests)
 
   for sql in sql_outputs
     case_name = File.dirname(sql)
-    if case_name[-1] == "C" or case_name[-2] == "2"
+    if case_name[-1] == "C" or case_name[-2] == "2" or ( case_name[-2] == "3" and ["a","b","c","d"].include?(case_name[-1]) )
       sql_files_CO << sql
-    elsif case_name[-1] == "L" or case_name[-2] == "1"
+    elsif case_name[-1] == "L" or case_name[-2] == "1" or ( case_name[-2] == "3" and ["e","f","g","h"].include?(case_name[-1]) )
       sql_files_LV << sql
     end
   end
@@ -108,10 +108,10 @@ def results(sql_outputs, tests)
 
     for sql in sql_outputs
       case_name = File.dirname(sql)
-      if case_name[-1] == "C" or case_name[-2] == "2"
+      if case_name[-1] == "C" or case_name[-2] == "2" or ( case_name[-2] == "3" and ["a","b","c","d"].include?(case_name[-1]) )
         src_CO << sql
         File.write(sql_batch_CO, "#{sql}\n", mode: "a")
-      elsif case_name[-1] == "L" or case_name[-2] == "1"
+      elsif case_name[-1] == "L" or case_name[-2] == "1" or ( case_name[-2] == "3" and ["e","f","g","h"].include?(case_name[-1]) )
         src_LV << sql
         File.write(sql_batch_LV, "#{sql}\n", mode: "a")
       else
