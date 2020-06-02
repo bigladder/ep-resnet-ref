@@ -53,6 +53,11 @@
   parameter "supply_duct_area_fraction", :default=>0.2 # fraction of conditioned floor area to set as supply duct area
   parameter "return_duct_area_fraction", :default=>0.05 # fraction of conditioned floor area to set as return duct area
 
+# AFN parameters for infiltration
+parameter "ela_main", :default=>0.001 # effective leakage area for Main Zone, m2
+parameter "ela_attic", :default=>0.001 # effective leakage area for Attic Zone, m2
+parameter "opening_mass_flow_coeff", :default=>0.001 # air mass flow coefficient for window and door openings used by AFN
+
 # use for testing simple glazing system
   parameter "window_model", :default=>"DETAILED" # choices: SIMPLE (simple glazing system to set window assembly properties), DETAILED (all window layers defined individually)
   parameter "win_u", :default=>1.039|'U-IP'
@@ -76,6 +81,7 @@ end
 # Dimensions
 width = 57.0|'ft' # East-to-West dimension in feet
 depth = 27.0|'ft' # North-to-South dimension in feet
+aspect_ratio = depth / width # ratio of building width along short axis to width along long axis
 roof_pitch = 14.23 # Pitch length of angled roof from eave to peak in feet
 roof_tilt = 18.43 # Tilt angle of roof surface above horizontal in degrees
 height_cond = 8.0|'ft' # Floor-to-Ceiling height of conditioned zone in feet
@@ -1775,6 +1781,27 @@ ZoneHVAC:IdealLoadsAirSystem,
 
   <% end %>
 <% end %>
+
+<%
+if afn_hvac
+  insert "airflownetwork.pxt",
+    :foundation_type=>foundation_type,
+    :aspect_ratio=>aspect_ratio,
+    :walls_main=>walls_main,
+    :surfaces_attic=>surfaces_attic,
+    :ela_main=>ela_main,
+    :ela_attic=>ela_attic,
+    :opening_mass_flow_coeff=>opening_mass_flow_coeff,
+    :north_windows=>north_windows,
+    :south_windows=>south_windows,
+    :east_windows=>east_windows,
+    :west_windows=>west_windows,
+    :north_doors=>north_doors,
+    :east_doors=>east_doors,
+    :south_doors=>south_doors,
+    :west_doors=>west_doors
+end
+%>
 
 !--- Outputs Section ---
   Output:Table:SummaryReports,
