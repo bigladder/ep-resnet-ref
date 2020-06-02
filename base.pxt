@@ -42,6 +42,17 @@
   parameter "crankcase_max_T", :default=>50|'F' # Taken from table 4.4.3(1) in dgrees celcius
   parameter "defrost_T", :default=>40|'F' # Taken from table 4.4.3(1) in dgrees celcius
 
+# AFN parameters for HVAC components
+  parameter "afn_hvac", :default=>false
+  parameter "supply_duct_zone", :default=>"Main Zone" # zone surrounding supply ducts, "Main Zone" | "Attic Zone" | "Basement Zone"
+  parameter "return_duct_zone", :default=>"Main Zone" # zone surrounding return ducts, "Main Zone" | "Attic Zone" | "Basement Zone"
+  parameter "duct_insulation_r_value", :default=>0 # R-value of duct insulation without air film
+  parameter "duct_ext_air_film_r_value", :default=>1.5|'r-ip' # R-value of exterior air film for duct (or duct insulation)
+  parameter "duct_int_air_film_r_value", :default=>0.4|'r-ip' # R-value of interior air film for duct, borrowed from CSE
+  parameter "duct_leakage_flow", :default=>0 # combined cfm airflow leaking out of supply + return ducts
+  parameter "supply_duct_area_fraction", :default=>0.2 # fraction of conditioned floor area to set as supply duct area
+  parameter "return_duct_area_fraction", :default=>0.05 # fraction of conditioned floor area to set as return duct area
+
 # use for testing simple glazing system
   parameter "window_model", :default=>"DETAILED" # choices: SIMPLE (simple glazing system to set window assembly properties), DETAILED (all window layers defined individually)
   parameter "win_u", :default=>1.039|'U-IP'
@@ -138,6 +149,15 @@ if hvac_model == "DETAILED"
 
   fan_power = fan_airflow * fan_power_per_flow * 1000 # convert kW to W
   fan_power_per_flow = (fan_power_per_flow * 1000)/(1|'CFM') # convert kW/cfm to W/m3/s
+
+  supply_duct_area = supply_duct_area_fraction * floor_area
+  return_duct_area = return_duct_area_fraction * floor_area
+  if return_duct_area > 0 and supply_duct_area > 0
+    duct_leakage_fraction = 0.5 * duct_leakage_flow / fan_airflow # half of total leakage flow assigned to supply + return ducts
+  else
+    duct_leakage_fraction = duct_leakage_flow / fan_airflow # total leakage flow assigned to supply or return duct
+  end
+
 end
 %>
 
@@ -1446,7 +1466,17 @@ elsif hvac_model == "DETAILED"
     :crankcase_max_temp=>crankcase_max_T,
     :cooling_coil_cd=>cooling_coil_cd,
     :heating_coil_cd=>heating_coil_cd,
-    :curve_source=>"open_studio"
+    :curve_source=>"open_studio",
+    :afn_hvac=>afn_hvac,
+    :supply_duct_zone=>supply_duct_zone,
+    :return_duct_zone=>return_duct_zone,
+    :duct_insulation_r_value=>duct_insulation_r_value,
+    :duct_ext_air_film_r_value=>duct_ext_air_film_r_value,
+    :duct_int_air_film_r_value=>duct_int_air_film_r_value,
+    :supply_leakage_ratio=>duct_leakage_fraction,
+    :return_leakage_ratio=>duct_leakage_fraction,
+    :supply_duct_inarea=>supply_duct_area,
+    :return_duct_inarea=>return_duct_area
 
   insert "atu.pxt",
     :zone_name=>"Main Zone",

@@ -51,6 +51,22 @@ parameter "operation_schedule", :default=>
     Until: 24:00, 1.0;       !- Field 3
 "
 
+parameter "afn_hvac", :default=>false
+parameter "hvac_equip_zone", :default=>"Main Zone" # zone surrounding air handling equipment, "Main Zone" | "Attic Zone" | "Basement Zone"
+parameter "supply_duct_zone", :default=>"Main Zone" # zone surrounding supply ducts, "Main Zone" | "Attic Zone" | "Basement Zone"
+parameter "supply_duct_inarea", :default=>1|'FT2'
+parameter "supply_duct_diameter", :default=>0.666667|'FT'
+parameter "return_duct_zone", :default=>"Main Zone" # zone surrounding return ducts, "Main Zone" | "Attic Zone" | "Basement Zone"
+parameter "return_duct_inarea", :default=>1|'FT2'
+parameter "return_duct_diameter", :default=>1.3333|'FT'
+parameter "duct_wall_thickness", :default=>0.0187|'in' # assumed 26-gage ducting per SMACNA
+parameter "duct_wall_k", :default=>63.9|'k-ip' # assumed conductivity for sheet metal
+parameter "duct_insulation_r_value", :default=>0|'r-ip' # R-value of duct insulation without air film
+parameter "duct_ext_air_film_r_value", :default=>1.5|'r-ip' # R-value of exterior air film for duct (or duct insulation)
+parameter "duct_int_air_film_r_value", :default=>0.4|'r-ip' # R-value of interior air film for duct, borrowed from CSE
+parameter "supply_leakage_ratio", :default=>0.001
+parameter "return_leakage_ratio", :default=>0.001
+
 %>
 
 <%
@@ -64,6 +80,19 @@ elsif fan_type == "CYCLING"
   fan_mode = "CYCLING"
   fan_control_method = "Discrete"
 end
+
+# Airflow Network Ducting Details
+
+duct_wall_r_value = duct_wall_thickness / duct_wall_k
+puts "duct_wall_r_value: #{duct_wall_r_value}"
+
+duct_r_value = duct_wall_r_value + duct_insulation_r_value
+puts "duct_r_value: #{duct_r_value}"
+
+duct_u_value = 1 / duct_r_value
+
+hyd_dia = 1.0
+cross_area = ((hyd_dia / 2) * (hyd_dia / 2) * 3.14159)
 
 %>
 
@@ -1025,3 +1054,437 @@ Output:Table:Annual,
   <%= system_name.gsub(" ", "_") %> supply fan no load disaggregate,  !- Variable, Meter, EMS Int Var, IDF field Name 2
   SumOrAverage,  !- Aggregation Type for 2
   2;  !- Digits After Decimal for 2
+
+<% if afn_hvac %>
+!--- Airflow Network Demand-Side Distribution ---
+
+  AirflowNetwork:Distribution:Linkage,
+    <%= system_name %> Main Supply Link,               !- Name
+    <%= system_name %> Equipment Inlet Node_AFN,      !- Node 1 Name
+    <%= system_name %> Splitter Node_AFN,            !- Node 2 Name
+    <%= system_name %> Main Supply Duct,               !- Component Name
+    <%= supply_duct_zone %>;              !- Thermal Zone Name
+
+  AirflowNetwork:Distribution:Node,
+    <%= system_name %> Equipment Inlet Node_AFN,      !- Name
+    <%= system_name %> Zone Equipment Inlet Node,  !- Component Name or Node Name
+    Other,                   !- Component Object Type or Node Type
+    3.0;                     !- Node Height {m}
+
+  AirflowNetwork:Distribution:Node,
+    <%= system_name %> Splitter Node_AFN,            !- Name
+    ,                        !- Component Name or Node Name
+    AirLoopHVAC:ZoneSplitter,!- Component Object Type or Node Type
+    3.0;                     !- Node Height {m}
+
+  AirflowNetwork:Distribution:Component:Duct,
+    <%= system_name %> Main Supply Duct,               !- Name
+    0.1,                     !- Duct Length {m}
+    <%= hyd_dia %>,                  !- Hydraulic Diameter {m}
+    <%= cross_area %>,                  !- Cross Section Area {m2}
+    0.0001,                  !- Surface Roughness {m}
+    0.00,                    !- Coefficient for Local Dynamic Loss Due to Fitting {dimensionless}
+    0.001,                   !- Heat Transmittance Coefficient (U-Factor) for Duct Wall Construction {W/m2-K}
+    0.0000001;               !- Overall Moisture Transmittance Coefficient from Air to Air {kg/m2}
+
+  <% for zone_name in zone_names %>
+  AirflowNetwork:Distribution:Linkage,
+    <%= zone_name %> Splitter Link,         !- Name
+    <%= system_name %> Splitter Node_AFN,            !- Node 1 Name
+    <%= zone_name %> Supply Node_AFN,          !- Node 2 Name
+    <%= zone_name %> Supply Duct,              !- Component Name
+    <%= supply_duct_zone %>;              !- Thermal Zone Name
+
+  AirflowNetwork:Distribution:Node,
+    <%= zone_name %> Supply Node_AFN,          !- Name
+    ,                        !- Component Name or Node Name
+    Other,                   !- Component Object Type or Node Type
+    3.0;                     !- Node Height {m}
+
+	AirflowNetwork:Distribution:Component:Duct,
+		<%= zone_name %> Supply Duct,              !- Name of Duct Component
+		<%= (supply_duct_inarea / supply_duct_diameter / zone_names.length / 3.14159) %>,                     !- Duct Length {m}
+		<%= supply_duct_diameter %>,                     !- Hydraulic Diameter {m}
+		<%= ((supply_duct_diameter / 2) * (supply_duct_diameter / 2) * 3.14159) %>,                  !- Cross Section Area {m2}
+		0.0009,                  !- Surface Roughness {m}
+		0.01,                    !- Coefficient for local dynamic loss due to fitting {dimensionless}
+		<%= duct_u_value %>,                   !- Heat Transmittance Coefficient (U-Factor) for Duct Wall Construction {W/m2-K}
+		0.0001,                  !- Overall moisture transmittance coefficient from air to air {kg/m2}
+		<%= duct_ext_air_film_r_value %>;                   !- Outside Convection Coefficient (U-Factor) for Duct Wall Construction {W/m2-K}
+
+  AirflowNetwork:Distribution:Linkage,
+    <%= zone_name %> Supply Leak Link,      !- Name
+    <%= zone_name %> Supply Node_AFN,             !- Node 1 Name
+    <%= supply_duct_zone %>,          !- Node 2 Name
+    <%= zone_name %> Supply Leak;              !- Component Name
+
+  AirflowNetwork:Distribution:Component:LeakageRatio,
+    <%= zone_name %> Supply Leak,              !- Name
+    <%= [supply_leakage_ratio,0.001].max %>,                    !- Effective Leakage Ratio {dimensionless}
+    <%= fan_flow_supply  / zone_names.length %>,                     !- Maximum Flow Rate {m3/s}
+    2,                      !- Reference Pressure Difference {Pa}
+    0.65;                    !- Air Mass Flow Exponent {dimensionless}
+
+  AirflowNetwork:Distribution:Linkage,
+    <%= zone_name %> Terminal Inlet Link,        !- Name
+    <%= zone_name %> Supply Node_AFN,          !- Node 1 Name
+    <%= zone_name %> Terminal Inlet Node_AFN,  !- Node 2 Name
+    <%= zone_name %> Supply Duct,              !- Component Name
+    <%= supply_duct_zone %>;              !- Thermal Zone Name
+
+  AirflowNetwork:Distribution:Node,
+    <%= zone_name %> Terminal Inlet Node_AFN,  !- Name
+    <%= zone_name %> ATU Inlet Node,         !- Component Name or Node Name
+    Other,                   !- Component Object Type or Node Type
+    3.0;                     !- Node Height {m}
+
+  AirflowNetwork:Distribution:Component:TerminalUnit,
+    <%= zone_name %> ATU,                       !- Terminal Unit Name
+    AirTerminal:SingleDuct:VAV:Reheat,                       !- Terminal Unit Object Type
+    0.1,                     !- Air Path Length {m}
+    1.000;                   !- Air Path Hydraulic Diameter {m}
+
+  AirflowNetwork:Distribution:Linkage,
+    <%= zone_name %> Terminal Link,!- Name
+    <%= zone_name %> Terminal Inlet Node_AFN,  !- Node 1 Name
+    <%= zone_name %> Terminal Damper Outlet Node_AFN,             !- Node 2 Name
+    <%= zone_name %> ATU;      !- Component Name
+
+  AirflowNetwork:Distribution:Node,
+    <%= zone_name %> Terminal Damper Outlet Node_AFN,  !- Name
+    <%= zone_name %> ATU DAMPER OUTLET Node,         !- Component Name or Node Name
+    Other,                   !- Component Object Type or Node Type
+    3.0;                     !- Node Height {m}
+
+  AirflowNetwork:Distribution:Linkage,
+    <%= zone_name %> Terminal Damper Link,!- Name
+    <%= zone_name %> Terminal Damper Outlet Node_AFN,  !- Node 1 Name
+    <%= zone_name %> Terminal Outlet Node_AFN,             !- Node 2 Name
+    <%= zone_name %> ATU;      !- Component Name
+
+  AirflowNetwork:Distribution:Node,
+    <%= zone_name %> Terminal Outlet Node_AFN,  !- Name
+    <%= zone_name %> ATU Outlet Node,         !- Component Name or Node Name
+    Other,                   !- Component Object Type or Node Type
+    3.0;                     !- Node Height {m}
+
+  AirflowNetwork:Distribution:Linkage,
+    <%= zone_name %> Supply Connection Link,!- Name
+    <%= zone_name %> Terminal Outlet Node_AFN,  !- Node 1 Name
+    <%= zone_name %>,             !- Node 2 Name
+    <%= zone_name %> Connection Duct;      !- Component Name
+
+  AirflowNetwork:Distribution:Component:Duct,
+    <%= zone_name %> Connection Duct,      !- Name
+    0.001,                     !- Duct Length {m}
+    <%= hyd_dia %>,                  !- Hydraulic Diameter {m}
+    <%= cross_area %>,                  !- Cross Section Area {m2}
+    0.0001,                  !- Surface Roughness {m}
+    0.00,                    !- Coefficient for Local Dynamic Loss Due to Fitting {dimensionless}
+    0.001,                   !- Heat Transmittance Coefficient (U-Factor) for Duct Wall Construction {W/m2-K}
+    0.0000001;               !- Overall Moisture Transmittance Coefficient from Air to Air {kg/m2}
+
+  AirflowNetwork:Distribution:Linkage,
+    <%= zone_name %> Return Connection Link,!- Name
+    <%= zone_name %>,             !- Node 1 Name
+    <%= zone_name %> Outlet Node_AFN,          !- Node 2 Name
+    <%= zone_name %> Connection Duct;      !- Component Name
+
+  AirflowNetwork:Distribution:Node,
+    <%= zone_name %> Outlet Node_AFN,          !- Name
+    <%= zone_name %> Return Node,        !- Component Name or Node Name
+    Other,                   !- Component Object Type or Node Type
+    3.0;                     !- Node Height {m}
+
+  AirflowNetwork:Distribution:Linkage,
+    <%= zone_name %> Return Link,         !- Name
+    <%= zone_name %> Outlet Node_AFN,          !- Node 1 Name
+    <%= zone_name %> Return Node_AFN,          !- Node 2 Name
+    <%= zone_name %> Return Duct,              !- Component Name
+    <%= return_duct_zone %>;              !- Thermal Zone Name
+
+  AirflowNetwork:Distribution:Node,
+    <%= zone_name %> Return Node_AFN,          !- Name
+    ,                        !- Component Name or Node Name
+    Other,                   !- Component Object Type or Node Type
+    3.0;                     !- Node Height {m}
+
+	AirflowNetwork:Distribution:Component:Duct,
+		<%= zone_name %> Return Duct,              !- Name of Duct Component
+		<%= (return_duct_inarea / return_duct_diameter / zone_names.length / 3.14159) %>,                     !- Duct Length {m}
+		<%= return_duct_diameter %>,                     !- Hydraulic Diameter {m}
+		<%= ((return_duct_diameter / 2) * (return_duct_diameter / 2) * 3.14159) %>,                  !- Cross Section Area {m2}
+		0.0009,                  !- Surface Roughness {m}
+		0.01,                    !- Coefficient for local dynamic loss due to fitting {dimensionless}
+		<%= duct_u_value %>,                   !- Heat Transmittance Coefficient (U-Factor) for Duct Wall Construction {W/m2-K}
+		0.0001,                  !- Overall moisture transmittance coefficient from air to air {kg/m2}
+		<%= duct_ext_air_film_r_value %>;                   !- Outside Convection Coefficient (U-Factor) for Duct Wall Construction {W/m2-K}
+
+  AirflowNetwork:Distribution:Linkage,
+    <%= zone_name %> Return Leak Link,      !- Name
+    <%= return_duct_zone %>,             !- Node 1 Name
+    <%= zone_name %> Return Node_AFN,          !- Node 2 Name
+    <%= zone_name %> Return Leak;              !- Component Name
+
+  AirflowNetwork:Distribution:Component:LeakageRatio,
+    <%= zone_name %> Return Leak,              !- Name
+    <%= [return_leakage_ratio,0.001].max %>,                    !- Effective Leakage Ratio {dimensionless}
+    <%= fan_flow_supply  / zone_names.length %>,                     !- Maximum Flow Rate {m3/s}
+    2,                      !- Reference Pressure Difference {Pa}
+    0.65;                    !- Air Mass Flow Exponent {dimensionless}
+
+  AirflowNetwork:Distribution:Linkage,
+    <%= zone_name %> Mixer Link,         !- Name
+    <%= zone_name %> Return Node_AFN,          !- Node 1 Name
+    <%= system_name %> Mixer Node_AFN,               !- Node 2 Name
+    <%= zone_name %> Return Duct,              !- Component Name
+    <%= return_duct_zone %>;             !- Thermal Zone Name
+
+  <% end %>
+  AirflowNetwork:Distribution:Node,
+    <%= system_name %> Mixer Node_AFN,               !- Name
+    ,                        !- Component Name or Node Name
+    AirLoopHVAC:ZoneMixer,   !- Component Object Type or Node Type
+    3.0;                     !- Node Height {m}
+
+  AirflowNetwork:Distribution:Linkage,
+    <%= system_name %> Main Return Link,         !- Name
+    <%= system_name %> Mixer Node_AFN,               !- Node 1 Name
+    <%= system_name %> Main Return Node_AFN,          !- Node 2 Name
+    <%= system_name %> Main Return Duct,              !- Component Name
+    <%= return_duct_zone %>;             !- Thermal Zone Name
+
+  AirflowNetwork:Distribution:Node,
+    <%= system_name %> Main Return Node_AFN,          !- Name
+    <%= system_name %> Zone Equipment Outlet Node, !- Component Name or Node Name
+    Other,                   !- Component Object Type or Node Type
+    3.0;                     !- Node Height {m}
+
+  AirflowNetwork:Distribution:Component:Duct,
+    <%= system_name %> Main Return Duct,              !- Name
+    0.001,                     !- Duct Length {m}
+    <%= hyd_dia %>,                  !- Hydraulic Diameter {m}
+    <%= cross_area %>,                  !- Cross Section Area {m2}
+    0.0001,                  !- Surface Roughness {m}
+    0.00,                    !- Coefficient for Local Dynamic Loss Due to Fitting {dimensionless}
+    0.001,                   !- Heat Transmittance Coefficient (U-Factor) for Duct Wall Construction {W/m2-K}
+    0.0000001;               !- Overall Moisture Transmittance Coefficient from Air to Air {kg/m2}
+
+  AirflowNetwork:Distribution:Linkage,
+    <%= system_name %> Air Loop Return Link,        !- Name
+    <%= system_name %> Main Return Node_AFN,          !- Node 1 Name
+    <%= system_name %> Main Inlet Node_AFN,           !- Node 2 Name
+    <%= system_name %> Air Loop Return Duct;           !- Component Name
+
+  AirflowNetwork:Distribution:Node,
+    <%= system_name %> Main Inlet Node_AFN,           !- Name
+    ,     !- Component Name or Node Name
+    Other,                   !- Component Object Type or Node Type
+    3.0;                     !- Node Height {m}
+
+  AirflowNetwork:Distribution:Component:Duct,
+    <%= system_name %> Air Loop Return Duct,           !- Name
+    0.001,                     !- Duct Length {m}
+    <%= hyd_dia %>,                  !- Hydraulic Diameter {m}
+    <%= cross_area %>,                  !- Cross Section Area {m2}
+    0.0001,                  !- Surface Roughness {m}
+    0.00,                    !- Coefficient for Local Dynamic Loss Due to Fitting {dimensionless}
+    0.001,                   !- Heat Transmittance Coefficient (U-Factor) for Duct Wall Construction {W/m2-K}
+    0.0000001;               !- Overall Moisture Transmittance Coefficient from Air to Air {kg/m2}
+
+!--- Airflow Network Supply-Side Distribution ---
+
+  AirflowNetwork:Distribution:Linkage,
+    <%= system_name %> Supply Inlet Link,         !- Name
+    <%= system_name %> Main Inlet Node_AFN,           !- Node 1 Name
+    <%= system_name %> Supply Equipment Inlet Node_AFN,            !- Node 2 Name
+    <%= system_name %> Main Return Duct;            !- Component Name
+
+  AirflowNetwork:Distribution:Node,
+    <%= system_name %> Supply Equipment Inlet Node_AFN,           !- Name
+    <%= system_name %> Supply Equipment Inlet Node,     !- Component Name or Node Name
+    Other,                   !- Component Object Type or Node Type
+    3.0;                     !- Node Height {m}
+
+  <% if (fan_config == "BLOWTHROUGH") %>
+  AirflowNetwork:Distribution:Linkage,
+    <%= system_name %> Supply Fan Link,         !- Name
+    <%= system_name %> Supply Equipment Inlet Node_AFN,           !- Node 1 Name
+    <%= system_name %> Supply Fan Outlet Node_AFN,            !- Node 2 Name
+    <%= system_name %> Supply Fan;            !- Component Name
+
+  AirflowNetwork:Distribution:Node,
+    <%= system_name %> Supply Fan Outlet Node_AFN,            !- Name
+    <%= system_name %> Supply Fan Outlet Node,  !- Component Name or Node Name
+    Other,                   !- Component Object Type or Node Type
+    3.0;                     !- Node Height {m}
+
+  AirflowNetwork:Distribution:Component:Fan,
+    <%= system_name %> Supply Fan,            !- Fan Name
+    Fan:SystemModel;      !- Supply Fan Object Type
+
+  AirflowNetwork:Distribution:Linkage,
+    <%= system_name %> Cooling Coil Link,         !- Name
+    <%= system_name %> Supply Fan Outlet Node_AFN,           !- Node 1 Name
+    <%= system_name %> Cooling Coil Outlet Node_AFN,        !- Node 2 Name
+    <%= system_name %> Cooling Coil;              !- Component Name
+
+  AirflowNetwork:Distribution:Node,
+    <%= system_name %> Cooling Coil Outlet Node_AFN,            !- Name
+    <%= system_name %> Cooling Coil Outlet Node,     !- Component Name or Node Name
+    Other,                   !- Component Object Type or Node Type
+    3.0;                     !- Node Height {m}
+
+  AirflowNetwork:Distribution:Component:Coil,
+    <%= system_name %> Cooling Coil,              !- Coil Name
+    Coil:Cooling:DX:SingleSpeed,  !- Coil Object Type
+    0.1,                     !- Air Path Length {m}
+    1.000;                   !- Air Path Hydraulic Diameter {m}
+
+  AirflowNetwork:Distribution:Linkage,
+    <%= system_name %> Heating Coil Link,         !- Name
+    <%= system_name %> Cooling Coil Outlet Node_AFN,        !- Node 1 Name
+    <% if heating_coil_type == "ASHP" and cooling_coil_type == "ASHP" %>
+    <%= system_name %> Heating Coil Outlet Node_AFN,       !- Node 2 Name
+    <% else %>
+    <%= system_name %> Supply Equipment Outlet Node_AFN,       !- Node 2 Name
+    <% end %>
+    <%= system_name %> Heating Coil;     !- Component Name
+
+    <% if heating_coil_type == "ASHP" and cooling_coil_type == "ASHP" %>
+  AirflowNetwork:Distribution:Node,
+    <%= system_name %> Heating Coil Outlet Node_AFN,            !- Name
+    <%= system_name %> Heating Coil Outlet Node,  !- Component Name or Node Name
+    Other,                   !- Component Object Type or Node Type
+    3.0;                     !- Node Height {m}
+
+    <% else %>
+  AirflowNetwork:Distribution:Node,
+    <%= system_name %> Supply Equipment Outlet Node_AFN,            !- Name
+    <%= system_name %> Supply Equipment Outlet Node,     !- Component Name or Node Name
+    Other,                   !- Component Object Type or Node Type
+    3.0;                     !- Node Height {m}
+
+    <% end %>
+  AirflowNetwork:Distribution:Component:Coil,
+    <%= system_name %> Heating Coil,     !- Coil Name
+    <% if (heating_coil_type == "GAS") %>
+    Coil:Heating:Fuel,        !- Coil Object Type
+    <% elsif (heating_coil_type == "ELECTRIC") %>
+		Coil:Heating:Electric,        !- Coil Object Type
+    <% elsif (heating_coil_type == "ASHP") %>
+		Coil:Heating:DX:SingleSpeed,        !- Coil Object Type
+    <% end %>
+    0.1,                     !- Air Path Length {m}
+    1.000;                   !- Air Path Hydraulic Diameter {m}
+
+  <% elsif (fan_config == "DRAWTHROUGH") %>
+  AirflowNetwork:Distribution:Linkage,
+    <%= system_name %> Cooling Coil Link,         !- Name
+    <%= system_name %> Supply Equipment Inlet Node_AFN,           !- Node 1 Name
+    <%= system_name %> Cooling Coil Outlet Node_AFN,        !- Node 2 Name
+    <%= system_name %> Cooling Coil;              !- Component Name
+
+  AirflowNetwork:Distribution:Node,
+    <%= system_name %> Cooling Coil Outlet Node_AFN,            !- Name
+    <%= system_name %> Cooling Coil Outlet Node,     !- Component Name or Node Name
+    Other,                   !- Component Object Type or Node Type
+    3.0;                     !- Node Height {m}
+
+  AirflowNetwork:Distribution:Component:Coil,
+    <%= system_name %> Cooling Coil,              !- Coil Name
+    Coil:Cooling:DX:SingleSpeed,  !- Coil Object Type
+    0.1,                     !- Air Path Length {m}
+    1.000;                   !- Air Path Hydraulic Diameter {m}
+
+  AirflowNetwork:Distribution:Linkage,
+    <%= system_name %> Heating Coil Link,         !- Name
+    <%= system_name %> Cooling Coil Outlet Node_AFN,        !- Node 1 Name
+    <%= system_name %> Heating Coil Outlet Node_AFN,       !- Node 2 Name
+    <%= system_name %> Heating Coil;     !- Component Name
+
+  AirflowNetwork:Distribution:Node,
+    <%= system_name %> Heating Coil Outlet Node_AFN,            !- Name
+    <%= system_name %> Heating Coil Outlet Node,  !- Component Name or Node Name
+    Other,                   !- Component Object Type or Node Type
+    3.0;                     !- Node Height {m}
+
+  AirflowNetwork:Distribution:Component:Coil,
+    <%= system_name %> Heating Coil,     !- Coil Name
+    <% if (heating_coil_type == "GAS") %>
+    Coil:Heating:Fuel,        !- Coil Object Type
+    <% elsif (heating_coil_type == "ELECTRIC") %>
+		Coil:Heating:Electric,        !- Coil Object Type
+    <% elsif (heating_coil_type == "ASHP") %>
+		Coil:Heating:DX:SingleSpeed,        !- Coil Object Type
+    <% end %>
+    0.1,                     !- Air Path Length {m}
+    1.000;                   !- Air Path Hydraulic Diameter {m}
+
+  AirflowNetwork:Distribution:Linkage,
+    <%= system_name %> Supply Fan Link,           !- Name
+    <%= system_name %> Heating Coil Outlet Node_AFN,            !- Node 1 Name
+    <% if heating_coil_type == "ASHP" and cooling_coil_type == "ASHP" %>
+    <%= system_name %> Supply Fan Outlet Node_AFN,            !- Node 2 Name
+    <% else %>
+    <%= system_name %> Supply Equipment Outlet Node_AFN,            !- Node 2 Name
+    <% end %>
+    <%= system_name %> Supply Fan;            !- Component Name
+
+    <% if heating_coil_type == "ASHP" and cooling_coil_type == "ASHP" %>
+  AirflowNetwork:Distribution:Node,
+    <%= system_name %> Supply Fan Outlet Node_AFN,            !- Name
+    <%= system_name %> Supply Fan Outlet Node,  !- Component Name or Node Name
+    Other,                   !- Component Object Type or Node Type
+    3.0;                     !- Node Height {m}
+
+    <% else %>
+  AirflowNetwork:Distribution:Node,
+    <%= system_name %> Supply Equipment Outlet Node_AFN,            !- Name
+    <%= system_name %> Supply Equipment Outlet Node,     !- Component Name or Node Name
+    Other,                   !- Component Object Type or Node Type
+    3.0;                     !- Node Height {m}
+
+    <% end %>
+  AirflowNetwork:Distribution:Component:Fan,
+    <%= system_name %> Supply Fan,            !- Fan Name
+    Fan:SystemModel;      !- Supply Fan Object Type
+
+  <% end %>
+  <% if heating_coil_type == "ASHP"  and cooling_coil_type == "ASHP" %>
+  AirflowNetwork:Distribution:Linkage,
+    <%= system_name %> Supp Heating Coil Link,         !- Name
+    <%= system_name %> Heating Coil Outlet Node_AFN,        !- Node 1 Name
+    <%= system_name %> Supply Equipment Outlet Node_AFN,       !- Node 2 Name
+    <%= system_name %> Supp Heating Coil;     !- Component Name
+
+  AirflowNetwork:Distribution:Node,
+    <%= system_name %> Supply Equipment Outlet Node_AFN,            !- Name
+    <%= system_name %> Supply Equipment Outlet Node,     !- Component Name or Node Name
+    Other,                   !- Component Object Type or Node Type
+    3.0;                     !- Node Height {m}
+
+  AirflowNetwork:Distribution:Component:Coil,
+    <%= system_name %> Supp Heating Coil,     !- Coil Name
+		Coil:Heating:Electric,        !- Coil Object Type
+    0.1,                     !- Air Path Length {m}
+    1.000;                   !- Air Path Hydraulic Diameter {m}
+
+  <% end %>
+  AirflowNetwork:Distribution:Linkage,
+    <%= system_name %> Air Loop Supply Link,    !- Name
+    <%= system_name %> Supply Equipment Outlet Node_AFN,       !- Node 1 Name
+    <%= system_name %> Equipment Inlet Node_AFN,      !- Node 2 Name
+    <%= system_name %> Air Loop Supply Duct;           !- Component Name
+
+  AirflowNetwork:Distribution:Component:Duct,
+    <%= system_name %> Air Loop Supply Duct,           !- Name
+    0.1,                     !- Duct Length {m}
+    <%= hyd_dia %>,                  !- Hydraulic Diameter {m}
+    <%= cross_area %>,                  !- Cross Section Area {m2}
+    0.0001,                  !- Surface Roughness {m}
+    0.00,                    !- Coefficient for Local Dynamic Loss Due to Fitting {dimensionless}
+    0.001,                   !- Heat Transmittance Coefficient (U-Factor) for Duct Wall Construction {W/m2-K}
+    0.0000001;               !- Overall Moisture Transmittance Coefficient from Air to Air {kg/m2}
+
+<% end %>
