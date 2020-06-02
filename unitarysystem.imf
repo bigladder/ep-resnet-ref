@@ -22,13 +22,14 @@ parameter "dx_heat_ratio", :default=>1.0
 parameter "heat_sizing_factor", :default=>1.25
 
 parameter "ashp_type", :default=>"UNITARY"  # ( UNITARY | MINISPLIT ) used to set performance curves
+parameter "hp_supp_heat_max_temp", :default=>50|'F'    # used with ashp
 
 parameter "hp_supply_max_temp", :default=>105|'F'    # used with ashp
-parameter "hp_min_temp", :default=>35|'F'    # used with ashp
+parameter "hp_min_temp", :default=>0|'F'    # used with ashp, based on OpenStudio-ERI
 parameter "hp_defrost_temp", :default=>40|'F'    # used with ashp
 
 parameter "crankcase_max_temp", :default=>50|'F'
-parameter "crankcase_cap", :default=>0|'W'
+parameter "crankcase_cap", :default=>50|'W'
 
 parameter "sat_low_temp", :default=>45|'F'
 parameter "sat_high_temp", :default=>105|'F'
@@ -70,7 +71,7 @@ end
     <%= system_name %>,      !- Name
     ,  !- Controller List Name
     <%= system_name %> Availability Manager List,  !- Availability Manager List Name
-    Autosize,                !- Design Supply Air Flow Rate {m3/s}
+    <%= fan_flow_supply %>,                !- Design Supply Air Flow Rate {m3/s}
     <%= system_name %> Branch List,  !- Branch List Name
     ,                        !- Connector List Name
     <%= system_name %> Supply Equipment Inlet Node,  !- Supply Side Inlet Node Name
@@ -88,7 +89,7 @@ end
     11.0,                    !- Precool Design Temperature {C}
     0.008,                   !- Precool Design Humidity Ratio {kg-H2O/kg-Air}
     <%= sat_low_temp %>,     !- Central Cooling Design Supply Air Temperature {C}
-<% if (heating_coil_type == "ASHP") %>
+<% if (heating_coil_type == "ASHP" and cooling_coil_type == "ASHP") %>
     <%= hp_supply_max_temp %>,    !- Central Heating Design Supply Air Temperature {C}
  <% else %>
     <%= sat_high_temp %>,    !- Central Heating Design Supply Air Temperature {C}
@@ -98,6 +99,7 @@ end
     No,                      !- 100% Outdoor Air in Heating
     0.0085,                  !- Central Cooling Design Supply Air Humidity Ratio {kg-H2O/kg-Air}
     0.008,                   !- Central Heating Design Supply Air Humidity Ratio {kg-H2O/kg-Air}
+  <% if fan_flow_supply == "Autosize" %>
     DesignDay,               !- Cooling Design Air Flow Method
     ,                        !- Cooling Design Air Flow Rate {m3/s}
     ,                        !- Supply Air Flow Rate Per Floor Area During Cooling Operation {m3/s-m2}
@@ -105,6 +107,15 @@ end
     ,                        !- Design Supply Air Flow Rate Per Unit Cooling Capacity {m3/s-W}
     DesignDay,  !- Heating Design Air Flow Method
     ,                        !- Heating Design Air Flow Rate {m3/s}
+  <% else %>
+    Flow/System,               !- Cooling Design Air Flow Method
+    <%= fan_flow_supply %>,                        !- Cooling Design Air Flow Rate {m3/s}
+    ,                        !- Supply Air Flow Rate Per Floor Area During Cooling Operation {m3/s-m2}
+    ,                        !- Fraction of Autosized Design Cooling Supply Air Flow Rate
+    ,                        !- Design Supply Air Flow Rate Per Unit Cooling Capacity {m3/s-W}
+    Flow/System,  !- Heating Design Air Flow Method
+    <%= fan_flow_supply %>,                        !- Heating Design Air Flow Rate {m3/s}
+  <% end %>
     ,                        !- Supply Air Flow Rate Per Floor Area During Heating Operation {m3/s-m2}
     ,                        !- Fraction of Autosized Design Heating Supply Air Flow Rate
     ,                        !- Fraction of Autosized Design Cooling Supply Air Flow Rate
@@ -178,7 +189,7 @@ end
     Temperature,             !- Control Variable
     <%= system_name %> Supply Equipment Outlet Node,  !- Reference Setpoint Node Name
     <%= system_name %> Heating Coil Outlet Node, !- Fan Inlet Node Name
-  <% if heating_coil_type == "ASHP" %>
+  <% if heating_coil_type == "ASHP" and cooling_coil_type == "ASHP" %>   <%# Adjust for supplemental heating coil %>
     <%= system_name %> Supply Fan Outlet Node,  !- Fan Outlet Node Name
   <% else %>
     <%= system_name %> Supply Equipment Outlet Node,  !- Fan Outlet Node Name
@@ -208,6 +219,9 @@ end
      <%= system_name %> Zone Setpoint Nodes,  !- Name
      <%= system_name %> Supply Fan Outlet Node,  !- Node Name
      <%= system_name %> Cooling Coil Outlet Node,  !- Node Name
+   <% if (heating_coil_type == "ASHP" and cooling_coil_type == "ASHP") %>  <%# Adjust for supplemental heating coil %>
+     <%= system_name %> Heating Coil Outlet Node,  !- Node Name
+   <% end %>
      <%= system_name %> Supply Equipment Outlet Node;  !- Node Name
 
 <% elsif (fan_config == "DRAWTHROUGH") %>
@@ -215,6 +229,9 @@ end
      <%= system_name %> Zone Setpoint Nodes,  !- Name
      <%= system_name %> Cooling Coil Outlet Node,  !- Node Name
      <%= system_name %> Heating Coil Outlet Node,  !- Node Name
+   <% if (heating_coil_type == "ASHP" and cooling_coil_type == "ASHP") %>  <%# Adjust for supplemental heating coil %>
+     <%= system_name %> Supply Fan Outlet Node,  !- Node Name
+   <% end %>
      <%= system_name %> Supply Equipment Outlet Node;  !- Node Name
 <% end %>
 
@@ -247,19 +264,18 @@ end
     , !- Heating Coil Name
     , !- DX Heating Coil Sizing Ratio
 <% end %>
-<% if (cooling_coil_type == "DX") %>
     Coil:Cooling:DX:SingleSpeed,  !- Cooling Coil Object Type
-<% elsif (cooling_coil_type == "ASHP") %>
-    Coil:Cooling:DX:SingleSpeed,  !- Cooling Coil Object Type
-<% elsif (cooling_coil_type == "CHILLEDWATER") %>
-    Coil:Cooling:Water,      !- Cooling Coil Object Type
-<% end %>
     <%= system_name %> Cooling Coil, !- Cooling Coil Name
     , !- Use DOAS DX Cooling Coil
     , !- DOAS DX Cooling Coil Leaving Minimum Air Temperature
     , !- Latent Load Control
+<% if (heating_coil_type == "ASHP" and cooling_coil_type == "ASHP") %>
+    Coil:Heating:Electric,         !- Supplemental Heating Coil Object Type
+    <%= system_name %> Supp Heating Coil, !- Supplemental Heating Coil Name
+<% else %>
     ,  !- Supplemental Heating Coil Object Type
     ,  !- Supplemental Heating Coil Name
+<% end %>
     SupplyAirFlowRate, !- Supply Air Flow Rate Method During Cooling Operation
     <%= fan_flow_supply %>, !- Supply Air Flow Rate During Cooling Operation {m3/s}
     , !- Supply Air Flow Rate Per Floor Area During Cooling Opertation
@@ -277,12 +293,12 @@ end
     , !- Fraction of Autosized Design Heating Supply Air Flow Rate
     , !- Design Supply Air Flow Rate Per Unit of Capacity During Cooling Operation
     , !- Design Supply Air Flow Rate Per Unit of Capacity During Heating Operation
-<% if (heating_coil_type == "ASHP" && cooling_coil_type == "ASHP") %>
+<% if (heating_coil_type == "ASHP" and cooling_coil_type == "ASHP") %>
     <%= hp_supply_max_temp %>, !- Maximum Supply Air Temperature {C}
 <% else %>
     <%= sat_high_temp %>, !- Maximum Supply Air Temperature {C}
 <% end %>
-    , !- Maximum Outdoor Dry-Bulb Temperature for Supplemental Heater Operation
+    <%= hp_supp_heat_max_temp %>, !- Maximum Outdoor Dry-Bulb Temperature for Supplemental Heater Operation
     , !- Outdoor Dry-Bulb Temperature Sensor Node Name
     , !- Maximum Cycling Rate
     , !- Heat Pump Time Constant
@@ -325,14 +341,14 @@ end
   <% elsif (fan_config == "DRAWTHROUGH") %>
     <%= system_name %> Heating Coil Outlet Node,  !- Air Inlet Node Name
   <% end %>
-  <% if (fan_config == "BLOWTHROUGH" || heating_coil_type == "ASHP") %>
+  <% if (fan_config == "BLOWTHROUGH" or (heating_coil_type == "ASHP" and cooling_coil_type == "ASHP")) %>
     <%= system_name %> Supply Fan Outlet Node,  !- Air Outlet Node Name
   <% else %>
     <%= system_name %> Supply Equipment Outlet Node,   !- Air Outlet Node Name
   <% end %>
     <%= fan_flow_supply %>,    !- Design Maximum Air Flow Rate {m3/s}
     <%= fan_control_method %>,   !- Speed Control Method
-    0.2,                       !- Electric Power Minimum Flow Rate Fraction
+    0.0,                       !- Electric Power Minimum Flow Rate Fraction
     <%= fan_rise_supply %>,                       !- Design Pressure Rise {Pa}
     <%= fan_motor_eff %>,                       !- Motor Efficiency
     1.0,                       !- Motor In Air Stream Fraction
@@ -352,6 +368,8 @@ end
     ,                                    !- Motor Loss Radiative Fraction
     Fan Energy;                          !- End-Use Subcategory
 
+  <% if (fan_type == "VARIABLE") %>
+    <% if (curve_source == "big_ladder") %>
   Curve:Quartic,
     <%= system_name %> Fan Curve,                      !- Name
     0.0013,                       !- Coefficient1 Constant
@@ -365,6 +383,19 @@ end
     1.0,                                !- Maximum Curve Output
     Dimensionless,                      !- Input Unit Type for X
     Dimensionless;                      !- Output Unit Type
+
+    <% elsif (curve_source == "open_studio") %>
+  Curve:Cubic,
+    <%= system_name %> Fan Curve,            !- Name
+    1,                                      !- Coefficient1 Constant
+    0,                                      !- Coefficient2 x
+    0,                                      !- Coefficient3 x**2
+    0,                                      !- Coefficient4 x**3
+    0,                                      !- Minimum Value of x {BasedOnField A2}
+    1;                                      !- Maximum Value of x {BasedOnField A2}
+
+    <% end %>
+  <% end %>
 
 <% if (cooling_coil_type == "DX" || cooling_coil_type == "ASHP") %>
 
@@ -402,7 +433,11 @@ Coil:Cooling:DX:SingleSpeed,
   ,                          !- Evaporative Condenser Effectiveness
   ,                          !- Evaporative Condenser Air Flow Rate {m^3/s}
   ,                          !- Evaporative Condenser Pump Rated Power Consumption {W}
+  <% if (cooling_coil_type == "DX") %>
   <%= crankcase_cap %>,   !- Crankcase Heater Capacity {W}
+  <% elsif (cooling_coil_type == "ASHP") %>
+  0,   !- Crankcase Heater Capacity {W}
+  <% end %>
   <%= crankcase_max_temp %>,  !- Maximum Outdoor Dry-Bulb Temperature for Crankcase Heater Operation {C}
   ,                        !- Supply Water Storage Tank Name
   ;                        !- Condensate Collection Water Storage Tank Name
@@ -653,10 +688,6 @@ Curve:Quadratic,
   <% end %>
 <% end %>
 
-<%
-  heating_coil_inlet_node = system_name + " Cooling Coil Outlet Node"
-%>
-
 <% if (heating_coil_type == "GAS") %>
 
   Coil:Heating:Fuel,
@@ -665,7 +696,7 @@ Curve:Quadratic,
     NaturalGas,              ! Fuel Type
     <%= heating_coil_eff %>,  !- Gas Burner Efficiency
     <%= heating_coil_cap %>, !- Nominal Capacity {W}
-    <%= heating_coil_inlet_node %>, !- Air Inlet Node Name
+    <%= system_name %> Cooling Coil Outlet Node, !- Air Inlet Node Name
   <% if (fan_config == "BLOWTHROUGH") %>
     <%= system_name %> Supply Equipment Outlet Node;  !- Air Outlet Node Name
   <% elsif (fan_config == "DRAWTHROUGH") %>
@@ -679,7 +710,7 @@ Curve:Quadratic,
     <%= system_name %> Always On Schedule,  !- Availability Schedule Name
     <%= heating_coil_eff %>,  !- Efficiency
     <%= heating_coil_cap %>, !- Nominal Capacity {W}
-    <%= heating_coil_inlet_node %>, !- Air Inlet Node Name
+    <%= system_name %> Cooling Coil Outlet Node, !- Air Inlet Node Name
   <% if (fan_config == "BLOWTHROUGH") %>
     <% if (control_type == "Load") %>
       <%= system_name %> Supply Equipment Outlet Node;  !- Air Outlet Node Name
@@ -706,12 +737,8 @@ Coil:Heating:DX:SingleSpeed,
   <%= heating_coil_eff %>,        !- Rated COP
   <%= fan_flow_supply %>,         !- Rated Air Flow Rate {m^3/s}
   ,                               !- Rated Evaporator Fan Power Per Volume Flow Rate {W/(m/s)}
-  <%= heating_coil_inlet_node %>, !- Air Inlet Node Name
-  <% if (fan_config == "BLOWTHROUGH") %>
-  <%= system_name %> Supply Equipment Outlet Node,  !- Air Outlet Node Name
-  <% elsif (fan_config == "DRAWTHROUGH") %>
+  <%= system_name %> Cooling Coil Outlet Node, !- Air Inlet Node Name
   <%= system_name %> Heating Coil Outlet Node,  !- Air Outlet Node Name
-  <% end %>
   <%= system_name %> HP_Heat-Cap-fT,  !- Total Heating Capacity Function of Temperature Curve Name
   <%= system_name %> HP_Heat-Cap-fFF,  !- Total Heating Capacity Function of Flow Fraction Curve Name
   <%= system_name %> HP_Heat-EIR-fT,  !- Energy Input Ratio Function of Temperature Curve Name
@@ -724,8 +751,9 @@ Coil:Heating:DX:SingleSpeed,
   <%= crankcase_cap %>,           !- Crankcase Heater Capacity {W}
   <%= crankcase_max_temp %>,      !- Maximum Outdoor Dry-Bulb Temperature for Crankcase Heater Operation {C}
   ReverseCycle,                   !- Defrost Strategy
-  Timed,                          !- Defrost Control
-  0.0;                       !- Defrost Time Period Fraction
+  OnDemand,                          !- Defrost Control
+  0.166667,                       !- Defrost Time Period Fraction
+  2000;                                   !- Resistive Defrost Heater Capacity {W}
 
   <% if (curve_source == "big_ladder") %>
     ! Following performance curves taken from single-speed ASHP system in BeOpt
@@ -844,6 +872,23 @@ Coil:Heating:DX:SingleSpeed,
         -100,                                   !- Minimum Value of y {BasedOnField A3}
         100;                                    !- Maximum Value of y {BasedOnField A3}
   <% end %>
+
+  Coil:Heating:Electric,
+    <%= system_name %> Supp Heating Coil,  !- Name
+    <%= system_name %> Always On Schedule,  !- Availability Schedule Name
+    1.0,                     !- Efficiency
+    Autosize,                !- Nominal Capacity
+  <% if (fan_config == "BLOWTHROUGH") %>
+    <%= system_name %> Heating Coil Outlet Node,  !- Air Inlet Node Name
+  <% elsif (fan_config == "DRAWTHROUGH") %>
+    <%= system_name %> Supply Fan Outlet Node,  !- Air Inlet Node Name
+  <% end %>
+  <% if (control_type == "Load") %>
+    <%= system_name %> Supply Equipment Outlet Node;  !- Air Outlet Node Name
+  <% elsif (control_type == "Setpoint") %>
+    <%= system_name %> Supply Equipment Outlet Node,  !- Air Outlet Node Name
+    <%= system_name %> Supply Equipment Outlet Node;  !- Temperature Setpoint Node Name
+  <% end %>
 <% end %>
 
   AirLoopHVAC:SupplyPath,
@@ -873,3 +918,110 @@ AirLoopHVAC:ZoneMixer,
   <%= zone_name %> Return Node,  !- Inlet Node Name
 <% end %>
   <%= zone_names[-1] %> Return Node;  !- Inlet Node Name
+
+<%# Following EMS objects needed to split fan energy use between heating and cooling %>
+
+EnergyManagementSystem:Sensor,
+  <%= system_name.gsub(" ", "_") %>_clg_coil_sensor,                  !- Name
+  <%= system_name %> Cooling Coil,                    !- Output:Variable or Output:Meter Index Key Name
+  Cooling Coil Total Cooling Rate;           !- Output:Variable or Output:Meter Name
+
+EnergyManagementSystem:Sensor,
+  <%= system_name.gsub(" ", "_") %>_htg_coil_sensor,                     !- Name
+  <%= system_name %> Heating Coil,                       !- Output:Variable or Output:Meter Index Key Name
+  Heating Coil Heating Rate;                !- Output:Variable or Output:Meter Name
+
+EnergyManagementSystem:Sensor,
+  <%= system_name.gsub(" ", "_") %>_supply_fan_sensor,    !- Name
+  <%= system_name %> Supply Fan,      !- Output:Variable or Output:Meter Index Key Name
+  Fan Electric Energy;                    !- Output:Variable or Output:Meter Name
+
+EnergyManagementSystem:Program,
+  <%= system_name.gsub(" ", "_") %>_supply_fan_disaggregate_program, !- Name
+  Set Supply_fan_clg = 0, !- Program Line 1
+  Set Supply_fan_primary_htg = 0, !- Program Line 2
+  Set Supply_fan_clg_htg = 0, !- Program Line 3
+  Set Supply_fan_no_load = 0, !- Program Line 4
+  If <%= system_name.gsub(" ", "_") %>_clg_coil_sensor > 0 && <%= system_name.gsub(" ", "_") %>_htg_coil_sensor > 0,           !- Program Line 5
+    Set Supply_fan_clg_htg = <%= system_name.gsub(" ", "_") %>_supply_fan_sensor, !- Program Line 6
+  ElseIf <%= system_name.gsub(" ", "_") %>_htg_coil_sensor > 0,          !- Program Line 5
+    Set Supply_fan_primary_htg = <%= system_name.gsub(" ", "_") %>_supply_fan_sensor, !- Program Line 6
+  ElseIf <%= system_name.gsub(" ", "_") %>_clg_coil_sensor > 0,          !- Program Line 5
+    Set Supply_fan_clg = <%= system_name.gsub(" ", "_") %>_supply_fan_sensor, !- Program Line 6
+  ElseIf <%= system_name.gsub(" ", "_") %>_clg_coil_sensor == 0 && <%= system_name.gsub(" ", "_") %>_htg_coil_sensor == 0,           !- Program Line 5
+    Set Supply_fan_no_load = <%= system_name.gsub(" ", "_") %>_supply_fan_sensor, !- Program Line 6
+  EndIf;                                  !- Program Line 7
+
+EnergyManagementSystem:ProgramCallingManager,
+  <%= system_name.gsub(" ", "_") %>_supply_fan_disaggregate_program_calling_manager, !- Name
+  EndOfSystemTimestepBeforeHVACReporting, !- EnergyPlus Model Calling Point
+  <%= system_name.gsub(" ", "_") %>_supply_fan_disaggregate_program; !- Program Name 1
+
+EnergyManagementSystem:OutputVariable,
+  <%= system_name.gsub(" ", "_") %> supply fan clg & htg disaggregate, !- Name
+  Supply_fan_clg_htg,  !- EMS Variable Name
+  Summed,                                 !- Type of Data in Variable
+  SystemTimestep,                         !- Update Frequency
+  <%= system_name.gsub(" ", "_") %>_supply_fan_disaggregate_program, !- EMS Program or Subroutine Name
+  J;                                      !- Units
+
+EnergyManagementSystem:OutputVariable,
+  <%= system_name.gsub(" ", "_") %> supply fan clg disaggregate, !- Name
+  Supply_fan_clg,  !- EMS Variable Name
+  Summed,                                 !- Type of Data in Variable
+  SystemTimestep,                         !- Update Frequency
+  <%= system_name.gsub(" ", "_") %>_supply_fan_disaggregate_program, !- EMS Program or Subroutine Name
+  J;                                      !- Units
+
+EnergyManagementSystem:OutputVariable,
+  <%= system_name.gsub(" ", "_") %> supply fan htg primary disaggregate, !- Name
+  Supply_fan_primary_htg, !- EMS Variable Name
+  Summed,                                 !- Type of Data in Variable
+  SystemTimestep,                         !- Update Frequency
+  <%= system_name.gsub(" ", "_") %>_supply_fan_disaggregate_program, !- EMS Program or Subroutine Name
+  J;                                      !- Units
+
+EnergyManagementSystem:OutputVariable,
+  <%= system_name.gsub(" ", "_") %> supply fan no load disaggregate, !- Name
+  Supply_fan_no_load, !- EMS Variable Name
+  Summed,                                 !- Type of Data in Variable
+  SystemTimestep,                         !- Update Frequency
+  <%= system_name.gsub(" ", "_") %>_supply_fan_disaggregate_program, !- EMS Program or Subroutine Name
+  J;                                      !- Units
+
+Output:Variable,
+  *,                                      !- Key Value
+  <%= system_name.gsub(" ", "_") %> supply fan clg & htg disaggregate, !- Variable Name
+  monthly;                                !- Reporting Frequency
+
+Output:Variable,
+  *,                                      !- Key Value
+  <%= system_name.gsub(" ", "_") %> supply fan clg disaggregate, !- Variable Name
+  monthly;                                !- Reporting Frequency
+
+Output:Variable,
+  *,                                      !- Key Value
+  <%= system_name.gsub(" ", "_") %> supply fan htg primary disaggregate, !- Variable Name
+  monthly;                                !- Reporting Frequency
+
+Output:Variable,
+  *,                                      !- Key Value
+  <%= system_name.gsub(" ", "_") %> supply fan no load disaggregate, !- Variable Name
+  monthly;                                !- Reporting Frequency
+
+Output:Table:Annual,
+  Custom Annual Fan Energy Report,  !- Name
+  , !- Filter
+  , !- Schedule Name
+  <%= system_name.gsub(" ", "_") %> supply fan clg & htg disaggregate,  !- Variable, Meter, EMS Int Var, IDF field Name 1
+  SumOrAverage,  !- Aggregation Type for 1
+  2,  !- Digits After Decimal for 1
+  <%= system_name.gsub(" ", "_") %> supply fan clg disaggregate,  !- Variable, Meter, EMS Int Var, IDF field Name 1
+  SumOrAverage,  !- Aggregation Type for 1
+  2,  !- Digits After Decimal for 1
+  <%= system_name.gsub(" ", "_") %> supply fan htg primary disaggregate,  !- Variable, Meter, EMS Int Var, IDF field Name 2
+  SumOrAverage,  !- Aggregation Type for 2
+  2,  !- Digits After Decimal for 2
+  <%= system_name.gsub(" ", "_") %> supply fan no load disaggregate,  !- Variable, Meter, EMS Int Var, IDF field Name 2
+  SumOrAverage,  !- Aggregation Type for 2
+  2;  !- Digits After Decimal for 2
