@@ -1820,16 +1820,37 @@ end
   Output:Variable,*,Zone Mean Air Temperature,Hourly;
   Output:Variable,*,Zone Thermostat Heating Setpoint Temperature,Hourly;
   Output:Variable,*,Zone Thermostat Cooling Setpoint Temperature,Hourly;
-  Output:Variable,*,Zone Ideal Loads Supply Air Total Heating Energy,Hourly;
-  Output:Variable,*,Zone Ideal Loads Supply Air Total Cooling Energy,Hourly;
   Output:Variable,*,Zone Windows Total Transmitted Solar Radiation Energy,Hourly;
   Output:Variable,*,Zone Infiltration Sensible Heat Loss Energy,Hourly;
+  Output:Variable,*,Zone Infiltration Air Change Rate,timestep; !- HVAC Average [ach]
+  Output:Variable,*,Zone Infiltration Air Change Rate,runperiod; !- HVAC Average [ach]
   Output:Variable,*,Zone Windows Total Heat Gain Energy,hourly; !- Zone Sum [J]
   Output:Variable,*,Zone Windows Total Heat Loss Energy,hourly; !- Zone Sum [J]
-<% if hvac_model == "DETAILED" %>
+<% if hvac_model == "SIMPLE" %>
+  Output:Variable,*,Zone Ideal Loads Supply Air Total Heating Energy,Hourly;
+  Output:Variable,*,Zone Ideal Loads Supply Air Total Cooling Energy,Hourly;
+<% elsif hvac_model == "DETAILED" %>
   Output:Variable,*,Fan Electric Power,timestep; !- Zone Sum [J]
   Output:Variable,*,Unitary System Fan Part Load Ratio,timestep; !- HVAC Average []
   Output:Variable,*,System Node Standard Density Volume Flow Rate,timestep; !- HVAC Average [m3/s]
+  Output:Variable,*,Heating Coil Heating Rate,timestep; !- HVAC Average [W]
+  Output:Variable,*,Cooling Coil Total Cooling Rate,timestep; !- HVAC Average [W]
+  <% if afn_hvac %>
+  Output:Variable,*,AFN Linkage Node 1 to Node 2 Volume Flow Rate,timestep; !- HVAC Average [m3/s]
+  Output:Variable,*,AFN Linkage Node 1 to 2 Average Volume Flow Rate,timestep; !- HVAC Average [m3/s]
+  Output:Variable,*,AFN Zone Infiltration Air Change Rate,timestep; !- HVAC Average [ach]
+  Output:Variable,*,AFN Zone Infiltration Air Change Rate,runperiod; !- HVAC Average [ach]
+  Output:Variable,*,AFN Zone Mixing Volume,timestep; !- HVAC Sum [m3]
+  Output:Variable,*,AFN Zone Duct Leaked Air Sensible Heat Gain Rate,timestep; !- HVAC Average [W]
+  Output:Variable,*,AFN Zone Duct Conduction Sensible Heat Gain Rate,timestep; !- HVAC Average [W]
+  Output:Variable,*,AFN Zone Duct Diffusion Latent Heat Gain Rate,timestep; !- HVAC Average [W]
+  Output:Variable,*,AFN Zone Duct Radiation Heat Gain Rate,timestep; !- HVAC Average [W]
+  Output:Variable,*,AFN Distribution Sensible Heat Gain Rate,timestep; !- HVAC Average [W]
+  Output:Variable,*,AFN Zone Exfiltration Heat Transfer Rate,timestep; !- HVAC Average [W]
+  <% end %>
 <% end %>
 
   Output:SQLite, SimpleAndTabular;  !- Option Type
+
+  Output:Diagnostics,
+    DisplayExtraWarnings;                       !- Key 1
