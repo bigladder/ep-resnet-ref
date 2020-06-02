@@ -24,6 +24,7 @@
   parameter "raised_floor_framed", :default=>true # whether main zone floor includes wood framing
 
   parameter "framing_factor_walls", :default=>0.25 # Note 3 in Table 7.1 specifies 0.25 framing factor for exterior walls
+  parameter "framing_factor_floor", :default=>0.1 # Note 5 in Table 7.1 specifies 0.1 framing factor for floor
   parameter "framing_factor_other", :default=>0.1 # Note 5 in Table 7.1 specifies 0.1 framing factor for ceiling and floor
   parameter "envelope_eff", :default=>"TYPICAL" # choices: TYPICAL, LOW, HIGH
   parameter "framing_approach", :default=>"COMPOSITE" # choices: COMPOSITE (lump framing section into cavity section), DETAILED (draw separate surfaces for framing and cavity sections)
@@ -992,8 +993,6 @@ Construction,
 <%
 if foundation_type == "SLAB"
   framing_factor_floor = 0.0
-else
-  framing_factor_floor = framing_factor_other
 end
 
 walls_main = [
@@ -1439,7 +1438,7 @@ Schedule:Compact,
 
 <%
 elsif hvac_model == "DETAILED"
-  require './heat_pump.rb'
+  require_relative 'heat_pump.rb'
   if cooling_type == "DX"
     COP_result = calc_heat_pump_COPs(seer, 6.8) # 6.8 here is arbitrary because it does not affect COP_cool
     cooling_coil_cop = COP_result[0]
