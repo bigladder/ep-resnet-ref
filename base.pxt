@@ -42,6 +42,7 @@
   parameter "crankcase_heat", :default=>50 # Taken from table 4.4.3(1) in W
   parameter "crankcase_max_T", :default=>50|'F' # Taken from table 4.4.3(1) in dgrees celcius
   parameter "defrost_T", :default=>40|'F' # Taken from table 4.4.3(1) in dgrees celcius
+  parameter "defrost_time_fra", :default=>0.05833 # EnergyPlus default
 
 # use for testing simple glazing system
   parameter "window_model", :default=>"DETAILED" # choices: SIMPLE (simple glazing system to set window assembly properties), DETAILED (all window layers defined individually)
@@ -1445,6 +1446,7 @@ elsif hvac_model == "DETAILED"
     :crankcase_max_temp=>crankcase_max_T,
     :cooling_coil_cd=>cooling_coil_cd,
     :heating_coil_cd=>heating_coil_cd,
+    :defrost_time_fra=>defrost_time_fra,
     :curve_source=>"open_studio"
 
   insert "atu.pxt",
@@ -1772,5 +1774,11 @@ ZoneHVAC:IdealLoadsAirSystem,
   Output:Variable,*,Unitary System Fan Part Load Ratio,timestep; !- HVAC Average []
   Output:Variable,*,System Node Standard Density Volume Flow Rate,timestep; !- HVAC Average [m3/s]
 <% end %>
+
+  Output:Variable,*,Heating Coil Heating Rate,Hourly;
+  Output:Variable,*,Heating Coil Electric Power,Hourly;
+  Output:Variable,*,Heating Coil Defrost Electric Power,Hourly;
+  Output:Variable,*,Heating Coil Crankcase Heater Electric Power,Hourly;
+  Output:Variable,*,Heating Coil Runtime Fraction,Hourly;
 
   Output:SQLite, SimpleAndTabular;  !- Option Type
