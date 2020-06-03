@@ -1770,15 +1770,19 @@ ZoneHVAC:IdealLoadsAirSystem,
   Output:Variable,*,Zone Windows Total Heat Gain Energy,hourly; !- Zone Sum [J]
   Output:Variable,*,Zone Windows Total Heat Loss Energy,hourly; !- Zone Sum [J]
 <% if hvac_model == "DETAILED" %>
-  Output:Variable,*,Fan Electric Power,timestep; !- Zone Sum [J]
-  Output:Variable,*,Unitary System Fan Part Load Ratio,timestep; !- HVAC Average []
-  Output:Variable,*,System Node Standard Density Volume Flow Rate,timestep; !- HVAC Average [m3/s]
+  Output:Variable,*,Fan Electric Power,hourly; !- Zone Sum [J]
+  Output:Variable,*,Unitary System Fan Part Load Ratio,hourly; !- HVAC Average []
+  Output:Variable,*,System Node Standard Density Volume Flow Rate,hourly; !- HVAC Average [m3/s]
 <% end %>
+
+!- Defrost related output variables
 
   Output:Variable,*,Heating Coil Heating Rate,Hourly;
   Output:Variable,*,Heating Coil Electric Power,Hourly;
   Output:Variable,*,Heating Coil Defrost Electric Power,Hourly;
   Output:Variable,*,Heating Coil Crankcase Heater Electric Power,Hourly;
   Output:Variable,*,Heating Coil Runtime Fraction,Hourly;
+  Output:Variable,*,Heating Coil Runtime Fraction,Hourly;
+  Output:Variable,HVAC Cooling Coil Outlet Node,System Node Temperature,hourly; !- HVAC Average [C]
 
   Output:SQLite, SimpleAndTabular;  !- Option Type
