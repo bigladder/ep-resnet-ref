@@ -42,6 +42,7 @@
   parameter "crankcase_heat", :default=>50 # Taken from table 4.4.3(1) in W
   parameter "crankcase_max_T", :default=>50|'F' # Taken from table 4.4.3(1) in dgrees celcius
   parameter "defrost_T", :default=>40|'F' # Taken from table 4.4.3(1) in dgrees celcius
+  parameter "defrost_time_fra", :default=>0.05833 # EnergyPlus default
 
 # AFN parameters for HVAC components
   parameter "afn_hvac", :default=>false
@@ -1481,7 +1482,8 @@ elsif hvac_model == "DETAILED"
     :supply_leakage_ratio=>duct_leakage_fraction,
     :return_leakage_ratio=>duct_leakage_fraction,
     :supply_duct_inarea=>supply_duct_area,
-    :return_duct_inarea=>return_duct_area
+    :return_duct_inarea=>return_duct_area,
+    :defrost_time_fra=>defrost_time_fra
 
   insert "atu.pxt",
     :zone_name=>"Main Zone",
@@ -1848,6 +1850,16 @@ end
   Output:Variable,*,AFN Zone Exfiltration Heat Transfer Rate,timestep; !- HVAC Average [W]
   <% end %>
 <% end %>
+
+!- Defrost related output variables
+
+  Output:Variable,*,Heating Coil Heating Rate,Hourly;
+  Output:Variable,*,Heating Coil Electric Power,Hourly;
+  Output:Variable,*,Heating Coil Defrost Electric Power,Hourly;
+  Output:Variable,*,Heating Coil Crankcase Heater Electric Power,Hourly;
+  Output:Variable,*,Heating Coil Runtime Fraction,Hourly;
+  Output:Variable,*,Heating Coil Runtime Fraction,Hourly;
+  Output:Variable,HVAC Cooling Coil Outlet Node,System Node Temperature,hourly; !- HVAC Average [C]
 
   Output:SQLite, SimpleAndTabular;  !- Option Type
 

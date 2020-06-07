@@ -27,6 +27,7 @@ parameter "hp_supp_heat_max_temp", :default=>50|'F'    # used with ashp
 parameter "hp_supply_max_temp", :default=>105|'F'    # used with ashp
 parameter "hp_min_temp", :default=>0|'F'    # used with ashp, based on OpenStudio-ERI
 parameter "hp_defrost_temp", :default=>40|'F'    # used with ashp
+parameter "defrost_time_fra", :default=>0.05833 # EnergyPlus default value 3.5min/60min
 
 parameter "crankcase_max_temp", :default=>50|'F'
 parameter "crankcase_cap", :default=>50|'W'
@@ -780,8 +781,8 @@ Coil:Heating:DX:SingleSpeed,
   <%= crankcase_cap %>,           !- Crankcase Heater Capacity {W}
   <%= crankcase_max_temp %>,      !- Maximum Outdoor Dry-Bulb Temperature for Crankcase Heater Operation {C}
   ReverseCycle,                   !- Defrost Strategy
-  OnDemand,                          !- Defrost Control
-  0.166667,                       !- Defrost Time Period Fraction
+  timed,                          !- Defrost Control
+  <%= defrost_time_fra %>,                       !- Defrost Time Period Fraction
   2000;                                   !- Resistive Defrost Heater Capacity {W}
 
   <% if (curve_source == "big_ladder") %>
