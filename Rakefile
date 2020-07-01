@@ -35,9 +35,9 @@ def sim(c)
   file_dir = Pathname(c).parent.basename
 
   if file_base[-1] == "C" or file_base[-2] == "2"
-    weather_file = "../../../TMY-Colorad-v5.0.epw"
+    weather_file = "../../../USA_CO_Colorado.Springs-Peterson.Field.724660_TMY3.epw"
   elsif file_base[-1] == "L" or file_base[-2] == "1"
-    weather_file = "../../../TMY-Lasvega-v5.0.epw"
+    weather_file = "../../../USA_NV_Las.Vegas-McCarran.Intl.AP.723860_TMY3.epw"
   else
     success = false
     puts "  unknown weather file."
