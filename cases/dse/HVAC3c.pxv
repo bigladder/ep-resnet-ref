@@ -4,10 +4,8 @@
 :framing_factor_floor=>0.13,
 :hvac_model=>"DETAILED",
 :heating_cap=>49000|'btuh',
-:afn_hvac=>true,
-:supply_duct_zone=>"Basement Zone",
-:return_duct_zone=>"Basement Zone",
-:duct_insulation_r_value=>6,
-:duct_ext_air_film_r_value=>1.0,
-:ela_main=>0.03765514874780395 * (0.67 / 0.67885689515214), # simulated ELA * (desired ACH output / simulated ACH output)
-:ela_attic=>0.03913290580025085 * (2.4 / 2.57861033948511) # default ELA * (desired ACH output / default ACH output)
+:ems_ducts=>true,
+:air_handler_zone=>"Basement Zone",
+:use_dummy_return_plenum=>true,
+:duct_insulation_r_value=>6|'r-ip',
+:duct_ext_air_film_r_value=>1.0|'r-ip'

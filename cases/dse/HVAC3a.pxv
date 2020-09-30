@@ -3,8 +3,4 @@
 :foundation_type=>"BASEMENT",
 :framing_factor_floor=>0.13,
 :hvac_model=>"DETAILED",
-:heating_cap=>46600|'btuh',
-:afn_hvac=>true,
-:ela_main=>0.03, # yields 0.540896397642243 ACH for Main Zone, hold constant and adjust 'opening_mass_flow_coeff' to hit desired infiltration ACH in Main Zone
-:ela_attic=>0.03913290580025085 * (2.4 / 2.57861033948511), # default ELA * (desired ACH output / default ACH output)
-:opening_mass_flow_coeff=>0.001 # 0.04053736910609036 * (0.67 / 0.66997600844386), # simulated MFC * (desired ACH output / simulated ACH output)
+:heating_cap=>46600|'btuh'

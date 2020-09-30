@@ -44,16 +44,17 @@
   parameter "defrost_T", :default=>40|'F' # Taken from table 4.4.3(1) in dgrees celcius
   parameter "defrost_time_fra", :default=>0.05833 # EnergyPlus default
 
-# AFN parameters for HVAC components
+# AFN and EMS parameters for HVAC components
   parameter "afn_hvac", :default=>false
-  parameter "supply_duct_zone", :default=>"Main Zone" # zone surrounding supply ducts, "Main Zone" | "Attic Zone" | "Basement Zone"
-  parameter "return_duct_zone", :default=>"Main Zone" # zone surrounding return ducts, "Main Zone" | "Attic Zone" | "Basement Zone"
+  parameter "ems_ducts", :default=>false
+  parameter "air_handler_zone", :default=>"Main Zone" # zone surrounding air handler, supply ducts, and return ducts ("Main Zone" | "Attic Zone" | "Basement Zone")
   parameter "duct_insulation_r_value", :default=>0 # R-value of duct insulation without air film
   parameter "duct_ext_air_film_r_value", :default=>1.5|'r-ip' # R-value of exterior air film for duct (or duct insulation)
   parameter "duct_int_air_film_r_value", :default=>0.4|'r-ip' # R-value of interior air film for duct, borrowed from CSE
   parameter "duct_leakage_flow", :default=>0 # combined cfm airflow leaking out of supply + return ducts
   parameter "supply_duct_area_fraction", :default=>0.2 # fraction of conditioned floor area to set as supply duct area
   parameter "return_duct_area_fraction", :default=>0.05 # fraction of conditioned floor area to set as return duct area
+  parameter "use_dummy_return_plenum", :default=>false # used for EMS objects to model duct losses
 
 # AFN parameters for infiltration
 parameter "ela_main", :default=>0.001 # effective leakage area for Main Zone, m2
@@ -147,7 +148,13 @@ k_air = (3.5|'in') / (1.01|'r-ip') # conductivity for air in IP units
 
 # HVAC system
 if hvac_model == "DETAILED"
-  fan_airflow = fan_flow_per_cap * [heating_cap, cooling_cap].max / (12000|'btuh') # multiplying cfm/ton by max of heating or coolig Btu/hr to get cfm
+  supply_airflow_cool = fan_flow_per_cap * cooling_cap / (12000|'btuh') # multiplying cfm/ton by heating Btu/hr to get cfm
+  puts"supply_airflow_cool: #{supply_airflow_cool} cfm"
+
+  supply_airflow_heat = fan_flow_per_cap * heating_cap / (12000|'btuh') # multiplying cfm/ton by cooling Btu/hr to get cfm
+  puts"supply_airflow_heat: #{supply_airflow_heat} cfm"
+
+  fan_flow_supply = [supply_airflow_cool, supply_airflow_heat].max # use max of heating/cooling supply flow for fan
 
   if seer >= 14 or afue >= 0.9
     fan_power_per_flow = 0.000375 # 'kW/cfm', Taken from table 4.4.3(1)
@@ -155,15 +162,14 @@ if hvac_model == "DETAILED"
     fan_power_per_flow = 0.0005 # 'kW/cfm', Taken from table 4.4.3(1)
   end
 
-  fan_power = fan_airflow * fan_power_per_flow * 1000 # convert kW to W
-  fan_power_per_flow = (fan_power_per_flow * 1000)/(1|'CFM') # convert kW/cfm to W/m3/s
+  fan_power = fan_flow_supply * fan_power_per_flow * 1000 # convert kW to W
 
   supply_duct_area = supply_duct_area_fraction * floor_area
   return_duct_area = return_duct_area_fraction * floor_area
   if return_duct_area > 0 and supply_duct_area > 0
-    duct_leakage_fraction = 0.5 * duct_leakage_flow / fan_airflow # half of total leakage flow assigned to supply + return ducts
+    duct_leakage_fraction = 0.5 * duct_leakage_flow / fan_flow_supply # half of total leakage flow assigned to supply + return ducts
   else
-    duct_leakage_fraction = duct_leakage_flow / fan_airflow # total leakage flow assigned to supply or return duct
+    duct_leakage_fraction = duct_leakage_flow / fan_flow_supply # total leakage flow assigned to supply or return duct
   end
 
 end
@@ -197,8 +203,8 @@ end
     <%= case_name %>,                   !- Name
     0.0,                     !- North Axis {deg}
     Suburbs,                 !- Terrain
-    0.04,                    !- Loads Convergence Tolerance Value
-    0.004,                   !- Temperature Convergence Tolerance Value {deltaC}
+    0.4,                    !- Loads Convergence Tolerance Value
+    0.04,                   !- Temperature Convergence Tolerance Value {deltaC}
     FullInteriorAndExterior, !- Solar Distribution
     ,                        !- Maximum Number of Warmup Days
     1;                       !- Minimum Number of Warmup Days
@@ -1460,9 +1466,10 @@ elsif hvac_model == "DETAILED"
     :control_zone_name=>"Main Zone",
     :heating_coil_type=>heating_type,
     :cooling_coil_type=>cooling_type,
-    :fan_flow_supply=>fan_airflow|'cfm',
+    :supply_airflow_cool=>supply_airflow_cool|'cfm',
+    :supply_airflow_heat=>supply_airflow_heat|'cfm',
+    :fan_flow_supply=>fan_flow_supply|'cfm',
     :fan_power=>fan_power,
-    :fan_powerperflow=>fan_power_per_flow,
     :cooling_coil_cap=>cooling_cap,
     :heating_coil_cap=>heating_cap,
     :cooling_coil_cop=>cooling_coil_cop,
@@ -1474,8 +1481,8 @@ elsif hvac_model == "DETAILED"
     :heating_coil_cd=>heating_coil_cd,
     :curve_source=>"open_studio",
     :afn_hvac=>afn_hvac,
-    :supply_duct_zone=>supply_duct_zone,
-    :return_duct_zone=>return_duct_zone,
+    :ems_ducts=>ems_ducts,
+    :air_handler_zone=>air_handler_zone,
     :duct_insulation_r_value=>duct_insulation_r_value,
     :duct_ext_air_film_r_value=>duct_ext_air_film_r_value,
     :duct_int_air_film_r_value=>duct_int_air_film_r_value,
@@ -1483,12 +1490,13 @@ elsif hvac_model == "DETAILED"
     :return_leakage_ratio=>duct_leakage_fraction,
     :supply_duct_inarea=>supply_duct_area,
     :return_duct_inarea=>return_duct_area,
-    :defrost_time_fra=>defrost_time_fra
+    :defrost_time_fra=>defrost_time_fra,
+    :use_dummy_return_plenum=>use_dummy_return_plenum
 
   insert "atu.pxt",
     :zone_name=>"Main Zone",
     :system_name=>"HVAC",
-    :terminal_max_flow=>fan_airflow|'cfm',
+    :terminal_max_flow=>fan_flow_supply|'cfm',
     :heating_setpoint=>20,
     :cooling_setpoint=>25.55555
 end
@@ -1848,6 +1856,13 @@ end
   Output:Variable,*,AFN Zone Duct Radiation Heat Gain Rate,timestep; !- HVAC Average [W]
   Output:Variable,*,AFN Distribution Sensible Heat Gain Rate,timestep; !- HVAC Average [W]
   Output:Variable,*,AFN Zone Exfiltration Heat Transfer Rate,timestep; !- HVAC Average [W]
+  <% end %>
+  <% if ems_ducts %>
+  Output:Variable,*,Other Equipment Total Heating Rate,hourly; !- Zone Average [W]
+  Output:Variable,*,Other Equipment Radiant Heating Rate,hourly; !- Zone Average [W]
+  Output:Variable,*,Other Equipment Latent Gain Rate,hourly; !- Zone Average [W]
+  Output:Variable,*,Other Equipment Convective Heating Rate,hourly; !- Zone Average [W]
+  Output:Variable,*,Other Equipment Lost Heat Rate,hourly; !- Zone Average [W]
   <% end %>
 <% end %>
 
