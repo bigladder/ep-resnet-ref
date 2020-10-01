@@ -149,10 +149,8 @@ k_air = (3.5|'in') / (1.01|'r-ip') # conductivity for air in IP units
 # HVAC system
 if hvac_model == "DETAILED"
   supply_airflow_cool = fan_flow_per_cap * cooling_cap / (12000|'btuh') # multiplying cfm/ton by heating Btu/hr to get cfm
-  puts"supply_airflow_cool: #{supply_airflow_cool} cfm"
 
   supply_airflow_heat = fan_flow_per_cap * heating_cap / (12000|'btuh') # multiplying cfm/ton by cooling Btu/hr to get cfm
-  puts"supply_airflow_heat: #{supply_airflow_heat} cfm"
 
   fan_flow_supply = [supply_airflow_cool, supply_airflow_heat].max # use max of heating/cooling supply flow for fan
 

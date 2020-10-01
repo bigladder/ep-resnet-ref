@@ -90,12 +90,8 @@ end
 # Ducting Details
 
 duct_wall_r_value = duct_wall_thickness / duct_wall_k
-puts "duct_wall_r_value: #{duct_wall_r_value}"
-
 duct_film = duct_ext_air_film_r_value + duct_int_air_film_r_value
-
 duct_r_value = duct_wall_r_value + duct_insulation_r_value + duct_film
-puts "duct_r_value: #{duct_r_value}"
 
 duct_u_value = 1 / duct_r_value
 supply_duct_ua = duct_u_value*supply_duct_inarea
