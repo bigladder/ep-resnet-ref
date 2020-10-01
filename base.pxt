@@ -1443,7 +1443,7 @@ Schedule:Compact,
 
 <%
 elsif hvac_model == "DETAILED"
-  require_relative 'heat_pump.rb'
+  require_relative 'scripts/heat_pump.rb'
   if cooling_type == "DX"
     COP_result = calc_heat_pump_COPs(seer, 6.8) # 6.8 here is arbitrary because it does not affect COP_cool
     cooling_coil_cop = COP_result[0]
@@ -1458,7 +1458,7 @@ elsif hvac_model == "DETAILED"
     heating_coil_cd = COP_result[3]
   end
 
-  insert "unitarysystem.imf",
+  insert "templates/unitarysystem.pxv",
     :system_name=>"HVAC",
     :zone_names=>["Main Zone"],
     :control_zone_name=>"Main Zone",
@@ -1491,7 +1491,7 @@ elsif hvac_model == "DETAILED"
     :defrost_time_fra=>defrost_time_fra,
     :use_dummy_return_plenum=>use_dummy_return_plenum
 
-  insert "atu.pxt",
+  insert "templates/atu.pxt",
     :zone_name=>"Main Zone",
     :system_name=>"HVAC",
     :terminal_max_flow=>fan_flow_supply|'cfm',
@@ -1792,7 +1792,7 @@ ZoneHVAC:IdealLoadsAirSystem,
 
 <%
 if afn_hvac
-  insert "airflownetwork.pxt",
+  insert "templates/airflownetwork.pxt",
     :foundation_type=>foundation_type,
     :aspect_ratio=>aspect_ratio,
     :walls_main=>walls_main,
