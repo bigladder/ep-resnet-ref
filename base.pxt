@@ -45,8 +45,8 @@
   parameter "defrost_time_fra", :default=>0.05833 # EnergyPlus default
 
 # Duct loss parameters
-  parameter "afn_hvac", :default=>false # uses AirflowNetwork objects to model duct leakage
-  parameter "ems_ducts", :default=>false # uses Energy Management Systems (EMS) objects to model duct leakage
+  parameter "duct_model", :default=>"NONE" # choices: NONE (ducts in conditioned space or no duct losses) | EMS (uses Energy Management Systems (EMS) objects) | AFN (uses AirflowNetwork objects)
+  # NOTE: "AFN" option for duct_model parameter may not work due to convergence issues with AFN calculations for air flow rates
   parameter "air_handler_zone", :default=>"Main Zone" # zone surrounding air handler, supply ducts, and return ducts ("Main Zone" | "Attic Zone" | "Basement Zone")
   parameter "duct_insulation_r_value", :default=>0 # R-value of duct insulation without air film
   parameter "duct_ext_air_film_r_value", :default=>1.5|'r-ip' # R-value of exterior air film for duct (or duct insulation)
@@ -72,16 +72,6 @@ parameter "opening_mass_flow_coeff", :default=>0.001 # air mass flow coefficient
 %>
 
 <%
-# Method to check if conflicting duct loss parameters are both set to true
-def duct_loss_check(afn, ems)
-  if afn and ems
-    puts "'afn_hvac' and 'ems_ducts' are both set to 'true'."
-    puts "Only one of these approaches (Airflow Network or Energy Management Systems) should be used."
-    puts "Set one of these parameters to 'false' in order to compile the IDF."
-    exit
-  end
-end
-
 # Climate info
 if climate == "HEATING"
   heat_power = 3413000|'btuh' # 3.413 million Btu/hr, required by Section 7.2.1.15
@@ -172,9 +162,7 @@ if hvac_model == "DETAILED"
 
   fan_power = fan_flow_supply * fan_power_per_flow * 1000 # convert kW to W
 
-  # Duct loss check & calculations
-  duct_loss_check(afn_hvac, ems_ducts)
-
+  # Duct loss calculations
   supply_duct_area = supply_duct_area_fraction * floor_area
   return_duct_area = return_duct_area_fraction * floor_area
   if return_duct_area > 0 and supply_duct_area > 0
@@ -1491,8 +1479,7 @@ elsif hvac_model == "DETAILED"
     :cooling_coil_cd=>cooling_coil_cd,
     :heating_coil_cd=>heating_coil_cd,
     :curve_source=>"open_studio",
-    :afn_hvac=>afn_hvac,
-    :ems_ducts=>ems_ducts,
+    :duct_model=>duct_model,
     :air_handler_zone=>air_handler_zone,
     :duct_insulation_r_value=>duct_insulation_r_value,
     :duct_ext_air_film_r_value=>duct_ext_air_film_r_value,
@@ -1804,7 +1791,7 @@ ZoneHVAC:IdealLoadsAirSystem,
 <% end %>
 
 <%
-if afn_hvac
+if duct_model == "AFN"
   insert "templates/airflownetwork.pxt",
     :foundation_type=>foundation_type,
     :aspect_ratio=>aspect_ratio,
@@ -1855,7 +1842,7 @@ end
   Output:Variable,*,System Node Standard Density Volume Flow Rate,timestep; !- HVAC Average [m3/s]
   Output:Variable,*,Heating Coil Heating Rate,timestep; !- HVAC Average [W]
   Output:Variable,*,Cooling Coil Total Cooling Rate,timestep; !- HVAC Average [W]
-  <% if afn_hvac %>
+  <% if duct_model == "AFN" %>
   Output:Variable,*,AFN Linkage Node 1 to Node 2 Volume Flow Rate,timestep; !- HVAC Average [m3/s]
   Output:Variable,*,AFN Linkage Node 1 to 2 Average Volume Flow Rate,timestep; !- HVAC Average [m3/s]
   Output:Variable,*,AFN Zone Infiltration Air Change Rate,timestep; !- HVAC Average [ach]
@@ -1868,7 +1855,7 @@ end
   Output:Variable,*,AFN Distribution Sensible Heat Gain Rate,timestep; !- HVAC Average [W]
   Output:Variable,*,AFN Zone Exfiltration Heat Transfer Rate,timestep; !- HVAC Average [W]
   <% end %>
-  <% if ems_ducts %>
+  <% if duct_model == "EMS" %>
   Output:Variable,*,Other Equipment Total Heating Rate,hourly; !- Zone Average [W]
   Output:Variable,*,Other Equipment Radiant Heating Rate,hourly; !- Zone Average [W]
   Output:Variable,*,Other Equipment Latent Gain Rate,hourly; !- Zone Average [W]

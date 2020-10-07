@@ -1,6 +1,5 @@
 <%#INITIALIZE
 parameter "foundation_type", :default=>"RAISED" # RAISED | SLAB | BASEMENT
-parameter "afn_hvac", :default=>true # whether duct leakage and conduction losses is modeled with AFN
 parameter "aspect_ratio", :default=>1.0 # ratio of building width along short axis to width along long axis (fraction value between 0 and 1)
 
 parameter "walls_main", :default=>[{}] # hash table of exterior wall surface information in Main Zone
@@ -24,11 +23,7 @@ parameter "west_doors", :default=>[]
 
 AirflowNetwork:SimulationControl,
 	AirflowNetwork_All,      !- Name
-<% if (afn_hvac) %>
 	MultizoneWithDistribution,  !- AirflowNetwork Control
-<% else %>
-	MultizoneWithoutDistribution,  !- AirflowNetwork Control
-<% end %>
 	SurfaceAverageCalculation,  !- Wind Pressure Coefficient Type
 	,                        !- Height Selection for Local Wind Pressure Calculation
 	LowRise,                 !- Building Type

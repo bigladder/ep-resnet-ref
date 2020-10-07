@@ -54,8 +54,9 @@ parameter "operation_schedule", :default=>
     Until: 24:00, 1.0;       !- Field 3
 "
 
-parameter "afn_hvac", :default=>false # adds AFN objects to model pressure-driven airflow and duct losses
-parameter "ems_ducts", :default=>false # adds EMS objects to model duct losses based on BEopt
+# Duct loss parameters
+parameter "duct_model", :default=>"NONE" # choices: NONE (ducts in conditioned space or no duct losses) | EMS (uses Energy Management Systems (EMS) objects) | AFN (uses AirflowNetwork objects)
+# NOTE: "AFN" option for duct_model parameter may not work due to convergence issues with AFN calculations for air flow rates
 
 parameter "air_handler_zone", :default=>"Main Zone" # air handler, supply ducts, and return ducts ("Main Zone" | "Attic Zone" | "Basement Zone")
 parameter "supply_duct_inarea", :default=>1|'FT2'
@@ -1102,7 +1103,7 @@ Output:Table:Annual,
   SumOrAverage,  !- Aggregation Type for 2
   2;  !- Digits After Decimal for 2
 
-<% if afn_hvac %>
+<% if duct_model == "AFN" %>
 <%# NOTE: decided to abandon AFN approach due to NANC error/bug and switch to EMS approach instead %>
 !--- Airflow Network Demand-Side Distribution ---
 
@@ -1537,7 +1538,7 @@ Output:Table:Annual,
 
 <% end %>
 
-<% if ems_ducts %>
+<% if duct_model == "EMS" %>
   <% if (use_dummy_return_plenum) %>
 ! Dummy return plenum zone
 
