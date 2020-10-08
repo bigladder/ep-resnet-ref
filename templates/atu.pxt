@@ -115,18 +115,37 @@ ZoneHVAC:EquipmentList,
 ZoneHVAC:AirDistributionUnit,
   <%= zone_name %> Air Distribution Unit,  !- Name
   <%= zone_name %> ATU Outlet Node,  !- Air Distribution Unit Outlet Node Name
-  AirTerminal:SingleDuct:VAV:NoReheat,  !- Air Terminal Object Type
+  AirTerminal:SingleDuct:VAV:Reheat,  !- Air Terminal Object Type
   <%= zone_name %> ATU,            !- Air Terminal Name
   <%= upstream_duct_leakage %>,            !- Nominal Upstream Leakage Fraction
   <%= downstream_duct_leakage %>;            !- Constant Downstream Leakage Fraction
 
-AirTerminal:SingleDuct:VAV:NoReheat,
+AirTerminal:SingleDuct:VAV:Reheat,
   <%= zone_name %> ATU,    !- Name
   <%= zone_name %> Operation Schedule,  !- Availability Schedule Name
-  <%= zone_name %> ATU Outlet Node,  !- Air Outlet Node Name
+  <%= zone_name %> ATU Damper Outlet Node,  !- Damper Air Outlet Node Name
   <%= zone_name %> ATU Inlet Node,  !- Air Inlet Node Name
   <%= terminal_max_flow %>,                !- Maximum Air Flow Rate {m3/s}
   Constant,                !- Zone Minimum Air Flow Input Method
   <%= terminal_min_flow_frac %>,                        !- Constant Minimum Air Flow Fraction
   ,                        !- Fixed Minimum Air Flow Rate {m3/s}
-  ;                        !- Minimum Air Flow Fraction Schedule Name
+  ,                        !- Minimum Air Flow Fraction Schedule Name
+  Coil:Heating:Electric,                        !- Reheat Coil Object Type
+  <%= zone_name %> ATU Reheat Coil,                        !- Reheat Coil Name
+  0,                        !- Maximum Hot Water or Steam Flow Rate
+  0,                        !- Minimum Hot Water or Steam Flow Rate
+  <%= zone_name %> ATU Outlet Node,                        !- Air Outlet Node Name
+  ,                        !- Convergence Tolerance
+  Reverse,                        !- Damper Heating Action
+  ,                        !- Maximum Flow per Zone Floor Area During Reheat
+  ,                        !- Maximum Flow Fraction During Reheat
+  <%= design_heating_sat %>,                        !- Maximum Reheat Air Temperature {C}
+  <%= zone_name %> Design OA;                         !- Design Specification Outdoor Air Object Name
+
+  Coil:Heating:Electric,
+    <%= zone_name %> ATU Reheat Coil,  !- Name
+    <%= system_name %> Always Off Schedule,  !- Availability Schedule Name
+    1.0,                     !- Efficiency
+    0,                !- Nominal Capacity
+    <%= zone_name %> ATU Damper Outlet Node,  !- Air Inlet Node Name
+    <%= zone_name %> ATU Outlet Node;  !- Air Outlet Node Name

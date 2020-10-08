@@ -1,0 +1,9 @@
+:case_name=>"HVAC3b",
+:climate=>"HEATING",
+:foundation_type=>"BASEMENT",
+:framing_factor_floor=>0.13,
+:hvac_model=>"DETAILED",
+:heating_cap=>56000|'btuh',
+:duct_model=>"EMS",
+:air_handler_zone=>"Basement Zone",
+:use_dummy_return_plenum=>true

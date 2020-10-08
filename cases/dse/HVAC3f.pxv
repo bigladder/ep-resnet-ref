@@ -1,0 +1,7 @@
+:case_name=>"HVAC3f",
+:climate=>"COOLING",
+:hvac_model=>"DETAILED",
+:cooling_cap=>49900|'btuh',
+:duct_model=>"EMS",
+:air_handler_zone=>"Attic Zone",
+:use_dummy_return_plenum=>true

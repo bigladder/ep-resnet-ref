@@ -1,0 +1,234 @@
+<%#INITIALIZE
+parameter "foundation_type", :default=>"RAISED" # RAISED | SLAB | BASEMENT
+parameter "aspect_ratio", :default=>1.0 # ratio of building width along short axis to width along long axis (fraction value between 0 and 1)
+
+parameter "walls_main", :default=>[{}] # hash table of exterior wall surface information in Main Zone
+parameter "surfaces_attic", :default=>[{}] # hash table of surface information in Attic Zone
+parameter "ela_main", :default=>0.001 # effective leakage area for Main Zone, m2
+parameter "ela_attic", :default=>0.001 # effective leakage area for Attic Zone, m2
+
+parameter "afn_openings", :default=>false # whether windows and doors have infiltration leakage modeled with AFN
+parameter "opening_mass_flow_coeff", :default=>0.001 # air mass flow coefficient for window and door openings used by AFN
+parameter "north_windows", :default=>[5|'ft',14|'ft',28|'ft',34|'ft',41|'ft',46|'ft'] # 6 windows in North exterior wall (measured from the left side of the wall)
+parameter "south_windows", :default=>[5|'ft',14|'ft',19|'ft',24|'ft',29|'ft',44|'ft'] # 6 windows in South exterior wall (measured from the left side of the wall)
+parameter "east_windows", :default=>[5|'ft',12|'ft',19|'ft'] # 3 windows in East exterior wall (measured from the left side of the wall)
+parameter "west_windows", :default=>[5|'ft',13|'ft',20|'ft'] # 3 windows in West exterior wall (measured from the left side of the wall)
+parameter "north_doors", :default=>[23|'ft']
+parameter "east_doors", :default=>[]
+parameter "south_doors", :default=>[34|'ft']
+parameter "west_doors", :default=>[]
+
+# per Note 5 in Table 7-39, basement zone has no infiltration
+%>
+
+AirflowNetwork:SimulationControl,
+	AirflowNetwork_All,      !- Name
+	MultizoneWithDistribution,  !- AirflowNetwork Control
+	SurfaceAverageCalculation,  !- Wind Pressure Coefficient Type
+	,                        !- Height Selection for Local Wind Pressure Calculation
+	LowRise,                 !- Building Type
+	10000,                     !- Maximum Number of Iterations {dimensionless}
+	ZeroNodePressures,       !- Initialization Type
+	5.0E-3,                  !- Relative Airflow Convergence Tolerance {dimensionless}
+	1.0E-5,                  !- Absolute Airflow Convergence Tolerance {kg/s}
+	-0.5,                    !- Convergence Acceleration Limit {dimensionless}
+	0.0,                     !- Azimuth Angle of Long Axis of Building {deg}
+	<%= aspect_ratio %>;                     !- Ratio of Building Width Along Short Axis to Width Along Long Axis
+
+AirflowNetwork:MultiZone:Zone,
+	Main Zone,               !- Zone Name
+	NoVent,                  !- Ventilation Control Mode
+	,                        !- Ventilation Control Zone Temperature Setpoint Schedule Name
+	1.0,                     !- Minimum Venting Open Factor {dimensionless}
+	0.0,                     !- Indoor and Outdoor Temperature Difference Lower Limit For Maximum Venting Open Factor {deltaC}
+	100.0,                   !- Indoor and Outdoor Temperature Difference Upper Limit for Minimum Venting Open Factor {deltaC}
+	0.0,                     !- Indoor and Outdoor Enthalpy Difference Lower Limit For Maximum Venting Open Factor {deltaJ/kg}
+	300000.0;                !- Indoor and Outdoor Enthalpy Difference Upper Limit for Minimum Venting Open Factor {deltaJ/kg}
+
+AirflowNetwork:MultiZone:Zone,
+	Attic Zone,               !- Zone Name
+	NoVent,                  !- Ventilation Control Mode
+	,                        !- Ventilation Control Zone Temperature Setpoint Schedule Name
+	1.0,                     !- Minimum Venting Open Factor {dimensionless}
+	0.0,                     !- Indoor and Outdoor Temperature Difference Lower Limit For Maximum Venting Open Factor {deltaC}
+	100.0,                   !- Indoor and Outdoor Temperature Difference Upper Limit for Minimum Venting Open Factor {deltaC}
+	0.0,                     !- Indoor and Outdoor Enthalpy Difference Lower Limit For Maximum Venting Open Factor {deltaJ/kg}
+	300000.0;                !- Indoor and Outdoor Enthalpy Difference Upper Limit for Minimum Venting Open Factor {deltaJ/kg}
+
+<% if foundation_type == "BASEMENT" %>
+AirflowNetwork:MultiZone:Zone,
+	Basement Zone,               !- Zone Name
+	NoVent,                  !- Ventilation Control Mode
+	,                        !- Ventilation Control Zone Temperature Setpoint Schedule Name
+	1.0,                     !- Minimum Venting Open Factor {dimensionless}
+	0.0,                     !- Indoor and Outdoor Temperature Difference Lower Limit For Maximum Venting Open Factor {deltaC}
+	100.0,                   !- Indoor and Outdoor Temperature Difference Upper Limit for Minimum Venting Open Factor {deltaC}
+	0.0,                     !- Indoor and Outdoor Enthalpy Difference Lower Limit For Maximum Venting Open Factor {deltaJ/kg}
+	300000.0;                !- Indoor and Outdoor Enthalpy Difference Upper Limit for Minimum Venting Open Factor {deltaJ/kg}
+
+<% end %>
+!--- Main Zone Exterior Wall Leakage ---
+
+<% for wall in walls_main %>
+AirflowNetwork:MultiZone:Surface,
+	<%= wall[:name] %>,           !- Name of Associated Heat Transfer Surface
+	<%= wall[:name] %>-Leakage,                    !- Leakage Component Name
+	,                 !- External Node Name
+	1.0;                     !- Window/Door Opening Factor, or Crack Factor {dimensionless}
+
+AirflowNetwork:MultiZone:Surface:EffectiveLeakageArea,
+	<%= wall[:name] %>-Leakage,                   !- Name
+	<%= ela_main %>,                   !- Effective Leakage Area {m2}
+	1.0,                     !- Discharge Coefficient {dimensionless}
+	19.0,                     !- Reference Pressure Difference {Pa}
+	0.65;                   !- Air Mass Flow Exponent {dimensionless}
+
+<% end %>
+<% if afn_openings %>
+!--- Main Zone Window Openings ---
+
+	<% north_windows.each_with_index do |start, number| %>
+AirflowNetwork:MultiZone:Surface,
+	North Wall Window <%= number + 1 %>,           !- Name of Associated Heat Transfer Surface
+	North Wall Window <%= number + 1 %>-Leakage,                    !- Leakage Component Name
+	,                 !- External Node Name
+	1.0;                     !- Window/Door Opening Factor, or Crack Factor {dimensionless}
+
+AirflowNetwork:MultiZone:Component:SimpleOpening,
+  North Wall Window <%= number + 1 %>-Leakage,                       !- Name
+  <%= opening_mass_flow_coeff %>,                   !- Air Mass Flow Coefficient When Opening Is Closed {kg/s-m}
+  0.0,                   !- Air Mass Flow Exponent When Opening Is Closed {dimensionless}
+  0.0001,                  !- Minimum density difference for two-way flow (kg/m3)
+  0.5;                     !- Discharge coefficient (dimensionless)
+
+	<% end %>
+	<% south_windows.each_with_index do |start, number| %>
+AirflowNetwork:MultiZone:Surface,
+	South Wall Window <%= number + 1 %>,           !- Name of Associated Heat Transfer Surface
+	South Wall Window <%= number + 1 %>-Leakage,                    !- Leakage Component Name
+	,                 !- External Node Name
+	0.5;                     !- Window/Door Opening Factor, or Crack Factor {dimensionless}
+
+AirflowNetwork:MultiZone:Component:SimpleOpening,
+  South Wall Window <%= number + 1 %>-Leakage,                       !- Name
+  <%= opening_mass_flow_coeff %>,                   !- Air Mass Flow Coefficient When Opening Is Closed {kg/s-m}
+  0.0,                   !- Air Mass Flow Exponent When Opening Is Closed {dimensionless}
+  0.0001,                  !- Minimum density difference for two-way flow (kg/m3)
+  0.5;                     !- Discharge coefficient (dimensionless)
+
+	<% end %>
+	<% east_windows.each_with_index do |start, number| %>
+AirflowNetwork:MultiZone:Surface,
+	East Wall Window <%= number + 1 %>,           !- Name of Associated Heat Transfer Surface
+	East Wall Window <%= number + 1 %>-Leakage,                    !- Leakage Component Name
+	,                 !- External Node Name
+	1.0;                     !- Window/Door Opening Factor, or Crack Factor {dimensionless}
+
+AirflowNetwork:MultiZone:Component:SimpleOpening,
+  East Wall Window <%= number + 1 %>-Leakage,                       !- Name
+  <%= opening_mass_flow_coeff %>,                   !- Air Mass Flow Coefficient When Opening Is Closed {kg/s-m}
+  0.0,                   !- Air Mass Flow Exponent When Opening Is Closed {dimensionless}
+  0.0001,                  !- Minimum density difference for two-way flow (kg/m3)
+  0.5;                     !- Discharge coefficient (dimensionless)
+
+	<% end %>
+	<% west_windows.each_with_index do |start, number| %>
+AirflowNetwork:MultiZone:Surface,
+	West Wall Window <%= number + 1 %>,           !- Name of Associated Heat Transfer Surface
+	West Wall Window <%= number + 1 %>-Leakage,                    !- Leakage Component Name
+	,                 !- External Node Name
+	1.0;                     !- Window/Door Opening Factor, or Crack Factor {dimensionless}
+
+AirflowNetwork:MultiZone:Component:SimpleOpening,
+  West Wall Window <%= number + 1 %>-Leakage,                       !- Name
+  <%= opening_mass_flow_coeff %>,                   !- Air Mass Flow Coefficient When Opening Is Closed {kg/s-m}
+  0.0,                   !- Air Mass Flow Exponent When Opening Is Closed {dimensionless}
+  0.0001,                  !- Minimum density difference for two-way flow (kg/m3)
+  0.5;                     !- Discharge coefficient (dimensionless)
+
+	<% end %>
+!--- Main Zone Door Openings ---
+
+	<% north_doors.each_with_index do |start, number| %>
+AirflowNetwork:MultiZone:Surface,
+	North Wall Door <%= number + 1 %>,           !- Name of Associated Heat Transfer Surface
+	North Wall Door <%= number + 1 %>-Leakage,                    !- Leakage Component Name
+	,                 !- External Node Name
+	1.0;                     !- Window/Door Opening Factor, or Crack Factor {dimensionless}
+
+AirflowNetwork:MultiZone:Component:SimpleOpening,
+  North Wall Door <%= number + 1 %>-Leakage,                       !- Name
+  <%= opening_mass_flow_coeff %>,                   !- Air Mass Flow Coefficient When Opening Is Closed {kg/s-m}
+  0.0,                   !- Air Mass Flow Exponent When Opening Is Closed {dimensionless}
+  0.0001,                  !- Minimum density difference for two-way flow (kg/m3)
+  0.5;                     !- Discharge coefficient (dimensionless)
+
+	<% end %>
+	<% south_doors.each_with_index do |start, number| %>
+AirflowNetwork:MultiZone:Surface,
+	South Wall Door <%= number + 1 %>,           !- Name of Associated Heat Transfer Surface
+	South Wall Door <%= number + 1 %>-Leakage,                    !- Leakage Component Name
+	,                 !- External Node Name
+	1.0;                     !- Window/Door Opening Factor, or Crack Factor {dimensionless}
+
+AirflowNetwork:MultiZone:Component:SimpleOpening,
+  South Wall Door <%= number + 1 %>-Leakage,                       !- Name
+  <%= opening_mass_flow_coeff %>,                   !- Air Mass Flow Coefficient When Opening Is Closed {kg/s-m}
+  0.0,                   !- Air Mass Flow Exponent When Opening Is Closed {dimensionless}
+  0.0001,                  !- Minimum density difference for two-way flow (kg/m3)
+  0.5;                     !- Discharge coefficient (dimensionless)
+
+	<% end %>
+<% end %>
+!--- Attic Zone Exterior Surface Leakage ---
+
+<% for surface in surfaces_attic %>
+AirflowNetwork:MultiZone:Surface,
+	<%= surface[:name] %>,           !- Name of Associated Heat Transfer Surface
+	<%= surface[:name] %>-Leakage,                    !- Leakage Component Name
+	,                 !- External Node Name
+	1.0;                     !- Window/Door Opening Factor, or Crack Factor {dimensionless}
+
+AirflowNetwork:MultiZone:Surface:EffectiveLeakageArea,
+	<%= surface[:name] %>-Leakage,                   !- Name
+	<%= ela_attic %>,                   !- Effective Leakage Area {m2}
+	0.5,                     !- Discharge Coefficient {dimensionless}
+	<% if surface[:type] == "Wall" %>
+	19.0,                     !- Reference Pressure Difference {Pa}
+	<% elsif surface[:type] == "Roof" %>
+	10.0,                     !- Reference Pressure Difference {Pa}
+	<% end %>
+	0.65;                   !- Air Mass Flow Exponent {dimensionless}
+
+<% end %>
+
+<% if foundation_type == "BASEMENT" %>
+!--- Basement Zone Exterior Wall Leakage ---
+
+AirflowNetwork:MultiZone:Surface,
+	North Basement Rim Joist,           !- Name of Associated Heat Transfer Surface
+	North Basement Rim Joist-Leakage,                    !- Leakage Component Name
+	,                 !- External Node Name
+	1.0;                     !- Window/Door Opening Factor, or Crack Factor {dimensionless}
+
+AirflowNetwork:MultiZone:Surface:EffectiveLeakageArea,
+	North Basement Rim Joist-Leakage,                   !- Name
+	0.000001,                   !- Effective Leakage Area {m2}
+	1.0,                     !- Discharge Coefficient {dimensionless}
+	19.0,                     !- Reference Pressure Difference {Pa}
+	0.65;                   !- Air Mass Flow Exponent {dimensionless}
+
+AirflowNetwork:MultiZone:Surface,
+	Main Zone Floor,           !- Name of Associated Heat Transfer Surface
+	Main Zone Floor-Leakage,                    !- Leakage Component Name
+	,                 !- External Node Name
+	1.0;                     !- Window/Door Opening Factor, or Crack Factor {dimensionless}
+
+AirflowNetwork:MultiZone:Surface:EffectiveLeakageArea,
+	Main Zone Floor-Leakage,                   !- Name
+	0.000001,                   !- Effective Leakage Area {m2}
+	1.0,                     !- Discharge Coefficient {dimensionless}
+	19.0,                     !- Reference Pressure Difference {Pa}
+	0.65;                   !- Air Mass Flow Exponent {dimensionless}
+
+<% end %>

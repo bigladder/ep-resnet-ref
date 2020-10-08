@@ -1,0 +1,4 @@
+:case_name=>"HVAC3e",
+:climate=>"COOLING",
+:hvac_model=>"DETAILED",
+:cooling_cap=>38400|'btuh'

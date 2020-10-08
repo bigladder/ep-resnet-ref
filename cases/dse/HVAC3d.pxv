@@ -1,0 +1,12 @@
+:case_name=>"HVAC3d",
+:climate=>"HEATING",
+:foundation_type=>"BASEMENT",
+:framing_factor_floor=>0.13,
+:hvac_model=>"DETAILED",
+:heating_cap=>61000|'btuh',
+:duct_model=>"EMS",
+:air_handler_zone=>"Basement Zone",
+:use_dummy_return_plenum=>true,
+:duct_insulation_r_value=>6|'r-ip',
+:duct_ext_air_film_r_value=>1.0|'r-ip',
+:duct_leakage_flow=>250

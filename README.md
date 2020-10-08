@@ -1,14 +1,12 @@
 # Standard 140 Section 7 BESTEST Cases for EnergyPlus
 
-Modified from GARD tests in EnergyPlus V.8.2
-
 ## Requirements
 
-- [Ruby 2.0.0-p645](https://dl.bintray.com/oneclick/rubyinstaller/rubyinstaller-2.0.0-p645.exe) (must add binaries to PATH): To run rake.
-- [Params Catalyst](http://downloads.bigladdersoftware.com/?ref=params-catalyst-latest-win) (only command line tools): To generate input files from templates
-- [Python 3.X (Anaconda distribution suggested)](https://www.anaconda.com/distribution/) (must add python to PATH): To process results and create report
-    - `pip install mako`
+- [Modelkit Catalyst](https://download.bigladdersoftware.com/?ref=modelkit-catalyst-latest-win) (only command line tools): To generate input files from templates
+- [EnergyPlus v9.3 - Bug Fix](https://github.com/NREL/EnergyPlus/releases/tag/v9.3.0-BugFix): To simulate EnergyPlus input files created from templates. Should be installed in default directory @ *C:\EnergyPlusV9-3-0*. If installed in a different directory, or on Mac instead of windows, you will need to update the following line in *.modelkit-config*:
+
+      engine = 'C:\EnergyPlusV9-3-0'  # Must be an absolute path
 
 ## Running tests
 
-Type `rake` from the top level directory.
+Type `modelkit rake` from the top level directory.
