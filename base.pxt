@@ -72,13 +72,17 @@ parameter "opening_mass_flow_coeff", :default=>0.001 # air mass flow coefficient
 %>
 
 <%
-# Climate info
+# Climate info used to set Ideal Air Loads System inputs
 if climate == "HEATING"
   heat_power = 3413000|'btuh' # 3.413 million Btu/hr, required by Section 7.2.1.15
+  heat_sched = "ALWAYS 1"
   cool_power = 0 # No cooling, required by Section 7.2.1.14.1
+  cool_sched = "ALWAYS 0" # No cooling, required by Section 7.2.1.14.1
 elsif climate == "COOLING"
   heat_power = 0 # No heating, required by Section 7.2.1.14.1
+  heat_sched = "ALWAYS 0" # No heating, required by Section 7.2.1.14.1
   cool_power = 3413000|'btuh' # 3.413 million Btu/hr, required by Section 7.2.1.15
+  cool_sched = "ALWAYS 1"
 end
 
 # Dimensions
@@ -1369,6 +1373,13 @@ Schedule:Compact,
   For: AllDays,            !- Field 2
   Until: 24:00,1;          !- Field 3
 
+Schedule:Compact,
+  ALWAYS 0,                !- Name
+  Any Number,              !- Schedule Type Limits Name
+  Through: 12/31,          !- Field 1
+  For: AllDays,            !- Field 2
+  Until: 24:00,0;          !- Field 3
+
 !--- Main Zone HVAC Section ---
 <% if hvac_model == "SIMPLE" %>
 ZoneHVAC:EquipmentConnections,
@@ -1405,8 +1416,8 @@ ZoneHVAC:IdealLoadsAirSystem,
   LimitCapacity,           !- Cooling Limit
   ,                        !- Maximum Cooling Air Flow Rate {m3/s}
   <%= cool_power %>,       !- Maximum Total Cooling Capacity {W}
-  ,                        !- Heating Availability Schedule Name
-  ,                        !- Cooling Availability Schedule Name
+  <%= heat_sched %>,                        !- Heating Availability Schedule Name
+  <%= cool_sched %>,                        !- Cooling Availability Schedule Name
   None;                    !- Dehumidification Control Type
 
 ZoneControl:Thermostat,
@@ -1783,8 +1794,8 @@ ZoneHVAC:IdealLoadsAirSystem,
     LimitCapacity,           !- Cooling Limit
     ,                        !- Maximum Cooling Air Flow Rate {m3/s}
     <%= cool_power %>,       !- Maximum Total Cooling Capacity {W}
-    ,                        !- Heating Availability Schedule Name
-    ,                        !- Cooling Availability Schedule Name
+    <%= heat_sched %>,                        !- Heating Availability Schedule Name
+    <%= cool_sched %>,                        !- Cooling Availability Schedule Name
     None;                    !- Dehumidification Control Type
 
   <% end %>
