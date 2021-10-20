@@ -35,9 +35,9 @@ def sim(c)
   file_dir = Pathname(c).parent.basename
 
   if file_base[-1] == "C" or file_base[-2] == "2" or ( file_base[-2] == "3" and ["a","b","c","d"].include?(file_base[-1]) )
-    weather_file = "../../../weather/TMY3-Colorad-v5.0.epw"
+    weather_file = "../../../weather/TMY3-Colorad-v5.0.epw" # "../../../weather/TMY3-Colorad-v5.0_noSun.epw"
   elsif file_base[-1] == "L" or file_base[-2] == "1" or ( file_base[-2] == "3" and ["e","f","g","h"].include?(file_base[-1]) )
-    weather_file = "../../../weather/TMY3-Lasvega-v5.0.epw"
+    weather_file = "../../../weather/TMY3-Lasvega-v5.0.epw" # "../../../weather/TMY3-Lasvega-v5.0_noSun.epw"
   else
     success = false
     puts "  unknown weather file."
@@ -64,7 +64,7 @@ def sim(c)
 end
 
 def results(sql_outputs, tests)
-  # check if any file in sql_outputs is more recent that results CSVs
+  # check if any file in sql_outputs is more recent than results CSVs
   output_dir = "results/#{tests}"
   target = ["#{output_dir}/results_CO.csv", "#{output_dir}/results_LV.csv"]
   sql_update_CO = false

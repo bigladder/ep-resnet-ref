@@ -723,16 +723,37 @@ Foundation:Kiva,
 
 <% if window_model == "DETAILED" %>
 ! Window layers
+<%
+  # For testing only
+  reflective_windows = false # Use 'true' to make the windows 100% reflective
+
+  outside_win_reflectance = 0.34
+  outside_win_transmittance = 0.45
+  inside_win_reflectance = 0.075
+  inside_win_transmittance = 0.837
+  frame_divider_absorptance = 0.6
+
+  if reflective_windows
+    frame_divider_absorptance = 0
+    if win_panes == 1
+      inside_win_reflectance = 1
+      inside_win_transmittance = 0
+    else
+      outside_win_reflectance = 1
+      outside_win_transmittance = 0
+    end
+  end
+%>
 WindowMaterial:Glazing,
   Outside Pane Glass,      !- Name
   SpectralAverage,         !- Optical Data Type
   ,                        !- Window Glass Spectral Data Set Name
   <%= 0.118|'in' %>,    !- Thickness {m}
-  0.45,                    !- Solar Transmittance at Normal Incidence
-  0.34,                    !- Front Side Solar Reflectance at Normal Incidence
+  <%= outside_win_transmittance %>,                    !- Solar Transmittance at Normal Incidence
+  <%= outside_win_reflectance %>,                    !- Front Side Solar Reflectance at Normal Incidence
   0.34,                    !- Back Side Solar Reflectance at Normal Incidence
-  0.45,                    !- Visible Transmittance at Normal Incidence
-  0.34,                    !- Front Side Visible Reflectance at Normal Incidence
+  <%= outside_win_transmittance %>,                    !- Visible Transmittance at Normal Incidence
+  <%= outside_win_reflectance %>,                    !- Front Side Visible Reflectance at Normal Incidence
   0.34,                    !- Back Side Visible Reflectance at Normal Incidence
   0.0,                     !- Infrared Transmittance at Normal Incidence
   0.84,                    !- Front Side Infrared Hemispherical Emissivity
@@ -744,11 +765,11 @@ WindowMaterial:Glazing,
   SpectralAverage,         !- Optical Data Type
   ,                        !- Window Glass Spectral Data Set Name
   <%= 0.118|'in' %>,    !- Thickness {m}
-  0.837,                   !- Solar Transmittance at Normal Incidence
-  0.075,                   !- Front Side Solar Reflectance at Normal Incidence
+  <%= inside_win_transmittance %>,                   !- Solar Transmittance at Normal Incidence
+  <%= inside_win_reflectance %>,                   !- Front Side Solar Reflectance at Normal Incidence
   0.075,                   !- Back Side Solar Reflectance at Normal Incidence
-  0.837,                   !- Visible Transmittance at Normal Incidence
-  0.075,                   !- Front Side Visible Reflectance at Normal Incidence
+  <%= inside_win_transmittance %>,                   !- Visible Transmittance at Normal Incidence
+  <%= inside_win_reflectance %>,                   !- Front Side Visible Reflectance at Normal Incidence
   0.075,                   !- Back Side Visible Reflectance at Normal Incidence
   0.0,                     !- Infrared Transmittance at Normal Incidence
   0.84,                    !- Front Side Infrared Hemispherical Emissivity
@@ -767,7 +788,7 @@ WindowProperty:FrameAndDivider,
   ,                        !- Frame Inside Projection {m}
   <%= win_frame_u %>,      !- Frame Conductance {W/m2-K}
   <%= win_edge_u_ratio %>,  !- Ratio of Frame-Edge Glass Conductance to Center-Of-Glass Conductance
-  0.6,                     !- Frame Solar Absorptance
+  <%= frame_divider_absorptance %>,                     !- Frame Solar Absorptance
   0,                       !- Frame Visible Absorptance
   0.9,                     !- Frame Thermal Hemispherical Emissivity
   DividedLite,             !- Divider Type
@@ -778,7 +799,7 @@ WindowProperty:FrameAndDivider,
   ,                        !- Divider Inside Projection {m}
   <%= win_frame_u %>,      !- Divider Conductance {W/m2-K}
   <%= win_edge_u_ratio %>,  !- Ratio of Divider-Edge Glass Conductance to Center-Of-Glass Conductance
-  0.6,                     !- Divider Solar Absorptance
+  <%= frame_divider_absorptance %>,                     !- Divider Solar Absorptance
   0,                       !- Divider Visible Absorptance
   0.9;                     !- Divider Thermal Hemispherical Emissivity
 
