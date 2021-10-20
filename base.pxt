@@ -725,7 +725,7 @@ Foundation:Kiva,
 ! Window layers
 <%
   # For testing only
-  make_windows_reflective = "no" # Use "yes" to make the windows 100% reflective
+  reflective_windows = false # Use 'true' to make the windows 100% reflective
 
   outside_win_reflectance = 0.34
   outside_win_transmittance = 0.45
@@ -733,7 +733,7 @@ Foundation:Kiva,
   inside_win_transmittance = 0.837
   frame_divider_absorptance = 0.6
 
-  if make_windows_reflective == "yes"
+  if reflective_windows
     frame_divider_absorptance = 0
     if win_panes == 1
       inside_win_reflectance = 1
