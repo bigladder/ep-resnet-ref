@@ -7,7 +7,7 @@ readvars = true
 dirs = '~/Documents/Modelkit Catalyst/templates/net-zero-templates'  # Must be an absolute path
 
 [energyplus-run]
-engine = 'C:\EnergyPlusV9-3-0'  # Must be an absolute path
+engine = 'C:\EnergyPlusV22-1-0'  # Must be an absolute path
 
 keep = false
 output-files = "eplusout.err; eplusout.rdd; eplusout.sql; eplustbl.htm; eplusvar.csv"
