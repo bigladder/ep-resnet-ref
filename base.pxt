@@ -253,9 +253,9 @@ end
   Site:GroundReflectance,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2;
 
   Foundation:Kiva:Settings,
-    1.8,                     !- Soil Conductivity {W/m-K}
-    3200,                    !- Soil Density {kg/m3}
-    836,                     !- Soil Specific Hevat {J/kg-K}
+    1.7304,                  !- Soil Conductivity {W/m-K}
+    1842.12212468764,        !- Soil Density {kg/m3}
+    419,                     !- Soil Specific Heat {J/kg-K}
     0.9,                     !- Ground Solar Absorptivity {dimensionless}
     0.9,                     !- Ground Thermal Absorptivity {dimensionless}
     0.03,                    !- Ground Surface Roughness {m}
