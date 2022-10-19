@@ -518,8 +518,8 @@ Material,
 
 <% if foundation_type == "SLAB" %>
 Foundation:Kiva,
-  Slab Foundation,          !- Name
-  ,                        !- Initial Indoor Air Temperature
+  Slab Foundation,         !- Name
+  20,                      !- Initial Indoor Air Temperature
   ,                        !- Interior Horizontal Insulation Material Name
   ,                        !- Interior Horizontal Insulation Depth {m}
   ,                        !- Interior Horizontal Insulation Width {m}
@@ -581,8 +581,8 @@ Construction,
   Wood Framing - 2x4;
 
 Foundation:Kiva,
-  Basement Foundation,          !- Name
-  ,                        !- Initial Indoor Air Temperature
+  Basement Foundation,     !- Name
+  20,                      !- Initial Indoor Air Temperature
   ,                        !- Interior Horizontal Insulation Material Name
   ,                        !- Interior Horizontal Insulation Depth {m}
   ,                        !- Interior Horizontal Insulation Width {m}
