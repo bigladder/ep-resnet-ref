@@ -200,7 +200,7 @@ def make_composite_layer(r_others, framing_factor, cavity_material, framing_mate
   return {:k=>k_composite,:rho=>rho_composite,:cp=>cp_composite}
 end
 %>
-  VERSION,9.3;
+  VERSION,22.1;
 
   Building,
     <%= case_name %>,                   !- Name
@@ -234,7 +234,9 @@ end
 <% end %>
     No,                      !- Do Plant Sizing Calculation
     No,                      !- Run Simulation for Sizing Periods
-    Yes;                     !- Run Simulation for Weather File Run Periods
+    Yes,                     !- Run Simulation for Weather File Run Periods
+    No,                      !- Do HVAC Sizing Simulation for Sizing Periods
+    1;                       !- Maximum Number of HVAC Sizing Simulation Passes
 
   RunPeriod,
     RUNPERIOD 1,             !- Name
@@ -255,9 +257,9 @@ end
   Site:GroundReflectance,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2;
 
   Foundation:Kiva:Settings,
-    1.8,                     !- Soil Conductivity {W/m-K}
-    3200,                    !- Soil Density {kg/m3}
-    836,                     !- Soil Specific Hevat {J/kg-K}
+    1.7304,                  !- Soil Conductivity {W/m-K}
+    1842.12212468764,        !- Soil Density {kg/m3}
+    419,                     !- Soil Specific Heat {J/kg-K}
     0.9,                     !- Ground Solar Absorptivity {dimensionless}
     0.9,                     !- Ground Thermal Absorptivity {dimensionless}
     0.03,                    !- Ground Surface Roughness {m}
@@ -520,8 +522,8 @@ Material,
 
 <% if foundation_type == "SLAB" %>
 Foundation:Kiva,
-  Slab Foundation,          !- Name
-  ,                        !- Initial Indoor Air Temperature
+  Slab Foundation,         !- Name
+  20,                      !- Initial Indoor Air Temperature
   ,                        !- Interior Horizontal Insulation Material Name
   ,                        !- Interior Horizontal Insulation Depth {m}
   ,                        !- Interior Horizontal Insulation Width {m}
@@ -583,8 +585,8 @@ Construction,
   Wood Framing - 2x4;
 
 Foundation:Kiva,
-  Basement Foundation,          !- Name
-  ,                        !- Initial Indoor Air Temperature
+  Basement Foundation,     !- Name
+  20,                      !- Initial Indoor Air Temperature
   ,                        !- Interior Horizontal Insulation Material Name
   ,                        !- Interior Horizontal Insulation Depth {m}
   ,                        !- Interior Horizontal Insulation Width {m}
@@ -805,7 +807,13 @@ WindowProperty:FrameAndDivider,
   <%= win_edge_u_ratio %>,  !- Ratio of Divider-Edge Glass Conductance to Center-Of-Glass Conductance
   <%= frame_divider_absorptance %>,                     !- Divider Solar Absorptance
   0,                       !- Divider Visible Absorptance
-  0.9;                     !- Divider Thermal Hemispherical Emissivity
+  0.9,                     !- Divider Thermal Hemispherical Emissivity
+  0.0,                     !- Outside Reveal Solar Absorptance
+  0.0,                     !- Inside Sill Depth
+  0.0,                     !- Inside Sill Solar Absorptance
+  0.0,                     !- Inside Reveal Depth
+  0.0,                     !- Inside Reveal Solar Absorptance
+  CurtainWall;             !- NFRC Product Type for Assembly Calculations
 
 <% elsif window_model == "SIMPLE" %>
 WindowMaterial:SimpleGlazingSystem,
@@ -1061,6 +1069,7 @@ BuildingSurface:Detailed,
   Exterior Wall,          !- Construction Name
   <% end %>
   Main Zone,                       !- Zone Name
+  ,                        !- Space Name
   Outdoors,                !- Outside Boundary Condition
   ,                       !- Outside Boundary Condition Object
   SunExposed,                !- Sun Exposure
@@ -1250,6 +1259,7 @@ BuildingSurface:Detailed,
   Ceiling,           !- Construction Name
 <% end %>
   Main Zone,                  !- Zone Name
+  ,                           !- Space Name
   Surface,                    !- Outside Boundary Condition
   Attic Floor,                !- Outside Boundary Condition Object
   NoSun,                      !- Sun Exposure
@@ -1270,6 +1280,7 @@ BuildingSurface:Detailed,
   Attic floor,       !- Construction Name
 <% end %>
   Attic Zone,                 !- Zone Name
+  ,                           !- Space Name
   Surface,                    !- Outside Boundary Condition
   Ceiling,                    !- Outside Boundary Condition Object
   NoSun,                      !- Sun Exposure
@@ -1294,6 +1305,7 @@ BuildingSurface:Detailed,
   Floor Slab,                  !- Construction Name
 <% end %>
   Main Zone,                   !- Zone Name
+  ,                            !- Space Name
 <% if foundation_type == "RAISED" %>
   Outdoors,                    !- Outside Boundary Condition
   ,                            !- Outside Boundary Condition Object
@@ -1327,19 +1339,21 @@ InternalMass,
   Interior Wall - Cavity,      !- Name
   Interior Wall - Cavity,      !- Construction Name
   Main Zone,                   !- Zone or ZoneList Name
+  ,                            !- Space or SpaceList Name
   <%= (1.0 - framing_factor_other)*interior_wall_area*2 %>;      !- Surface Area {m2} 10% is framed
 
 InternalMass,
   Interior Wall - Frame,       !- Name
   Interior Wall - Frame,       !- Construction Name
   Main Zone,                   !- Zone or ZoneList Name
+  ,                            !- Space or SpaceList Name
   <%= framing_factor_other*interior_wall_area*2 %>;     !- Surface Area {m2} 10% is framed
 <% end %>
 
 !--- Main Zone Internal Gains Section ---
 ElectricEquipment,
   Internal Gains,          !- Name
-  Main Zone,               !- Zone or ZoneList Name
+  Main Zone,               !- Zone or ZoneList or Space or SpaceList Name
   Internal Gains Schedule, !- Schedule Name
   EquipmentLevel,          !- Design Level Calculation Method
   <%= int_load %>,         !- Design Level {W}
@@ -1567,6 +1581,7 @@ BuildingSurface:Detailed,
   Wall,                       !- Surface Type
   Gable Wall,                !- Construction Name
   Attic Zone,                !- Zone Name
+  ,                          !- Space Name
   Outdoors,                  !- Outside Boundary Condition
   ,                          !- Outside Boundary Condition Object
   SunExposed,                !- Sun Exposure
@@ -1602,6 +1617,7 @@ BuildingSurface:Detailed,
   Roof,                      !- Surface Type
   Roof,                      !- Construction Name
   Attic Zone,                !- Zone Name
+  ,                          !- Space Name
   Outdoors,                  !- Outside Boundary Condition
   ,                          !- Outside Boundary Condition Object
   SunExposed,                !- Sun Exposure
@@ -1730,6 +1746,7 @@ BuildingSurface:Detailed,
   Wall,                      !- Surface Type
   <%= surface[:con] %>,             !- Construction Name
   Basement Zone,                       !- Zone Name
+  ,                          !- Space Name
       <% if surface[:ext_cond] == "Ambient" %>
   Outdoors,                !- Outside Boundary Condition
   ,                       !- Outside Boundary Condition Object
@@ -1754,6 +1771,7 @@ BuildingSurface:Detailed,
   Floor,                      !- Surface Type
   <%= surface[:con] %>,                       !- Construction Name
   Basement Zone,                        !- Zone Name
+  ,                          !- Space Name
   <%= surface[:ext_cond] %>,                       !- Outside Boundary Condition
   Basement Foundation,                       !- Outside Boundary Condition Object
   NoSun,                !- Sun Exposure
@@ -1869,7 +1887,7 @@ end
   Output:Variable,*,Zone Ideal Loads Supply Air Total Heating Energy,Hourly;
   Output:Variable,*,Zone Ideal Loads Supply Air Total Cooling Energy,Hourly;
 <% elsif hvac_model == "DETAILED" %>
-  Output:Variable,*,Fan Electric Power,timestep; !- Zone Sum [J]
+  Output:Variable,*,Fan Electricity Rate,timestep; !- Zone Sum [J]
   Output:Variable,*,Unitary System Fan Part Load Ratio,timestep; !- HVAC Average []
   Output:Variable,*,System Node Standard Density Volume Flow Rate,timestep; !- HVAC Average [m3/s]
   Output:Variable,*,Heating Coil Heating Rate,timestep; !- HVAC Average [W]
