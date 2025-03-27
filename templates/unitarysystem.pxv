@@ -794,7 +794,8 @@ Coil:Heating:DX:SingleSpeed,
   <%= heating_coil_cap %>,        !- Rated Total Heating Capacity {W}
   <%= heating_coil_eff %>,        !- Rated COP
   <%= supply_airflow_heat %>,         !- Rated Air Flow Rate {m^3/s}
-  ,                               !- Rated Evaporator Fan Power Per Volume Flow Rate {W/(m/s)}
+  ,                               !- 2017 Rated Evaporator Fan Power Per Volume Flow Rate {W/(m/s)}
+  ,                               !- 2023 Rated Evaporator Fan Power Per Volume Flow Rate {W/(m/s)}
   <%= system_name %> Cooling Coil Outlet Node, !- Air Inlet Node Name
   <%= system_name %> Heating Coil Outlet Node,  !- Air Outlet Node Name
   <%= system_name %> HP_Heat-Cap-fT,  !- Total Heating Capacity Function of Temperature Curve Name
@@ -807,6 +808,7 @@ Coil:Heating:DX:SingleSpeed,
   ,                               !- Outdoor Dry-Bulb Temperature to Turn On Compressor {C}
   <%= hp_defrost_temp %>,         !- Maximum Outdoor Dry-Bulb Temperature for Defrost Operation {C}
   <%= crankcase_cap %>,           !- Crankcase Heater Capacity {W}
+  ,                               !- Crankcase Heater Capacity Function of Temperature Curve Name
   <%= crankcase_max_temp %>,      !- Maximum Outdoor Dry-Bulb Temperature for Crankcase Heater Operation {C}
   ReverseCycle,                   !- Defrost Strategy
   timed,                          !- Defrost Control
