@@ -491,7 +491,7 @@ Material,
     <%= 0.5|'in' %>,    !- Thickness {m}
     <%= 0.020|'k-ip' %>,    !- Conductivity {W/m-K}
     <%= 3.4|'lb/ft3' %>,        !- Density {kg/m3}
-    <%= 0.32|'cp-ip' %>,        !- Specific Heat {J/kg-K}
+    <%= 0.34|'cp-ip' %>,        !- Specific Heat {J/kg-K}
     ,                     !- Thermal Absorptance
     ,                     !- Solar Absorptance
     ;                     !- Visible Absorptance
