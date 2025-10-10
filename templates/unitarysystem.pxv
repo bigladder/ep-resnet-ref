@@ -225,6 +225,8 @@ end
     <%= system_name %> Supply Equipment Inlet Node, !- Fan Inlet Node Name
     <%= system_name %> Supply Fan Outlet Node,  !- Fan Outlet Node Name
     <%= system_name %> Mixed Air Setpoint Nodes,  !- Setpoint Node or NodeList Name
+    , !- Cooling Coil Inlet Node Name
+    , !- Cooling Coil Outlet Node Name
      7.2; !- Minimum Temperature at Cooling Coil Outlet Node
 
   NodeList,
@@ -243,6 +245,8 @@ end
     <%= system_name %> Supply Equipment Outlet Node,  !- Fan Outlet Node Name
   <% end %>
     <%= system_name %> Mixed Air Setpoint Nodes,  !- Setpoint Node or NodeList Name
+    , !- Cooling Coil Inlet Node Name
+    , !- Cooling Coil Outlet Node Name
      7.2; !- Minimum Temperature at Cooling Coil Outlet Node
 
   NodeList,
@@ -341,6 +345,7 @@ end
     , !- Fraction of Autosized Design Heating Supply Air Flow Rate
     , !- Design Supply Air Flow Rate Per Unit of Capacity During Cooling Operation
     , !- Design Supply Air Flow Rate Per Unit of Capacity During Heating Operation
+    , !- No Load Supply Air Flow Rate Control Set To Low Speed
 <% if (heating_coil_type == "ASHP" and cooling_coil_type == "ASHP") %>
     <%= hp_supply_max_temp %>, !- Maximum Supply Air Temperature {C}
 <% else %>
@@ -348,10 +353,6 @@ end
 <% end %>
     <%= hp_supp_heat_max_temp %>, !- Maximum Outdoor Dry-Bulb Temperature for Supplemental Heater Operation
     , !- Outdoor Dry-Bulb Temperature Sensor Node Name
-    , !- Maximum Cycling Rate
-    , !- Heat Pump Time Constant
-    , !- Fraction of On-Cycle Power Use
-    , !- Heat Pump Fan Delay Time
     , !- Ancilliary On-Cycle Electric Power
     , !- Ancilliary Off-Cycle Electric Power
     , !- Design Heat Recovery Water Flow Rate
@@ -466,7 +467,8 @@ Coil:Cooling:DX:SingleSpeed,
   Autosize,                  !- Rated High Speed Sensible Heat Ratio
   <%= cooling_coil_cop %>,   !- Rated High Speed COP
   <%= supply_airflow_cool %>,    !- Rated High Speed Air Flow Rate {m^3/s}
-  ,                          !- Rated Evaporator Fan Power Per Volume Flow Rate {W/(m^3/s)}
+  ,                          !- 2017 Rated Evaporator Fan Power Per Volume Flow Rate {W/(m^3/s)}
+  , !- 2023 Rated Evaporator Fan Power Per Volume Flow
   <% if (fan_config == "BLOWTHROUGH") %>
   <%= system_name %> Supply Fan Outlet Node,  !- Air Inlet Node Name
   <% elsif (fan_config == "DRAWTHROUGH") %>
@@ -493,6 +495,7 @@ Coil:Cooling:DX:SingleSpeed,
   <% elsif (cooling_coil_type == "ASHP") %>
   0,   !- Crankcase Heater Capacity {W}
   <% end %>
+  , !- Crankcase Heater Capacity Function of Temperature Curve Name
   <%= crankcase_max_temp %>,  !- Maximum Outdoor Dry-Bulb Temperature for Crankcase Heater Operation {C}
   ,                        !- Supply Water Storage Tank Name
   ;                        !- Condensate Collection Water Storage Tank Name
@@ -791,7 +794,8 @@ Coil:Heating:DX:SingleSpeed,
   <%= heating_coil_cap %>,        !- Rated Total Heating Capacity {W}
   <%= heating_coil_eff %>,        !- Rated COP
   <%= supply_airflow_heat %>,         !- Rated Air Flow Rate {m^3/s}
-  ,                               !- Rated Evaporator Fan Power Per Volume Flow Rate {W/(m/s)}
+  ,                               !- 2017 Rated Evaporator Fan Power Per Volume Flow Rate {W/(m/s)}
+  ,                               !- 2023 Rated Evaporator Fan Power Per Volume Flow Rate {W/(m/s)}
   <%= system_name %> Cooling Coil Outlet Node, !- Air Inlet Node Name
   <%= system_name %> Heating Coil Outlet Node,  !- Air Outlet Node Name
   <%= system_name %> HP_Heat-Cap-fT,  !- Total Heating Capacity Function of Temperature Curve Name
@@ -804,6 +808,7 @@ Coil:Heating:DX:SingleSpeed,
   ,                               !- Outdoor Dry-Bulb Temperature to Turn On Compressor {C}
   <%= hp_defrost_temp %>,         !- Maximum Outdoor Dry-Bulb Temperature for Defrost Operation {C}
   <%= crankcase_cap %>,           !- Crankcase Heater Capacity {W}
+  ,                               !- Crankcase Heater Capacity Function of Temperature Curve Name
   <%= crankcase_max_temp %>,      !- Maximum Outdoor Dry-Bulb Temperature for Crankcase Heater Operation {C}
   ReverseCycle,                   !- Defrost Strategy
   timed,                          !- Defrost Control
@@ -1011,7 +1016,7 @@ EnergyManagementSystem:Sensor,
 EnergyManagementSystem:Sensor,
   <%= system_name.gsub(" ", "_") %>_supply_fan_sensor,    !- Name
   <%= system_name %> Supply Fan,      !- Output:Variable or Output:Meter Index Key Name
-  Fan Electric Energy;                    !- Output:Variable or Output:Meter Name
+  Fan Electricity Energy;                    !- Output:Variable or Output:Meter Name
 
 EnergyManagementSystem:Program,
   <%= system_name.gsub(" ", "_") %>_supply_fan_disaggregate_program, !- Name
@@ -1575,6 +1580,7 @@ BuildingSurface:Detailed,
   Floor,                   !- Surface Type
   <%= system_name %> Plenum Construction,  !- Construction Name
   <%= return_plenum_zone_name %>,  !- Zone Name
+  ,                        !- Space Name
   Adiabatic,               !- Outside Boundary Condition
   ,                        !- Outside Boundary Condition Object
   NoSun,                   !- Sun Exposure
@@ -1599,6 +1605,7 @@ BuildingSurface:Detailed,
   Ceiling,                   !- Surface Type
   <%= system_name %> Plenum Construction,  !- Construction Name
   <%= return_plenum_zone_name %>,  !- Zone Name
+  ,                        !- Space Name
   Adiabatic,               !- Outside Boundary Condition
   ,                        !- Outside Boundary Condition Object
   NoSun,                   !- Sun Exposure
@@ -1623,6 +1630,7 @@ BuildingSurface:Detailed,
   Wall,                   !- Surface Type
   <%= system_name %> Plenum Construction,  !- Construction Name
   <%= return_plenum_zone_name %>,  !- Zone Name
+  ,                        !- Space Name
   Adiabatic,               !- Outside Boundary Condition
   ,                        !- Outside Boundary Condition Object
   NoSun,                   !- Sun Exposure
@@ -1647,6 +1655,7 @@ BuildingSurface:Detailed,
   Wall,                   !- Surface Type
   <%= system_name %> Plenum Construction,  !- Construction Name
   <%= return_plenum_zone_name %>,  !- Zone Name
+  ,                        !- Space Name
   Adiabatic,               !- Outside Boundary Condition
   ,                        !- Outside Boundary Condition Object
   NoSun,                   !- Sun Exposure
@@ -1671,6 +1680,7 @@ BuildingSurface:Detailed,
   Wall,                   !- Surface Type
   <%= system_name %> Plenum Construction,  !- Construction Name
   <%= return_plenum_zone_name %>,  !- Zone Name
+  ,                        !- Space Name
   Adiabatic,               !- Outside Boundary Condition
   ,                        !- Outside Boundary Condition Object
   NoSun,                   !- Sun Exposure
@@ -1695,6 +1705,7 @@ BuildingSurface:Detailed,
   Wall,                   !- Surface Type
   <%= system_name %> Plenum Construction,  !- Construction Name
   <%= return_plenum_zone_name %>,  !- Zone Name
+  ,                        !- Space Name
   Adiabatic,               !- Outside Boundary Condition
   ,                        !- Outside Boundary Condition Object
   NoSun,                   !- Sun Exposure
@@ -1718,6 +1729,7 @@ InternalMass,
   <%= return_plenum_zone_name %> Plenum Internal Mass,  !- Name
   <%= system_name %> Plenum Construction,  !- Construction Name
   <%= return_plenum_zone_name %>,          !- Zone Name
+  ,                                        !- Space or SpaceList Name
   5.0;      !- Surface Area {m2}
 
   <% end %>
