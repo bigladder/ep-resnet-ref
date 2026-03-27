@@ -200,7 +200,7 @@ def make_composite_layer(r_others, framing_factor, cavity_material, framing_mate
   return {:k=>k_composite,:rho=>rho_composite,:cp=>cp_composite}
 end
 %>
-  VERSION,24.2;
+  VERSION,25.1;
 
   Building,
     <%= case_name %>,                   !- Name
