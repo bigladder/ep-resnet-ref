@@ -3,4 +3,4 @@
 :foundation_type=>"BASEMENT",
 :framing_factor_floor=>0.13,
 :hvac_model=>"DETAILED",
-:heating_cap=>46600|'btuh'
+:heating_capacity=>46600|'btuh'

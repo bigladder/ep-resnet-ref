@@ -4,7 +4,7 @@
   parameter "ach", :default=>0.67
 # Max internal total (sensible + latent) loads set to 10,000 Btu/hr even though actual max value in Table 7-9 is 5,818 Btu/hr
 # This makes it easier to interpret hourly total loads from applied schedule
-  parameter "int_load", :default=>10000|'btuh'
+  parameter "internal_load", :default=>10000|'btuh'
   parameter "win_frame_u", :default=>9.096|'U-IP' # Surface-to-surface frame conductance from Table 7-4
   parameter "win_edge_u_ratio", :default=>1.0   # L100A: 1.064/1.064 = 1.0, L130A: 0.265/0.238 = 1.11
   parameter "win_panes", :default=>1 # number of windows panes
@@ -34,17 +34,23 @@
   parameter "heating_type", :default=>"GAS" # heat type, choices: GAS | ASHP | ELECTRIC
   parameter "cooling_type", :default=>"DX" # cool type, choices: DX | ASHP
   parameter "fan_flow_per_cap", :default=>360 # 'cfm/ton', From table 4.4.3(1) in the standard
-  parameter "cooling_cap", :default=>38300|'btuh' # cooling capacity, default from HVAC1a DX capacity
-  parameter "heating_cap", :default=>56100|'btuh' # heating capacity, default from HVAC2a gas furnace capacity
+  parameter "cooling_capacity", :default=>38300|'btuh' # cooling capacity, default from HVAC1a DX capacity
+  parameter "heating_capacity", :default=>56100|'btuh' # heating capacity, default from HVAC2a gas furnace capacity
+  parameter "heating_capacity_17", :default=>nil # heating capacity, default from HVAC2a gas furnace capacity
+  parameter "minimum_rated_temperature", :default=>-25 # Minimum operating temperature of HEAT_PUMP in degF
   parameter "afue", :default=>0.78 # heating efficiency for gas furnace and electric resistance
-  parameter "seer", :default=>10 # DX cooling SEER
-  parameter "hspf", :default=>6.8 # Heating Seasonal Performance Factor for ASHP
+  parameter "seer2", :default=>9.50 # DX cooling SEER2
+  parameter "eer2", :default=>nil # DX cooling EER2
+  parameter "hspf2", :default=>5.78 # Heating Seasonal Performance Factor for HEAT_PUMP
   parameter "crankcase_heat", :default=>50 # Taken from table 4.4.3(1) in W
   parameter "crankcase_max_T", :default=>50|'F' # Taken from table 4.4.3(1) in dgrees celcius
   parameter "defrost_T", :default=>40|'F' # Taken from table 4.4.3(1) in dgrees celcius
   parameter "defrost_time_fra", :default=>0.05833 # EnergyPlus default
+  parameter "compressor_speed_type", :default=>"SINGLE_STAGE" # Number of compressor stages, choices: SINGLE_STAGE | TWO_STAGE | VARIABLE_SPEED
+  parameter "fan_motor_type", :default=>"PSC" # Fan Motor Type for blower system 
 
 # Duct loss parameters
+  parameter "duct_type", :default=>"DUCTED" # choices DUCTED | DUCTLESS
   parameter "duct_model", :default=>"NONE" # choices: NONE (ducts in conditioned space or no duct losses) | EMS (uses Energy Management Systems (EMS) objects) | AFN (uses AirflowNetwork objects)
   # NOTE: "AFN" option for duct_model parameter may not work due to convergence issues with AFN calculations for air flow rates
   parameter "air_handler_zone", :default=>"Main Zone" # zone surrounding air handler, supply ducts, and return ducts ("Main Zone" | "Attic Zone" | "Basement Zone")
@@ -152,9 +158,9 @@ k_air = (3.5|'in') / (1.01|'r-ip') # conductivity for air in IP units
 
 # HVAC system
 if hvac_model == "DETAILED"
-  supply_airflow_cool = fan_flow_per_cap * cooling_cap / (12000|'btuh') # multiplying cfm/ton by heating Btu/hr to get cfm
+  supply_airflow_cool = fan_flow_per_cap * cooling_capacity / (12000|'btuh') # multiplying cfm/ton by heating Btu/hr to get cfm
 
-  supply_airflow_heat = fan_flow_per_cap * heating_cap / (12000|'btuh') # multiplying cfm/ton by cooling Btu/hr to get cfm
+  supply_airflow_heat = fan_flow_per_cap * heating_capacity / (12000|'btuh') # multiplying cfm/ton by cooling Btu/hr to get cfm
 
   fan_flow_supply = [supply_airflow_cool, supply_airflow_heat].max # use max of heating/cooling supply flow for fan
 
@@ -176,9 +182,25 @@ if hvac_model == "DETAILED"
   end
 
 end
-%>
 
-<%
+# Define heating_capacity_17 if nil
+if heating_capacity_17.nil?
+  if compressor_speed_type == "VARIABLE_SPEED"
+    heating_capacity_17 = 0.689 * heating_capacity
+  else # compressor_speed_type == SINGLE_STAGE | TWO_STAGE
+    heating_capacity_17 = 0.626 * heating_capacity
+  end
+end
+
+# Define eer2 if nil
+if eer2.nil?
+  if seer2 < 13.0 
+    eer2 = 10.0 + 0.84 * (seer2 - 11.5)
+  else # seer2 >= 13.0
+    eer2 = 11.3 + 0.57 * (seer2 - 13.0)
+  end
+end
+
 # method to calculate properties of composite layer that combines framing + cavity layers
 def make_composite_layer(r_others, framing_factor, cavity_material, framing_material)
   r_cavity = cavity_material[:r]
@@ -1356,7 +1378,7 @@ ElectricEquipment,
   Main Zone,               !- Zone or ZoneList or Space or SpaceList Name
   Internal Gains Schedule, !- Schedule Name
   EquipmentLevel,          !- Design Level Calculation Method
-  <%= int_load %>,         !- Design Level {W}
+  <%= internal_load %>,         !- Design Level {W}
   ,                        !- Watts per Zone Floor Area {W/m2}
   ,                        !- Watts per Person {W/person}
   0.178,                   !- Fraction Latent
@@ -1492,13 +1514,13 @@ Schedule:Compact,
 elsif hvac_model == "DETAILED"
   require_relative 'scripts/heat_pump.rb'
   if cooling_type == "DX"
-    COP_result = calc_heat_pump_COPs(seer, 6.8) # 6.8 here is arbitrary because it does not affect COP_cool
+    COP_result = calc_heat_pump_COPs(seer2, 6.8) # 6.8 here is arbitrary because it does not affect COP_cool
     cooling_coil_cop = COP_result[0]
     heating_coil_eff = afue
     cooling_coil_cd = COP_result[2]
     heating_coil_cd = COP_result[3] # heating_coil_cd only used for ASHP, but needs to be set to something for unitarysystem.imf template to use
   elsif cooling_type == "ASHP" and heating_type == "ASHP"
-    COP_result = calc_heat_pump_COPs(13,hspf) # 13 here is arbitrary because it does not affect COP_heat
+    COP_result = calc_heat_pump_COPs(13,hspf2) # 13 here is arbitrary because it does not affect COP_heat
     cooling_coil_cop = COP_result[0]
     heating_coil_eff = COP_result[1]
     cooling_coil_cd = COP_result[2]
@@ -1515,8 +1537,8 @@ elsif hvac_model == "DETAILED"
     :supply_airflow_heat=>supply_airflow_heat|'cfm',
     :fan_flow_supply=>fan_flow_supply|'cfm',
     :fan_power=>fan_power,
-    :cooling_coil_cap=>cooling_cap,
-    :heating_coil_cap=>heating_cap,
+    :cooling_coil_cap=>cooling_capacity,
+    :heating_coil_cap=>heating_capacity,
     :cooling_coil_cop=>cooling_coil_cop,
     :heating_coil_eff=>heating_coil_eff,
     :hp_defrost_temp=>defrost_T,
