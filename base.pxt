@@ -1512,6 +1512,21 @@ Schedule:Compact,
 
 <%
 elsif hvac_model == "DETAILED"
+%>
+
+<%
+
+  cli_command = "uv run python functions/get_air_source_heat_pump_performance_map.py #{compressor_speed_type} #{cooling_capacity} #{heating_capacity} #{heating_capacity_17} #{minimum_rated_temperature} #{seer2} #{eer2} #{hspf2} #{fan_motor_type} #{duct_type}"
+
+  run_command = `#{cli_command}`
+
+  performance_map = run_command.strip
+
+  %>
+
+  <%= performance_map %>
+
+<%
   require_relative 'scripts/heat_pump.rb'
   if cooling_type == "DX"
     COP_result = calc_heat_pump_COPs(seer2, 6.8) # 6.8 here is arbitrary because it does not affect COP_cool
