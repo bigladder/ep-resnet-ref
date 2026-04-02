@@ -164,7 +164,7 @@ if hvac_model == "DETAILED"
 
   fan_flow_supply = [supply_airflow_cool, supply_airflow_heat].max # use max of heating/cooling supply flow for fan
 
-  if seer >= 14 or afue >= 0.9
+  if seer2 >= 14 or afue >= 0.9 # TODO: adjust if statement and possibly values below
     fan_power_per_flow = 0.000375 # 'kW/cfm', Taken from table 4.4.3(1)
   else
     fan_power_per_flow = 0.0005 # 'kW/cfm', Taken from table 4.4.3(1)
@@ -1528,7 +1528,7 @@ elsif hvac_model == "DETAILED"
 
 <%
   require_relative 'scripts/heat_pump.rb'
-  if cooling_type == "DX"
+  if cooling_type == "DX" # TODO: fix calc_heat_pump_COPs func
     COP_result = calc_heat_pump_COPs(seer2, 6.8) # 6.8 here is arbitrary because it does not affect COP_cool
     cooling_coil_cop = COP_result[0]
     heating_coil_eff = afue
