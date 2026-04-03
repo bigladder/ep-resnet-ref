@@ -217,75 +217,75 @@ end
     <%= system_name %> Supply Equipment Inlet Node,  !- Component 1 Inlet Node Name
     <%= system_name %> Supply Equipment Outlet Node;  !- Component 1 Outlet Node Name
 
-<% if (fan_config == "BLOWTHROUGH") %>
-  SetpointManager:MixedAir,
-    <%= system_name %> Mixed Air Setpoint Manager,  !- Name
-    Temperature,             !- Control Variable
-    <%= system_name %> Supply Equipment Outlet Node,  !- Reference Setpoint Node Name
-    <%= system_name %> Supply Equipment Inlet Node, !- Fan Inlet Node Name
-    <%= system_name %> Supply Fan Outlet Node,  !- Fan Outlet Node Name
-    <%= system_name %> Mixed Air Setpoint Nodes,  !- Setpoint Node or NodeList Name
-    , !- Cooling Coil Inlet Node Name
-    , !- Cooling Coil Outlet Node Name
-     7.2; !- Minimum Temperature at Cooling Coil Outlet Node
+! <% if (fan_config == "BLOWTHROUGH") %>
+!   SetpointManager:MixedAir,
+!     <%= system_name %> Mixed Air Setpoint Manager,  !- Name
+!     Temperature,             !- Control Variable
+!     <%= system_name %> Unitary Outlet Node,  !- Reference Setpoint Node Name
+!     <%= system_name %> Unitary Inlet Node, !- Fan Inlet Node Name
+!     <%= system_name %> Unitary Outlet Node,  !- Fan Outlet Node Name
+!     <%= system_name %> Mixed Air Setpoint Nodes,  !- Setpoint Node or NodeList Name
+!     , !- Cooling Coil Inlet Node Name
+!     , !- Cooling Coil Outlet Node Name
+!      7.2; !- Minimum Temperature at Cooling Coil Outlet Node
 
-  NodeList,
-    <%= system_name %> Mixed Air Setpoint Nodes,  !- Name
-    <%= system_name %> Supply Equipment Inlet Node;  !- Node Name
+!   NodeList,
+!     <%= system_name %> Mixed Air Setpoint Nodes,  !- Name
+!     <%= system_name %> Unitary Inlet Node;  !- Node Name
 
-<% elsif (fan_config == "DRAWTHROUGH") %>
-  SetpointManager:MixedAir,
-    <%= system_name %> Mixed Air Setpoint Manager,  !- Name
-    Temperature,             !- Control Variable
-    <%= system_name %> Supply Equipment Outlet Node,  !- Reference Setpoint Node Name
-    <%= system_name %> Heating Coil Outlet Node, !- Fan Inlet Node Name
-  <% if heating_coil_type == "ASHP" and cooling_coil_type == "ASHP" %>   <%# Adjust for supplemental heating coil %>
-    <%= system_name %> Supply Fan Outlet Node,  !- Fan Outlet Node Name
-  <% else %>
-    <%= system_name %> Supply Equipment Outlet Node,  !- Fan Outlet Node Name
-  <% end %>
-    <%= system_name %> Mixed Air Setpoint Nodes,  !- Setpoint Node or NodeList Name
-    , !- Cooling Coil Inlet Node Name
-    , !- Cooling Coil Outlet Node Name
-     7.2; !- Minimum Temperature at Cooling Coil Outlet Node
+! <% elsif (fan_config == "DRAWTHROUGH") %>
+!   SetpointManager:MixedAir,
+!     <%= system_name %> Mixed Air Setpoint Manager,  !- Name
+!     Temperature,             !- Control Variable
+!     <%= system_name %> Unitary Outlet Node,  !- Reference Setpoint Node Name
+!     <%= system_name %> Heating Coil Outlet Node, !- Fan Inlet Node Name
+!   <% if heating_coil_type == "ASHP" and cooling_coil_type == "ASHP" %>   <%# Adjust for supplemental heating coil %>
+!     <%= system_name %> Unitary Outlet Node,  !- Fan Outlet Node Name
+!   <% else %>
+!     <%= system_name %> Unitary Outlet Node,  !- Fan Outlet Node Name
+!   <% end %>
+!     <%= system_name %> Mixed Air Setpoint Nodes,  !- Setpoint Node or NodeList Name
+!     , !- Cooling Coil Inlet Node Name
+!     , !- Cooling Coil Outlet Node Name
+!      7.2; !- Minimum Temperature at Cooling Coil Outlet Node
 
-  NodeList,
-    <%= system_name %> Mixed Air Setpoint Nodes,  !- Name
-    <%= system_name %> Supply Equipment Inlet Node,  !- Node Name
-    <%= system_name %> Cooling Coil Outlet Node,  !- Node Name
-    <%= system_name %> Heating Coil Outlet Node;  !- Node Name
-<% end %>
+!   NodeList,
+!     <%= system_name %> Mixed Air Setpoint Nodes,  !- Name
+!     <%= system_name %> Unitary Inlet Node,  !- Node Name
+!     <%= system_name %> Cooling Coil Outlet Node,  !- Node Name
+!     <%= system_name %> Heating Coil Outlet Node;  !- Node Name
+! <% end %>
 
-  SetpointManager:SingleZone:Reheat,
-    <%= system_name %> SupAirTemp Manager,   !- Name
-    Temperature,             !- Control Variable
-    10.0,                    !- Minimum Supply Air Temperature {C}
-    50.0,                    !- Maximum Supply Air Temperature {C}
-    <%= control_zone_name %>,        !- Control Zone Name
-    <%= control_zone_name %> Air Node,  !- Zone Node Name
-    <%= control_zone_name %> ATU Outlet Node,  !- Zone Inlet Node Name
-    <%= system_name %> Zone Setpoint Nodes;  !- Setpoint Node or NodeList Name
+!   SetpointManager:SingleZone:Reheat,
+!     <%= system_name %> SupAirTemp Manager,   !- Name
+!     Temperature,             !- Control Variable
+!     10.0,                    !- Minimum Supply Air Temperature {C}
+!     50.0,                    !- Maximum Supply Air Temperature {C}
+!     <%= control_zone_name %>,        !- Control Zone Name
+!     <%= control_zone_name %> Air Node,  !- Zone Node Name
+!     <%= control_zone_name %> ATU Outlet Node,  !- Zone Inlet Node Name
+!     <%= system_name %> Zone Setpoint Nodes;  !- Setpoint Node or NodeList Name
 
-<% if (fan_config == "BLOWTHROUGH") %>
-   NodeList,
-     <%= system_name %> Zone Setpoint Nodes,  !- Name
-     <%= system_name %> Supply Fan Outlet Node,  !- Node Name
-     <%= system_name %> Cooling Coil Outlet Node,  !- Node Name
-   <% if (heating_coil_type == "ASHP" and cooling_coil_type == "ASHP") %>  <%# Adjust for supplemental heating coil %>
-     <%= system_name %> Heating Coil Outlet Node,  !- Node Name
-   <% end %>
-     <%= system_name %> Supply Equipment Outlet Node;  !- Node Name
+! <% if (fan_config == "BLOWTHROUGH") %>
+!    NodeList,
+!      <%= system_name %> Zone Setpoint Nodes,  !- Name
+!      <%= system_name %> Unitary Outlet Node,  !- Node Name
+!      <%= system_name %> Cooling Coil Outlet Node,  !- Node Name
+!    <% if (heating_coil_type == "ASHP" and cooling_coil_type == "ASHP") %>  <%# Adjust for supplemental heating coil %>
+!      <%= system_name %> Heating Coil Outlet Node,  !- Node Name
+!    <% end %>
+!      <%= system_name %> Unitary Outlet Node;  !- Node Name
 
-<% elsif (fan_config == "DRAWTHROUGH") %>
-   NodeList,
-     <%= system_name %> Zone Setpoint Nodes,  !- Name
-     <%= system_name %> Cooling Coil Outlet Node,  !- Node Name
-     <%= system_name %> Heating Coil Outlet Node,  !- Node Name
-   <% if (heating_coil_type == "ASHP" and cooling_coil_type == "ASHP") %>  <%# Adjust for supplemental heating coil %>
-     <%= system_name %> Supply Fan Outlet Node,  !- Node Name
-   <% end %>
-     <%= system_name %> Supply Equipment Outlet Node;  !- Node Name
-<% end %>
+! <% elsif (fan_config == "DRAWTHROUGH") %>
+!    NodeList,
+!      <%= system_name %> Zone Setpoint Nodes,  !- Name
+!      <%= system_name %> Cooling Coil Outlet Node,  !- Node Name
+!      <%= system_name %> Heating Coil Outlet Node,  !- Node Name
+!    <% if (heating_coil_type == "ASHP" and cooling_coil_type == "ASHP") %>  <%# Adjust for supplemental heating coil %>
+!      <%= system_name %> Unitary Outlet Node,  !- Node Name
+!    <% end %>
+!      <%= system_name %> Unitary Outlet Node;  !- Node Name
+! <% end %>
 
   AirLoopHVAC:UnitarySystem,
     <%= system_name %> Unitary, !- Name

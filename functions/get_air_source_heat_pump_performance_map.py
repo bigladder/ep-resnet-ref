@@ -85,43 +85,6 @@ def get_performance_map(
     return object_string
 
 
-# stage_type = "SINGLE_STAGE"
-# cooling_capacity_95_W = "38300"
-# heating_capacity_47_W = "56100"
-# heating_capacity_17_W = "40000"
-# minimum_rated_temperature_degC = "-25"
-# seer2 = "9.50"
-# eer2 = "8.32"
-# hspf2 = "5.78"
-# motor_type = "PSC"
-# duct_type = "DUCTED"
-
-# stage_type = "SINGLE_STAGE"
-# cooling_capacity_95_W = "11214.639115548554"
-# heating_capacity_47_W = "13644.965607952026"
-# heating_capacity_17_W = "8541.748470577968"
-# minimum_rated_temperature_degC = "0"
-# seer2 = "9.50"
-# eer2 = "8.32"
-# hspf2 = "5.78"
-# motor_type = "PSC"
-# duct_type = "DUCTED"
-
-
-# get_performance_map(
-#     stage_type=stage_type,
-#     cooling_capacity_95_W=cooling_capacity_95_W,
-#     heating_capacity_47_W=heating_capacity_47_W,
-#     heating_capacity_17_W=heating_capacity_17_W,
-#     minimum_rated_temperature_degC=minimum_rated_temperature_degC,
-#     seer2=seer2,
-#     eer2=eer2,
-#     hspf2=hspf2,
-#     motor_type=motor_type,
-#     duct_type=duct_type,
-# )
-
-
 if __name__ == "__main__":
     stage_type = argv[1]
     cooling_capacity_95_W = argv[2]
