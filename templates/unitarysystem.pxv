@@ -453,6 +453,46 @@ end
     <% end %>
   <% end %>
 
+<% if (heating_coil_type == "GAS") %>
+
+  Coil:Heating:Fuel,
+    <%= system_name %> Heating Coil,  !- Name
+    <%= system_name %> Always On Schedule,  !- Availability Schedule Name
+    NaturalGas,              ! Fuel Type
+    <%= heating_coil_eff %>,  !- Gas Burner Efficiency
+    <%= heating_coil_cap %>, !- Nominal Capacity {W}
+    <%= system_name %> Cooling Coil Outlet Node, !- Air Inlet Node Name
+  <% if (fan_config == "BLOWTHROUGH") %>
+    <%= system_name %> Unitary Outlet Node;  !- Air Outlet Node Name
+  <% elsif (fan_config == "DRAWTHROUGH") %>
+    <%= system_name %> Heating Coil Outlet Node;  !- Air Outlet Node Name
+  <% end %>
+
+<% elsif (heating_coil_type == "ELECTRIC") %>
+
+  Coil:Heating:Electric,
+    <%= system_name %> Heating Coil,  !- Name
+    <%= system_name %> Always On Schedule,  !- Availability Schedule Name
+    <%= heating_coil_eff %>,  !- Efficiency
+    <%= heating_coil_cap %>, !- Nominal Capacity {W}
+    <%= system_name %> Cooling Coil Outlet Node, !- Air Inlet Node Name
+  <% if (fan_config == "BLOWTHROUGH") %>
+    <% if (control_type == "Load") %>
+      <%= system_name %> Unitary Outlet Node;  !- Air Outlet Node Name
+    <% elsif (control_type == "Setpoint") %>
+      <%= system_name %> Unitary Outlet Node,  !- Air Outlet Node Name
+      <%= system_name %> Unitary Outlet Node;  !- Temperature Setpoint Node Name
+    <% end %>
+
+  <% elsif (fan_config == "DRAWTHROUGH") %>
+    <% if (control_type == "Load") %>
+      <%= system_name %> Heating Coil Outlet Node;  !- Air Outlet Node Name
+    <% elsif (control_type == "Setpoint") %>
+      <%= system_name %> Heating Coil Outlet Node,  !- Air Outlet Node Name
+      <%= system_name %> Heating Coil Outlet Node;  !- Temperature Setpoint Node Name
+    <% end %>
+  <% end %>
+<% end %>
 
 
   AirLoopHVAC:SupplyPath,
