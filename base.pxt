@@ -1572,7 +1572,8 @@ elsif hvac_model == "DETAILED"
     :supply_duct_inarea=>supply_duct_area,
     :return_duct_inarea=>return_duct_area,
     :defrost_time_fra=>defrost_time_fra,
-    :use_dummy_return_plenum=>use_dummy_return_plenum
+    :use_dummy_return_plenum=>use_dummy_return_plenum,
+    :fan_config=>"DRAWTHROUGH" # TODO: change to if furnace then blowthrough, heat pumps then drawthrough
 
   insert "templates/atu.pxt",
     :zone_name=>"Main Zone",
