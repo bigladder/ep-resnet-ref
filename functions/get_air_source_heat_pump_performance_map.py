@@ -27,6 +27,7 @@ def get_performance_map(
     hspf2: str,
     motor_type: str,
     duct_type: str,
+    heating_type: str,
 ) -> str:  # type: ignore
     """
     Get IDF objects
@@ -50,6 +51,11 @@ def get_performance_map(
     else:  # duct_type == "DUCTLESS"
         is_ducted = False
 
+    if heating_type == "ASHP":
+        get_heating_performance_map = True
+    else:  # heating_type == "GAS" or heating_type == "ELECTRIC"
+        get_heating_performance_map = False
+
     unit = RESNETDXModel(
         staging_type=stage_type,
         rated_net_total_cooling_capacity=cooling_capacity_95,
@@ -71,7 +77,7 @@ def get_performance_map(
         normalize=False,
         get_independent_variable_lists=True,
         get_cooling_performance_map=True,
-        get_heating_performance_map=True,
+        get_heating_performance_map=get_heating_performance_map,
     )
 
     object_string = create_idf_string(objects)
@@ -127,6 +133,7 @@ if __name__ == "__main__":
     hspf2 = argv[8]
     motor_type = argv[9]
     duct_type = argv[10]
+    heating_type = argv[11]
 
     print(
         get_performance_map(
@@ -140,5 +147,6 @@ if __name__ == "__main__":
             hspf2=hspf2,
             motor_type=motor_type,
             duct_type=duct_type,
+            heating_type=heating_type,
         )
     )

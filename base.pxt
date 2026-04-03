@@ -1516,7 +1516,7 @@ elsif hvac_model == "DETAILED"
 
 <%
 
-  cli_command = "uv run python functions/get_air_source_heat_pump_performance_map.py #{compressor_speed_type} #{cooling_capacity} #{heating_capacity} #{heating_capacity_17} #{minimum_rated_temperature} #{seer2} #{eer2} #{hspf2} #{fan_motor_type} #{duct_type}"
+  cli_command = "uv run python functions/get_air_source_heat_pump_performance_map.py #{compressor_speed_type} #{cooling_capacity} #{heating_capacity} #{heating_capacity_17} #{minimum_rated_temperature} #{seer2} #{eer2} #{hspf2} #{fan_motor_type} #{duct_type} #{heating_type}"
 
   run_command = `#{cli_command}`
 
