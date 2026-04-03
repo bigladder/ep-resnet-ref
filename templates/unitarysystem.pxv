@@ -115,10 +115,10 @@ end
     <%= fan_flow_supply %>,                !- Design Supply Air Flow Rate {m3/s}
     <%= system_name %> Branch List,  !- Branch List Name
     ,                        !- Connector List Name
-    <%= system_name %> Supply Equipment Inlet Node,  !- Supply Side Inlet Node Name
+    <%= system_name %> Unitary Inlet Node,  !- Supply Side Inlet Node Name
     <%= system_name %> Zone Equipment Outlet Node,  !- Demand Side Outlet Node Name
     <%= system_name %> Zone Equipment Inlet Node,  !- Demand Side Inlet Node Names
-    <%= system_name %> Supply Equipment Outlet Node;  !- Supply Side Outlet Node Names
+    <%= system_name %> Unitary Outlet Node;  !- Supply Side Outlet Node Names
 
   Sizing:System,
     <%= system_name %>,      !- AirLoop Name
@@ -214,8 +214,8 @@ end
     ,                        !- Pressure Drop Curve Name
     AirLoopHVAC:UnitarySystem,  !- Component 1 Object Type
     <%= system_name %> Unitary,   !- Component 1 Name
-    <%= system_name %> Supply Equipment Inlet Node,  !- Component 1 Inlet Node Name
-    <%= system_name %> Supply Equipment Outlet Node;  !- Component 1 Outlet Node Name
+    <%= system_name %> Unitary Inlet Node,  !- Component 1 Inlet Node Name
+    <%= system_name %> Unitary Outlet Node;  !- Component 1 Outlet Node Name
 
 ! <% if (fan_config == "BLOWTHROUGH") %>
 !   SetpointManager:MixedAir,
@@ -293,8 +293,8 @@ end
     <%= control_zone_name %>, !- Controlling Zone or Thermostat Location
     , !- Dehumidification Control Type
     <%= system_name %> Always On Schedule, !- Availability Schedule Name
-    <%= system_name %> Supply Equipment Inlet Node,  !- Air Inlet Node Name
-    <%= system_name %> Supply Equipment Outlet Node,  !- Air Outlet Node Name
+    <%= system_name %> Unitary Inlet Node,  !- Air Inlet Node Name
+    <%= system_name %> Unitary Outlet Node,  !- Air Outlet Node Name
     Fan:SystemModel, !- Supply Air Fan Object Type
     <%= system_name %> Supply Fan, !- Supply Air Fan Name
     <%= fan_config %>, !- Fan Placement
@@ -386,14 +386,14 @@ end
     <%= system_name %> Supply Fan,  !- Name
     <%= system_name %> Always On Schedule,  !- Availability Schedule Name
   <% if (fan_config == "BLOWTHROUGH") %>
-    <%= system_name %> Supply Equipment Inlet Node,  !- Air Inlet Node Name
+    <%= system_name %> Unitary Inlet Node,  !- Air Inlet Node Name
   <% elsif (fan_config == "DRAWTHROUGH") %>
     <%= system_name %> Heating Coil Outlet Node,  !- Air Inlet Node Name
   <% end %>
   <% if (fan_config == "BLOWTHROUGH" or (heating_coil_type == "ASHP" and cooling_coil_type == "ASHP")) %>
-    <%= system_name %> Supply Fan Outlet Node,  !- Air Outlet Node Name
+    <%= system_name %> Unitary Outlet Node,  !- Air Outlet Node Name
   <% else %>
-    <%= system_name %> Supply Equipment Outlet Node,   !- Air Outlet Node Name
+    <%= system_name %> Unitary Outlet Node,   !- Air Outlet Node Name
   <% end %>
     <%= fan_flow_supply %>,    !- Design Maximum Air Flow Rate {m3/s}
     <%= fan_control_method %>,   !- Speed Control Method
@@ -895,25 +895,25 @@ Output:Table:Annual,
   AirflowNetwork:Distribution:Linkage,
     <%= system_name %> Supply Inlet Link,         !- Name
     <%= system_name %> Main Inlet Node_AFN,           !- Node 1 Name
-    <%= system_name %> Supply Equipment Inlet Node_AFN,            !- Node 2 Name
+    <%= system_name %> Unitary Inlet Node_AFN,            !- Node 2 Name
     <%= system_name %> Main Return Duct;            !- Component Name
 
   AirflowNetwork:Distribution:Node,
-    <%= system_name %> Supply Equipment Inlet Node_AFN,           !- Name
-    <%= system_name %> Supply Equipment Inlet Node,     !- Component Name or Node Name
+    <%= system_name %> Unitary Inlet Node_AFN,           !- Name
+    <%= system_name %> Unitary Inlet Node,     !- Component Name or Node Name
     Other,                   !- Component Object Type or Node Type
     3.0;                     !- Node Height {m}
 
   <% if (fan_config == "BLOWTHROUGH") %>
   AirflowNetwork:Distribution:Linkage,
     <%= system_name %> Supply Fan Link,         !- Name
-    <%= system_name %> Supply Equipment Inlet Node_AFN,           !- Node 1 Name
-    <%= system_name %> Supply Fan Outlet Node_AFN,            !- Node 2 Name
+    <%= system_name %> Unitary Inlet Node_AFN,           !- Node 1 Name
+    <%= system_name %> Unitary Outlet Node_AFN,            !- Node 2 Name
     <%= system_name %> Supply Fan;            !- Component Name
 
   AirflowNetwork:Distribution:Node,
-    <%= system_name %> Supply Fan Outlet Node_AFN,            !- Name
-    <%= system_name %> Supply Fan Outlet Node,  !- Component Name or Node Name
+    <%= system_name %> Unitary Outlet Node_AFN,            !- Name
+    <%= system_name %> Unitary Outlet Node,  !- Component Name or Node Name
     Other,                   !- Component Object Type or Node Type
     3.0;                     !- Node Height {m}
 
@@ -923,7 +923,7 @@ Output:Table:Annual,
 
   AirflowNetwork:Distribution:Linkage,
     <%= system_name %> Cooling Coil Link,         !- Name
-    <%= system_name %> Supply Fan Outlet Node_AFN,           !- Node 1 Name
+    <%= system_name %> Unitary Outlet Node_AFN,           !- Node 1 Name
     <%= system_name %> Cooling Coil Outlet Node_AFN,        !- Node 2 Name
     <%= system_name %> Cooling Coil;              !- Component Name
 
@@ -945,7 +945,7 @@ Output:Table:Annual,
     <% if heating_coil_type == "ASHP" and cooling_coil_type == "ASHP" %>
     <%= system_name %> Heating Coil Outlet Node_AFN,       !- Node 2 Name
     <% else %>
-    <%= system_name %> Supply Equipment Outlet Node_AFN,       !- Node 2 Name
+    <%= system_name %> Unitary Outlet Node_AFN,       !- Node 2 Name
     <% end %>
     <%= system_name %> Heating Coil;     !- Component Name
 
@@ -958,8 +958,8 @@ Output:Table:Annual,
 
     <% else %>
   AirflowNetwork:Distribution:Node,
-    <%= system_name %> Supply Equipment Outlet Node_AFN,            !- Name
-    <%= system_name %> Supply Equipment Outlet Node,     !- Component Name or Node Name
+    <%= system_name %> Unitary Outlet Node_AFN,            !- Name
+    <%= system_name %> Unitary Outlet Node,     !- Component Name or Node Name
     Other,                   !- Component Object Type or Node Type
     3.0;                     !- Node Height {m}
 
@@ -979,7 +979,7 @@ Output:Table:Annual,
   <% elsif (fan_config == "DRAWTHROUGH") %>
   AirflowNetwork:Distribution:Linkage,
     <%= system_name %> Cooling Coil Link,         !- Name
-    <%= system_name %> Supply Equipment Inlet Node_AFN,           !- Node 1 Name
+    <%= system_name %> Unitary Inlet Node_AFN,           !- Node 1 Name
     <%= system_name %> Cooling Coil Outlet Node_AFN,        !- Node 2 Name
     <%= system_name %> Cooling Coil;              !- Component Name
 
@@ -1023,23 +1023,23 @@ Output:Table:Annual,
     <%= system_name %> Supply Fan Link,           !- Name
     <%= system_name %> Heating Coil Outlet Node_AFN,            !- Node 1 Name
     <% if heating_coil_type == "ASHP" and cooling_coil_type == "ASHP" %>
-    <%= system_name %> Supply Fan Outlet Node_AFN,            !- Node 2 Name
+    <%= system_name %> Unitary Outlet Node_AFN,            !- Node 2 Name
     <% else %>
-    <%= system_name %> Supply Equipment Outlet Node_AFN,            !- Node 2 Name
+    <%= system_name %> Unitary Outlet Node_AFN,            !- Node 2 Name
     <% end %>
     <%= system_name %> Supply Fan;            !- Component Name
 
     <% if heating_coil_type == "ASHP" and cooling_coil_type == "ASHP" %>
   AirflowNetwork:Distribution:Node,
-    <%= system_name %> Supply Fan Outlet Node_AFN,            !- Name
-    <%= system_name %> Supply Fan Outlet Node,  !- Component Name or Node Name
+    <%= system_name %> Unitary Outlet Node_AFN,            !- Name
+    <%= system_name %> Unitary Outlet Node,  !- Component Name or Node Name
     Other,                   !- Component Object Type or Node Type
     3.0;                     !- Node Height {m}
 
     <% else %>
   AirflowNetwork:Distribution:Node,
-    <%= system_name %> Supply Equipment Outlet Node_AFN,            !- Name
-    <%= system_name %> Supply Equipment Outlet Node,     !- Component Name or Node Name
+    <%= system_name %> Unitary Outlet Node_AFN,            !- Name
+    <%= system_name %> Unitary Outlet Node,     !- Component Name or Node Name
     Other,                   !- Component Object Type or Node Type
     3.0;                     !- Node Height {m}
 
@@ -1053,12 +1053,12 @@ Output:Table:Annual,
   AirflowNetwork:Distribution:Linkage,
     <%= system_name %> Supp Heating Coil Link,         !- Name
     <%= system_name %> Heating Coil Outlet Node_AFN,        !- Node 1 Name
-    <%= system_name %> Supply Equipment Outlet Node_AFN,       !- Node 2 Name
+    <%= system_name %> Unitary Outlet Node_AFN,       !- Node 2 Name
     <%= system_name %> Supp Heating Coil;     !- Component Name
 
   AirflowNetwork:Distribution:Node,
-    <%= system_name %> Supply Equipment Outlet Node_AFN,            !- Name
-    <%= system_name %> Supply Equipment Outlet Node,     !- Component Name or Node Name
+    <%= system_name %> Unitary Outlet Node_AFN,            !- Name
+    <%= system_name %> Unitary Outlet Node,     !- Component Name or Node Name
     Other,                   !- Component Object Type or Node Type
     3.0;                     !- Node Height {m}
 
@@ -1071,7 +1071,7 @@ Output:Table:Annual,
   <% end %>
   AirflowNetwork:Distribution:Linkage,
     <%= system_name %> Air Loop Supply Link,    !- Name
-    <%= system_name %> Supply Equipment Outlet Node_AFN,       !- Node 1 Name
+    <%= system_name %> Unitary Outlet Node_AFN,       !- Node 1 Name
     <%= system_name %> Equipment Inlet Node_AFN,      !- Node 2 Name
     <%= system_name %> Air Loop Supply Duct;           !- Component Name
 
