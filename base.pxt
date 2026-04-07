@@ -43,8 +43,8 @@
   parameter "eer2", :default=>nil # DX cooling EER2
   parameter "hspf2", :default=>5.78 # Heating Seasonal Performance Factor for HEAT_PUMP
   parameter "crankcase_heat", :default=>50 # Taken from table 4.4.3(1) in W
-  parameter "crankcase_max_T", :default=>50|'F' # Taken from table 4.4.3(1) in dgrees celcius
-  parameter "defrost_T", :default=>40|'F' # Taken from table 4.4.3(1) in dgrees celcius
+  parameter "crankcase_max_T", :default=>50|'F' # Taken from table 4.4.3(1) in degrees Celsius
+  parameter "defrost_T", :default=>40|'F' # Taken from table 4.4.3(1) in degrees Celsius
   parameter "defrost_time_fra", :default=>0.05833 # EnergyPlus default
   parameter "compressor_speed_type", :default=>"SINGLE_STAGE" # Number of compressor stages, choices: SINGLE_STAGE | TWO_STAGE | VARIABLE_SPEED
   parameter "fan_motor_type", :default=>"PSC" # Fan Motor Type for blower system 
