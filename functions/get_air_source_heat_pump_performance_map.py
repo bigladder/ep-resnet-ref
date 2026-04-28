@@ -71,6 +71,7 @@ def get_performance_map(
 
     objects = get_select_idf_objects(
         unit=unit,
+        heating_type=heating_type,
         system_name="HVAC ",
         system_type=EnergyPlusSystemType.UNITARY_SYSTEM,
         autosize=False,
