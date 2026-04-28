@@ -1409,7 +1409,7 @@ InternalMass,
   EnergyManagementSystem:Sensor,
      Fan_RTF<%= zone_name_ems %>,            !- Name
      <%= system_name %> Supply Fan,                  !- Output:Variable or Output:Meter Index Key Name
-     Fan Runtime Fraction;                           !- Output:Variable or Output:Meter Index Key Name
+     Fan Runtime Fraction Speed 1;                           !- Output:Variable or Output:Meter Index Key Name
 
   ! Program
 
