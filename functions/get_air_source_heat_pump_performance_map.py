@@ -76,6 +76,7 @@ def get_performance_map(
         system_type=EnergyPlusSystemType.UNITARY_SYSTEM,
         autosize=False,
         normalize=False,
+        get_fan=True,
         get_independent_variable_lists=True,
         get_cooling_performance_map=True,
         get_heating_performance_map=get_heating_performance_map,
