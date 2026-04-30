@@ -211,7 +211,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/db/d2/f32c2db16c3a5a76a
 
 [[package]]
 name = "resdx"
-version = "0.1.1.dev0"
+version = "0.1.0"
 source = { editable = "../resdx" }
 dependencies = [
     { name = "dimes" },
