@@ -33,7 +33,7 @@ parameter "crankcase_max_temp", :default=>50|'F'
 parameter "crankcase_cap", :default=>50|'W'
 
 parameter "sat_low_temp", :default=>45|'F'
-parameter "sat_high_temp", :default=>105|'F'
+parameter "sat_high_temp", :default=>120|'F'
 
 parameter "fan_type", :default=>"CYCLING"  # (CONSTANT | VARIABLE | CYCLING)
 parameter "fan_eff_supply", :default=>0.7
