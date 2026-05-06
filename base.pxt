@@ -33,7 +33,8 @@
   parameter "hvac_model", :default=>"SIMPLE" # SIMPLE for ideal air loads | DETAILED for unitary system
   parameter "heating_type", :default=>"GAS" # heat type, choices: GAS | ASHP | ELECTRIC
   parameter "cooling_type", :default=>"DX" # cool type, choices: DX | ASHP
-  parameter "fan_flow_per_cap", :default=>360 # 'cfm/ton', From table 4.4.3(1) in the standard
+  parameter "fan_flow_per_heating_capacity", :default=>nil # 'cfm/ton', From table 4.4.3(1) in the standard
+  parameter "fan_flow_per_cooling_capacity", :default=>nil # 'cfm/ton', From table 4.4.3(1) in the standard
   parameter "cooling_capacity", :default=>38300|'btuh' # cooling capacity, default from HVAC1a DX capacity
   parameter "heating_capacity", :default=>56100|'btuh' # heating capacity, default from HVAC2a gas furnace capacity
   parameter "heating_capacity_17", :default=>nil # heating capacity, default from HVAC2a gas furnace capacity
@@ -156,13 +157,26 @@ nsteps = 6
 k_air = (3.5|'in') / (1.01|'r-ip') # conductivity for air in IP units
 # properties for air at 1atm and 75F (3.5" of air yields R-1.01)
 
+# Fan flow per (heating or cooling) capacity (cfm/ton) as defined in Addendum 82 Section C.6.13 Indoor Fan Energy
+if fan_flow_per_heating_capacity.nil?
+  if heating_type == "ASHP"
+    fan_flow_per_heating_capacity = 360
+  else
+    fan_flow_per_heating_capacity = 240
+  end
+end
+
+if fan_flow_per_cooling_capacity.nil?
+  fan_flow_per_cooling_capacity = 360
+end
+
 # HVAC system
 if hvac_model == "DETAILED"
-  supply_airflow_cool = fan_flow_per_cap * cooling_capacity / (12000|'btuh') # multiplying cfm/ton by heating Btu/hr to get cfm
+  supply_airflow_heat = fan_flow_per_heating_capacity * heating_capacity / (12000|'btuh') # multiplying cfm/ton by cooling Btu/hr to get cfm
 
-  supply_airflow_heat = fan_flow_per_cap * heating_capacity / (12000|'btuh') # multiplying cfm/ton by cooling Btu/hr to get cfm
+  supply_airflow_cool = fan_flow_per_cooling_capacity * cooling_capacity / (12000|'btuh') # multiplying cfm/ton by heating Btu/hr to get cfm
 
-  fan_flow_supply = [supply_airflow_cool, supply_airflow_heat].max # use max of heating/cooling supply flow for fan
+  fan_flow_supply = [supply_airflow_heat, supply_airflow_cool].max # use max of heating/cooling supply flow for fan
 
   if seer2 >= 14 or afue >= 0.9 # TODO: adjust if statement and possibly values below
     fan_power_per_flow = 0.000375 # 'kW/cfm', Taken from table 4.4.3(1)
