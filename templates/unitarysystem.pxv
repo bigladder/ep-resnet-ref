@@ -1432,6 +1432,7 @@ EnergyManagementSystem:GlobalVariable,
      Set Qleak_s = f_sup * AH_MFR<%= zone_name_ems %> * (h_RA - h_SA), ! Supply leakage total heat flow
      Set Qleak_s_l<%= zone_name_ems %> = f_sup * AH_MFR<%= zone_name_ems %> * h_fg * (RA_W<%= zone_name_ems %> - AH_Wout<%= zone_name_ems %>), ! Supply leakage latent heat flow
      Set Qleak_s_s<%= zone_name_ems %> = Qleak_s - Qleak_s_l<%= zone_name_ems %>, ! Supply leakage sensible heat flow
+     Set Fan_RTF<%= zone_name_ems %> = Fan_RTF_<%= zone_name_ems %>_Speed_1 + Fan_RTF_<%= zone_name_ems %>_Speed_2 + Fan_RTF_<%= zone_name_ems %>_Speed_3 + Fan_RTF_<%= zone_name_ems %>_Speed_4,
      Set expTerm = (Fan_RTF<%= zone_name_ems %> / ((@Max AH_MFR<%= zone_name_ems %> 0.001) * 1006.0)) * <%= supply_duct_ua %>,
      Set expTerm = 0 - expTerm,
      Set Tsupply = AHZone_T<%= zone_name_ems %> + ((AH_Tout<%= zone_name_ems %> - AHZone_T<%= zone_name_ems %>) * (@Exp expTerm)), ! Supply temperature
