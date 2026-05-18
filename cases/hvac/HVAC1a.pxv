@@ -1,4 +1,4 @@
 :case_name=>"HVAC1a",
 :climate=>"COOLING",
-:cooling_cap=>38300|'btuh',
+:cooling_capacity=>38300|'btuh',
 :hvac_model=>"DETAILED"

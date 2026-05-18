@@ -3,7 +3,7 @@
 :foundation_type=>"BASEMENT",
 :framing_factor_floor=>0.13,
 :hvac_model=>"DETAILED",
-:heating_cap=>61000|'btuh',
+:heating_capacity=>61000|'btuh',
 :duct_model=>"EMS",
 :air_handler_zone=>"Basement Zone",
 :use_dummy_return_plenum=>true,

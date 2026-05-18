@@ -1,0 +1,13 @@
+[project]
+dependencies = [
+  "koozie>=1.3.0",
+  "resdx",
+]
+description = "Add your description here"
+name = "ep-resnet-ref"
+readme = "README.md"
+requires-python = ">=3.13"
+version = "0.1.0"
+
+[tool.uv.sources]
+resdx = { path = "../resdx", editable = true }

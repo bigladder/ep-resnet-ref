@@ -33,7 +33,7 @@ parameter "crankcase_max_temp", :default=>50|'F'
 parameter "crankcase_cap", :default=>50|'W'
 
 parameter "sat_low_temp", :default=>45|'F'
-parameter "sat_high_temp", :default=>105|'F'
+parameter "sat_high_temp", :default=>120|'F'
 
 parameter "fan_type", :default=>"CYCLING"  # (CONSTANT | VARIABLE | CYCLING)
 parameter "fan_eff_supply", :default=>0.7
@@ -115,10 +115,10 @@ end
     <%= fan_flow_supply %>,                !- Design Supply Air Flow Rate {m3/s}
     <%= system_name %> Branch List,  !- Branch List Name
     ,                        !- Connector List Name
-    <%= system_name %> Supply Equipment Inlet Node,  !- Supply Side Inlet Node Name
+    <%= system_name %> Unitary Inlet Node,  !- Supply Side Inlet Node Name
     <%= system_name %> Zone Equipment Outlet Node,  !- Demand Side Outlet Node Name
     <%= system_name %> Zone Equipment Inlet Node,  !- Demand Side Inlet Node Names
-    <%= system_name %> Supply Equipment Outlet Node;  !- Supply Side Outlet Node Names
+    <%= system_name %> Unitary Outlet Node;  !- Supply Side Outlet Node Names
 
   Sizing:System,
     <%= system_name %>,      !- AirLoop Name
@@ -131,9 +131,9 @@ end
     0.008,                   !- Precool Design Humidity Ratio {kg-H2O/kg-Air}
     <%= sat_low_temp %>,     !- Central Cooling Design Supply Air Temperature {C}
 <% if (heating_coil_type == "ASHP" and cooling_coil_type == "ASHP") %>
-    <%= hp_supply_max_temp %>,    !- Central Heating Design Supply Air Temperature {C}
+    <%= hp_supply_max_temp %>,    !- Central Heating Design Supply Air Temperature {C} TODO: Does this need to change for Add. 82?
  <% else %>
-    <%= sat_high_temp %>,    !- Central Heating Design Supply Air Temperature {C}
+    <%= sat_high_temp %>,    !- Central Heating Design Supply Air Temperature {C} TODO: Does this need to change for Add. 82?
  <% end %>
     NonCoincident,              !- Sizing Option
     No,                      !- 100% Outdoor Air in Cooling
@@ -214,78 +214,8 @@ end
     ,                        !- Pressure Drop Curve Name
     AirLoopHVAC:UnitarySystem,  !- Component 1 Object Type
     <%= system_name %> Unitary,   !- Component 1 Name
-    <%= system_name %> Supply Equipment Inlet Node,  !- Component 1 Inlet Node Name
-    <%= system_name %> Supply Equipment Outlet Node;  !- Component 1 Outlet Node Name
-
-<% if (fan_config == "BLOWTHROUGH") %>
-  SetpointManager:MixedAir,
-    <%= system_name %> Mixed Air Setpoint Manager,  !- Name
-    Temperature,             !- Control Variable
-    <%= system_name %> Supply Equipment Outlet Node,  !- Reference Setpoint Node Name
-    <%= system_name %> Supply Equipment Inlet Node, !- Fan Inlet Node Name
-    <%= system_name %> Supply Fan Outlet Node,  !- Fan Outlet Node Name
-    <%= system_name %> Mixed Air Setpoint Nodes,  !- Setpoint Node or NodeList Name
-    , !- Cooling Coil Inlet Node Name
-    , !- Cooling Coil Outlet Node Name
-     7.2; !- Minimum Temperature at Cooling Coil Outlet Node
-
-  NodeList,
-    <%= system_name %> Mixed Air Setpoint Nodes,  !- Name
-    <%= system_name %> Supply Equipment Inlet Node;  !- Node Name
-
-<% elsif (fan_config == "DRAWTHROUGH") %>
-  SetpointManager:MixedAir,
-    <%= system_name %> Mixed Air Setpoint Manager,  !- Name
-    Temperature,             !- Control Variable
-    <%= system_name %> Supply Equipment Outlet Node,  !- Reference Setpoint Node Name
-    <%= system_name %> Heating Coil Outlet Node, !- Fan Inlet Node Name
-  <% if heating_coil_type == "ASHP" and cooling_coil_type == "ASHP" %>   <%# Adjust for supplemental heating coil %>
-    <%= system_name %> Supply Fan Outlet Node,  !- Fan Outlet Node Name
-  <% else %>
-    <%= system_name %> Supply Equipment Outlet Node,  !- Fan Outlet Node Name
-  <% end %>
-    <%= system_name %> Mixed Air Setpoint Nodes,  !- Setpoint Node or NodeList Name
-    , !- Cooling Coil Inlet Node Name
-    , !- Cooling Coil Outlet Node Name
-     7.2; !- Minimum Temperature at Cooling Coil Outlet Node
-
-  NodeList,
-    <%= system_name %> Mixed Air Setpoint Nodes,  !- Name
-    <%= system_name %> Supply Equipment Inlet Node,  !- Node Name
-    <%= system_name %> Cooling Coil Outlet Node,  !- Node Name
-    <%= system_name %> Heating Coil Outlet Node;  !- Node Name
-<% end %>
-
-  SetpointManager:SingleZone:Reheat,
-    <%= system_name %> SupAirTemp Manager,   !- Name
-    Temperature,             !- Control Variable
-    10.0,                    !- Minimum Supply Air Temperature {C}
-    50.0,                    !- Maximum Supply Air Temperature {C}
-    <%= control_zone_name %>,        !- Control Zone Name
-    <%= control_zone_name %> Air Node,  !- Zone Node Name
-    <%= control_zone_name %> ATU Outlet Node,  !- Zone Inlet Node Name
-    <%= system_name %> Zone Setpoint Nodes;  !- Setpoint Node or NodeList Name
-
-<% if (fan_config == "BLOWTHROUGH") %>
-   NodeList,
-     <%= system_name %> Zone Setpoint Nodes,  !- Name
-     <%= system_name %> Supply Fan Outlet Node,  !- Node Name
-     <%= system_name %> Cooling Coil Outlet Node,  !- Node Name
-   <% if (heating_coil_type == "ASHP" and cooling_coil_type == "ASHP") %>  <%# Adjust for supplemental heating coil %>
-     <%= system_name %> Heating Coil Outlet Node,  !- Node Name
-   <% end %>
-     <%= system_name %> Supply Equipment Outlet Node;  !- Node Name
-
-<% elsif (fan_config == "DRAWTHROUGH") %>
-   NodeList,
-     <%= system_name %> Zone Setpoint Nodes,  !- Name
-     <%= system_name %> Cooling Coil Outlet Node,  !- Node Name
-     <%= system_name %> Heating Coil Outlet Node,  !- Node Name
-   <% if (heating_coil_type == "ASHP" and cooling_coil_type == "ASHP") %>  <%# Adjust for supplemental heating coil %>
-     <%= system_name %> Supply Fan Outlet Node,  !- Node Name
-   <% end %>
-     <%= system_name %> Supply Equipment Outlet Node;  !- Node Name
-<% end %>
+    <%= system_name %> Unitary Inlet Node,  !- Component 1 Inlet Node Name
+    <%= system_name %> Unitary Outlet Node;  !- Component 1 Outlet Node Name
 
   AirLoopHVAC:UnitarySystem,
     <%= system_name %> Unitary, !- Name
@@ -293,8 +223,8 @@ end
     <%= control_zone_name %>, !- Controlling Zone or Thermostat Location
     , !- Dehumidification Control Type
     <%= system_name %> Always On Schedule, !- Availability Schedule Name
-    <%= system_name %> Supply Equipment Inlet Node,  !- Air Inlet Node Name
-    <%= system_name %> Supply Equipment Outlet Node,  !- Air Outlet Node Name
+    <%= system_name %> Unitary Inlet Node,  !- Air Inlet Node Name
+    <%= system_name %> Unitary Outlet Node,  !- Air Outlet Node Name
     Fan:SystemModel, !- Supply Air Fan Object Type
     <%= system_name %> Supply Fan, !- Supply Air Fan Name
     <%= fan_config %>, !- Fan Placement
@@ -308,7 +238,7 @@ end
     <%= system_name %> Heating Coil, !- Heating Coil Name
     <%= dx_heat_ratio %>, !- DX Heating Coil Sizing Ratio
 <% elsif (heating_coil_type == "ASHP") %>
-    Coil:Heating:DX:SingleSpeed,  !- Cooling Coil Object Type
+    Coil:Heating:DX:VariableSpeed,  !- Cooling Coil Object Type
     <%= system_name %> Heating Coil, !- Heating Coil Name
     <%= dx_heat_ratio %>, !- DX Heating Coil Sizing Ratio
 <% else  %>
@@ -316,7 +246,7 @@ end
     , !- Heating Coil Name
     , !- DX Heating Coil Sizing Ratio
 <% end %>
-    Coil:Cooling:DX:SingleSpeed,  !- Cooling Coil Object Type
+    Coil:Cooling:DX:VariableSpeed,  !- Cooling Coil Object Type
     <%= system_name %> Cooling Coil, !- Cooling Coil Name
     , !- Use DOAS DX Cooling Coil
     , !- DOAS DX Cooling Coil Leaving Minimum Air Temperature
@@ -362,389 +292,6 @@ end
     , !- Design Specification Multispeed Heat Pump Object Type
     ; !- Design Specification Multispeed Heat Pump Object Name
 
-<% if (fan_mode == "CYCLING") %>
-  Schedule:Constant,
-    <%= system_name %> Fan Mode Schedule,  !- Name
-    Any Number,                    !- Schedule Type Limits Name
-    0;                             !- Hourly Value
-
-<% else %>
-  <% if (control_type == "Load") %>
-  Schedule:compact,
-    <%= system_name %> Fan Mode Schedule,  !- Name
-    Any Number,                    !- Schedule Type Limits Name
-     <%= operation_schedule %>
-   <% else %>
-  Schedule:Constant,
-    <%= system_name %> Fan Mode Schedule,  !- Name
-    Any Number,                    !- Schedule Type Limits Name
-     1;
-   <% end %>
- <% end %>
-
-  Fan:SystemModel,
-    <%= system_name %> Supply Fan,  !- Name
-    <%= system_name %> Always On Schedule,  !- Availability Schedule Name
-  <% if (fan_config == "BLOWTHROUGH") %>
-    <%= system_name %> Supply Equipment Inlet Node,  !- Air Inlet Node Name
-  <% elsif (fan_config == "DRAWTHROUGH") %>
-    <%= system_name %> Heating Coil Outlet Node,  !- Air Inlet Node Name
-  <% end %>
-  <% if (fan_config == "BLOWTHROUGH" or (heating_coil_type == "ASHP" and cooling_coil_type == "ASHP")) %>
-    <%= system_name %> Supply Fan Outlet Node,  !- Air Outlet Node Name
-  <% else %>
-    <%= system_name %> Supply Equipment Outlet Node,   !- Air Outlet Node Name
-  <% end %>
-    <%= fan_flow_supply %>,    !- Design Maximum Air Flow Rate {m3/s}
-    <%= fan_control_method %>,   !- Speed Control Method
-    ,                       !- Electric Power Minimum Flow Rate Fraction
-    <%= fan_rise_supply %>,                       !- Design Pressure Rise {Pa}
-    <%= fan_motor_eff %>,                       !- Motor Efficiency
-    1.0,                       !- Motor In Air Stream Fraction
-    <%= fan_power %>,                       !- Design Electric Power Consumption {W}
-<% if fan_power == "Autosize" %>
-    <%= fan_sizing_method %>,   !- Design Power Sizing Method
-    <%= fan_powerperflow %>,                       !- Electric Power Per Unit Flow Rate {W/(m3/s)}
-    ,                   !- Electric Power Per Unit Flow Rate Per Unit Pressure {W/((m3/s)-Pa)}
-    <%= fan_eff_supply %>,                              !- Fan Total Efficiency
-<% else %>
-    ,   !- Design Power Sizing Method
-    ,                       !- Electric Power Per Unit Flow Rate {W/(m3/s)}
-    ,                   !- Electric Power Per Unit Flow Rate Per Unit Pressure {W/((m3/s)-Pa)}
-    ,                              !- Fan Total Efficiency
-<% end %>
-  <% if (fan_type == "VARIABLE") %>
-    <%= system_name %> Fan Curve,                       !- Electric Power Function of Flow Fraction Curve Name
-  <% else %>
-    ,                                    !- Electric Power Function of Flow Fraction Curve Name
-  <% end %>
-    ,                                    !- Night Ventilation Mode Pressure Rise
-    ,                                    !- Night Ventilation Mode Flow Fraction
-    ,                                    !- Motor Loss Zone Name
-    ,                                    !- Motor Loss Radiative Fraction
-    Fan Energy;                          !- End-Use Subcategory
-
-  <% if (fan_type == "VARIABLE") %>
-    <% if (curve_source == "big_ladder") %>
-  Curve:Quartic,
-    <%= system_name %> Fan Curve,                      !- Name
-    0.0013,                       !- Coefficient1 Constant
-    0.1470,                         !- Coefficient2 x
-    0.9506,                      !- Coefficient3 x**2
-    -0.0998,                       !- Coefficient4 x**3
-    0.0,                                !- Coefficient5 x**4
-    0.0,                                !- Minimum Value of x
-    1.0,                                !- Maximum Value of x
-    0.0,                                !- Minimum Curve Output
-    1.0,                                !- Maximum Curve Output
-    Dimensionless,                      !- Input Unit Type for X
-    Dimensionless;                      !- Output Unit Type
-
-    <% elsif (curve_source == "open_studio") %>
-  Curve:Cubic,
-    <%= system_name %> Fan Curve,            !- Name
-    1,                                      !- Coefficient1 Constant
-    0,                                      !- Coefficient2 x
-    0,                                      !- Coefficient3 x**2
-    0,                                      !- Coefficient4 x**3
-    0,                                      !- Minimum Value of x {BasedOnField A2}
-    1;                                      !- Maximum Value of x {BasedOnField A2}
-
-    <% end %>
-  <% end %>
-
-<% if (cooling_coil_type == "DX" || cooling_coil_type == "ASHP") %>
-
-Coil:Cooling:DX:SingleSpeed,
-  <%= system_name %> Cooling Coil,  !- Name
-  <% if cooling_coil_cap > 0 or cooling_coil_cap == "Autosize" %>
-  <%= system_name %> Always On Schedule,  !- Availability Schedule Name
-  <%= cooling_coil_cap %>,   !- Rated High Speed Total Cooling Capacity {W}
-  <% elsif cooling_coil_cap == 0 %>
-  <%= system_name %> Always Off Schedule,  !- Availability Schedule Name
-  Autosize,   !- Rated High Speed Total Cooling Capacity {W}
-  <% end %>
-  Autosize,                  !- Rated High Speed Sensible Heat Ratio
-  <%= cooling_coil_cop %>,   !- Rated High Speed COP
-  <%= supply_airflow_cool %>,    !- Rated High Speed Air Flow Rate {m^3/s}
-  ,                          !- 2017 Rated Evaporator Fan Power Per Volume Flow Rate {W/(m^3/s)}
-  , !- 2023 Rated Evaporator Fan Power Per Volume Flow
-  <% if (fan_config == "BLOWTHROUGH") %>
-  <%= system_name %> Supply Fan Outlet Node,  !- Air Inlet Node Name
-  <% elsif (fan_config == "DRAWTHROUGH") %>
-  <%= system_name %> Supply Equipment Inlet Node,  !- Air Inlet Node Name
-  <% end %>
-  <%= system_name %> Cooling Coil Outlet Node,  !- Air Outlet Node Name
-  <%= system_name %> Cool-Cap-fT,  !- Total Cooling Capacity Function of Temperature Curve Name
-  <%= system_name %> Cool-Cap-fFF,  !- Total Cooling Capacity Function of Flow Fraction Curve Name
-  <%= system_name %> Cool-EIR-fT,  !- Energy Input Ratio Function of Temperature Curve Name
-  <%= system_name %> Cool-EIR-fFF,  !- Energy Input Ratio Function of Flow Fraction Curve Name
-  <%= system_name %> Cool-PLF-fPLR,  !- Part Load Fraction Correlation Curve Name
-  -25.0,                     !- Minimum Outdoor Dry-Bulb Temperature for Compressor Operation (C)
-  1000,                      !- Nominal Time for Condensate Removal to Begin {s}
-  1.5,                       !- Ratio of Initial Moisture Evaporation Rate and Steady State Latent Capacity
-  3,                         !- Maximum Cycling Rate {cycles/hr}
-  45,                        !- Latent Capacity Time Constant {s}
-  ,                          !- Condenser Air Inlet Node Name
-  AirCooled,                 !- Condenser Type
-  ,                          !- Evaporative Condenser Effectiveness
-  ,                          !- Evaporative Condenser Air Flow Rate {m^3/s}
-  ,                          !- Evaporative Condenser Pump Rated Power Consumption {W}
-  <% if (cooling_coil_type == "DX") %>
-  <%= crankcase_cap %>,   !- Crankcase Heater Capacity {W}
-  <% elsif (cooling_coil_type == "ASHP") %>
-  0,   !- Crankcase Heater Capacity {W}
-  <% end %>
-  , !- Crankcase Heater Capacity Function of Temperature Curve Name
-  <%= crankcase_max_temp %>,  !- Maximum Outdoor Dry-Bulb Temperature for Crankcase Heater Operation {C}
-  ,                        !- Supply Water Storage Tank Name
-  ;                        !- Condensate Collection Water Storage Tank Name
-
- <% if (curve_source == "big_ladder") %>
-  <% if (cooling_coil_type == "ASHP") %>
-
-  ! Following performance curves taken from single-speed ASHP system in BeOpt
-
-  !Curve:Biquadratic,
-  !   <%= system_name %> Cool-Cap-fT,   !- Name
-  !   1.5573597060000006,-0.0744481692,0.00309859668,0.0014595786,-0.000041148,-0.00042671448,   !- Coefficients (list)
-  !   13.88,         !- Minimum Value of x
-  !   23.88,         !- Maximum Value of x
-  !   18.33,         !- Minimum Value of y
-  !   51.66;         !- Maximum Value of y
-
-  !Curve:Biquadratic,
-  !   <%= system_name %> Cool-EIR-fT,   !- Name
-  !   -0.3504476949999999,0.116809893,-0.00339950844,-0.001226088,0.0006008094,-0.000466884,   !- Coefficients (List)
-  !   13.88,         !- Minimum Value of x
-  !   23.88,         !- Maximum Value of x
-  !   18.33,         !- Minimum Value of y
-  !   51.66;         !- Maximum Value of y
-
-  !Curve:Quadratic,
-  !   <%= system_name %> Cool-PLF-fPLR,   !- Name
-  !   <%= 1 - cooling_coil_cd %>,<%= cooling_coil_cd %>,0,     !- Coefficients (List)
-  !   0,               !- Minimum Value of x
-  !   1,               !- Maximum Value of x
-  !   0.7,             !- Minimum Value of y
-  !   1;               !- Maximum Value of y
-
-  !Curve:Quadratic,
-  !   <%= system_name %> Cool-Cap-fFF,  !- Name
-  !   0.718664047,0.41797409,-0.136638137,   !- Coefficients (List)
-  !   0,                                     !- Minimum Value of x
-  !   2,                                     !- Maximum Value of x
-  !   0,                                     !- Minimum Value of y
-  !   2;                                     !- Maximum Value of y
-
-  !Curve:Quadratic,
-  !   <%= system_name %> Cool-EIR-fFF,  !- Name
-  !   1.143487507,-0.13943972,-0.004047787,   !- Coefficients (List)
-  !   0,                                      !- Minimum Value of x
-  !   2,                                      !- Maximum Value of x
-  !   0,                                      !- Minimum Value of y
-  !   2;                                      !- Maximum Value of y
-  ! Following performance curves taken from single-speed DX system in BeOpt
-
-  Curve:Biquadratic,
-     <%= system_name %> Cool-Cap-fT,   !- Name
-     1.5509020010000003,-0.0750500892,0.00309713544,0.00240111,-0.000050544,-0.00042728148,   !- Coefficients (list)
-     13.88,         !- Minimum Value of x
-     23.88,         !- Maximum Value of x
-     18.33,         !- Minimum Value of y
-     51.66;         !- Maximum Value of y
-
-  Curve:Biquadratic,
-     <%= system_name %> Cool-EIR-fT,   !- Name
-     -3.437356399, 0.136656369, -0.001049231, -0.0079378, 0.000185435, -0.0001441,   !- Coefficients (List)
-     13.88,         !- Minimum Value of x
-     23.88,         !- Maximum Value of x
-     18.33,         !- Minimum Value of y
-     51.66;         !- Maximum Value of y
-
-  Curve:Quadratic,
-     <%= system_name %> Cool-PLF-fPLR,               !- Name
-     <%= 1 - cooling_coil_cd %>,<%= cooling_coil_cd %>,0,     !- Coefficients (List)
-     0,                           !- Minimum Value of x
-     1,                           !- Maximum Value of x
-     0.7,                         !- Minimum Value of y
-     1;                           !- Maximum Value of y
-
-  Curve:Quadratic,
-     <%= system_name %> Cool-Cap-fFF,                           !- Name
-     0.718605468,0.410099989,-0.128705457,   !- Coefficients (List)
-     0,                                      !- Minimum Value of x
-     2,                                      !- Maximum Value of x
-     0,                                      !- Minimum Value of y
-     2;                                      !- Maximum Value of y
-
-  Curve:Quadratic,
-     <%= system_name %> Cool-EIR-fFF,                          !- Name
-     1.32299905,-0.477711207,0.154712157,   !- Coefficients (List)
-     0,                                     !- Minimum Value of x
-     2,                                     !- Maximum Value of x
-     0,                                     !- Minimum Value of y
-     2;                                     !- Maximum Value of y
-    <% elsif (cooling_coil_type == "DX") %>
-  ! Following performance curves taken from single-speed DX system in BeOpt
-
-  Curve:Biquadratic,
-     <%= system_name %> Cool-Cap-fT,   !- Name
-     1.5509020010000003,-0.0750500892,0.00309713544,0.00240111,-0.000050544,-0.00042728148,   !- Coefficients (list)
-     13.88,         !- Minimum Value of x
-     23.88,         !- Maximum Value of x
-     18.33,         !- Minimum Value of y
-     51.66;         !- Maximum Value of y
-
-  Curve:Biquadratic,
-     <%= system_name %> Cool-EIR-fT,   !- Name
-     -3.437356399, 0.136656369, -0.001049231, -0.0079378, 0.000185435, -0.0001441,   !- Coefficients (List)
-     13.88,         !- Minimum Value of x
-     23.88,         !- Maximum Value of x
-     18.33,         !- Minimum Value of y
-     51.66;         !- Maximum Value of y
-
-  Curve:Quadratic,
-     <%= system_name %> Cool-PLF-fPLR,               !- Name
-     <%= 1 - cooling_coil_cd %>,<%= cooling_coil_cd %>,0,     !- Coefficients (List)
-     0,                           !- Minimum Value of x
-     1,                           !- Maximum Value of x
-     0.7,                         !- Minimum Value of y
-     1;                           !- Maximum Value of y
-
-  Curve:Quadratic,
-     <%= system_name %> Cool-Cap-fFF,                           !- Name
-     0.718605468,0.410099989,-0.128705457,   !- Coefficients (List)
-     0,                                      !- Minimum Value of x
-     2,                                      !- Maximum Value of x
-     0,                                      !- Minimum Value of y
-     2;                                      !- Maximum Value of y
-
-  Curve:Quadratic,
-     <%= system_name %> Cool-EIR-fFF,                          !- Name
-     1.32299905,-0.477711207,0.154712157,   !- Coefficients (List)
-     0,                                     !- Minimum Value of x
-     2,                                     !- Maximum Value of x
-     0,                                     !- Minimum Value of y
-     2;                                     !- Maximum Value of y
-    <% end %>
- <% elsif (curve_source == "open_studio") %>
-  <% if (cooling_coil_type == "ASHP") %>
-
-  Curve:Biquadratic,
-    <%= system_name %> Cool-Cap-fT,                           !- Name
-    1.557359706,                            !- Coefficient1 Constant
-    -0.0744481692,                          !- Coefficient2 x
-    0.00309859668,                          !- Coefficient3 x**2
-    0.0014595786,                           !- Coefficient4 y
-    -4.1148e-005,                           !- Coefficient5 y**2
-    -0.00042671448,                         !- Coefficient6 x*y
-    13.88,                                  !- Minimum Value of x {BasedOnField A2}
-    23.88,                                  !- Maximum Value of x {BasedOnField A2}
-    18.33,                                  !- Minimum Value of y {BasedOnField A3}
-    51.66;                                  !- Maximum Value of y {BasedOnField A3}
-
-  Curve:Quadratic,
-    <%= system_name %> Cool-Cap-fFF,                          !- Name
-    0.718664047,                            !- Coefficient1 Constant
-    0.41797409,                             !- Coefficient2 x
-    -0.136638137,                           !- Coefficient3 x**2
-    0,                                      !- Minimum Value of x {BasedOnField A2}
-    2,                                      !- Maximum Value of x {BasedOnField A2}
-    0,                                      !- Minimum Curve Output {BasedOnField A3}
-    2;                                      !- Maximum Curve Output {BasedOnField A3}
-
-  Curve:Biquadratic,
-    <%= system_name %> Cool-EIR-fT,                           !- Name
-    -0.350447695,                           !- Coefficient1 Constant
-    0.116809893,                            !- Coefficient2 x
-    -0.00339950844,                         !- Coefficient3 x**2
-    -0.001226088,                           !- Coefficient4 y
-    0.0006008094,                           !- Coefficient5 y**2
-    -0.000466884,                           !- Coefficient6 x*y
-    13.88,                                  !- Minimum Value of x {BasedOnField A2}
-    23.88,                                  !- Maximum Value of x {BasedOnField A2}
-    18.33,                                  !- Minimum Value of y {BasedOnField A3}
-    51.66;                                  !- Maximum Value of y {BasedOnField A3}
-
-  Curve:Quadratic,
-    <%= system_name %> Cool-EIR-fFF,                          !- Name
-    1.143487507,                            !- Coefficient1 Constant
-    -0.13943972,                            !- Coefficient2 x
-    -0.004047787,                           !- Coefficient3 x**2
-    0,                                      !- Minimum Value of x {BasedOnField A2}
-    2,                                      !- Maximum Value of x {BasedOnField A2}
-    0,                                      !- Minimum Curve Output {BasedOnField A3}
-    2;                                      !- Maximum Curve Output {BasedOnField A3}
-
-
-  Curve:Quadratic,
-     <%= system_name %> Cool-PLF-fPLR,               !- Name
-     <%= 1 - cooling_coil_cd %>,<%= cooling_coil_cd %>,0,     !- Coefficients (List)
-     0,                           !- Minimum Value of x
-     1,                           !- Maximum Value of x
-     0.7,                         !- Minimum Value of y
-     1;                           !- Maximum Value of y
-
-    <% elsif (cooling_coil_type == "DX") %>
-  ! Following performance curves taken from single-speed DX system in BeOpt
-
-  Curve:Biquadratic,
-     <%= system_name %> Cool-Cap-fT,   !- Name
-    1.550902001,                            !- Coefficient1 Constant
-    -0.0750500892,                          !- Coefficient2 x
-    0.00309713544,                          !- Coefficient3 x**2
-    0.00240111,                             !- Coefficient4 y
-    -5.0544e-005,                           !- Coefficient5 y**2
-    -0.00042728148,                         !- Coefficient6 x*y
-    13.88,                                  !- Minimum Value of x {BasedOnField A2}
-    23.88,                                  !- Maximum Value of x {BasedOnField A2}
-    18.33,                                  !- Minimum Value of y {BasedOnField A3}
-    51.66;                                  !- Maximum Value of y {BasedOnField A3}
-
-  Curve:Biquadratic,
-     <%= system_name %> Cool-EIR-fT,   !- Name
-    -0.304282997000001,                     !- Coefficient1 Constant
-    0.1180477062,                           !- Coefficient2 x
-    -0.00342466704,                         !- Coefficient3 x**2
-    -0.0062619138,                          !- Coefficient4 y
-    0.00069542712,                          !- Coefficient5 y**2
-    -0.00046997496,                         !- Coefficient6 x*y
-    13.88,                                  !- Minimum Value of x {BasedOnField A2}
-    23.88,                                  !- Maximum Value of x {BasedOnField A2}
-    18.33,                                  !- Minimum Value of y {BasedOnField A3}
-    51.66;                                  !- Maximum Value of y {BasedOnField A3}
-
-  Curve:Quadratic,
-     <%= system_name %> Cool-PLF-fPLR,               !- Name
-     <%= 1 - cooling_coil_cd %>,<%= cooling_coil_cd %>,0,     !- Coefficients (List)
-     0,                           !- Minimum Value of x
-     1,                           !- Maximum Value of x
-     0.7,                         !- Minimum Value of y
-     1;                           !- Maximum Value of y
-
-Curve:Quadratic,
-     <%= system_name %> Cool-Cap-fFF,                           !- Name
-    0.718605468,                            !- Coefficient1 Constant
-    0.410099989,                            !- Coefficient2 x
-    -0.128705457,                           !- Coefficient3 x**2
-    0,                                      !- Minimum Value of x {BasedOnField A2}
-    2,                                      !- Maximum Value of x {BasedOnField A2}
-    0,                                      !- Minimum Curve Output {BasedOnField A3}
-    2;                                      !- Maximum Curve Output {BasedOnField A3}
-
-  Curve:Quadratic,
-     <%= system_name %> Cool-EIR-fFF,                          !- Name
-    1.32299905,                             !- Coefficient1 Constant
-    -0.477711207,                           !- Coefficient2 x
-    0.154712157,                            !- Coefficient3 x**2
-    0,                                      !- Minimum Value of x {BasedOnField A2}
-    2,                                      !- Maximum Value of x {BasedOnField A2}
-    0,                                      !- Minimum Curve Output {BasedOnField A3}
-    2;                                      !- Maximum Curve Output {BasedOnField A3}
-    <% end %>
-  <% end %>
-<% end %>
 
 <% if (heating_coil_type == "GAS") %>
 
@@ -756,7 +303,7 @@ Curve:Quadratic,
     <%= heating_coil_cap %>, !- Nominal Capacity {W}
     <%= system_name %> Cooling Coil Outlet Node, !- Air Inlet Node Name
   <% if (fan_config == "BLOWTHROUGH") %>
-    <%= system_name %> Supply Equipment Outlet Node;  !- Air Outlet Node Name
+    <%= system_name %> Unitary Outlet Node;  !- Air Outlet Node Name
   <% elsif (fan_config == "DRAWTHROUGH") %>
     <%= system_name %> Heating Coil Outlet Node;  !- Air Outlet Node Name
   <% end %>
@@ -771,10 +318,10 @@ Curve:Quadratic,
     <%= system_name %> Cooling Coil Outlet Node, !- Air Inlet Node Name
   <% if (fan_config == "BLOWTHROUGH") %>
     <% if (control_type == "Load") %>
-      <%= system_name %> Supply Equipment Outlet Node;  !- Air Outlet Node Name
+      <%= system_name %> Unitary Outlet Node;  !- Air Outlet Node Name
     <% elsif (control_type == "Setpoint") %>
-      <%= system_name %> Supply Equipment Outlet Node,  !- Air Outlet Node Name
-      <%= system_name %> Supply Equipment Outlet Node;  !- Temperature Setpoint Node Name
+      <%= system_name %> Unitary Outlet Node,  !- Air Outlet Node Name
+      <%= system_name %> Unitary Outlet Node;  !- Temperature Setpoint Node Name
     <% end %>
 
   <% elsif (fan_config == "DRAWTHROUGH") %>
@@ -785,171 +332,8 @@ Curve:Quadratic,
       <%= system_name %> Heating Coil Outlet Node;  !- Temperature Setpoint Node Name
     <% end %>
   <% end %>
-
-<% elsif (heating_coil_type == "ASHP") %>
-
-Coil:Heating:DX:SingleSpeed,
-  <%= system_name %> Heating Coil,  !- Name
-  <%= system_name %> Always On Schedule,  !- Availability Schedule Name
-  <%= heating_coil_cap %>,        !- Rated Total Heating Capacity {W}
-  <%= heating_coil_eff %>,        !- Rated COP
-  <%= supply_airflow_heat %>,         !- Rated Air Flow Rate {m^3/s}
-  ,                               !- 2017 Rated Evaporator Fan Power Per Volume Flow Rate {W/(m/s)}
-  ,                               !- 2023 Rated Evaporator Fan Power Per Volume Flow Rate {W/(m/s)}
-  <%= system_name %> Cooling Coil Outlet Node, !- Air Inlet Node Name
-  <%= system_name %> Heating Coil Outlet Node,  !- Air Outlet Node Name
-  <%= system_name %> HP_Heat-Cap-fT,  !- Total Heating Capacity Function of Temperature Curve Name
-  <%= system_name %> HP_Heat-Cap-fFF,  !- Total Heating Capacity Function of Flow Fraction Curve Name
-  <%= system_name %> HP_Heat-EIR-fT,  !- Energy Input Ratio Function of Temperature Curve Name
-  <%= system_name %> HP_Heat-EIR-fFF,  !- Energy Input Ratio Function of Flow Fraction Curve Name
-  <%= system_name %> HP_Heat-PLF-fPLR,  !- Part Load Fraction Correlation Curve Name
-  <%= system_name %> DefrostEIR,  !- Defrost Energy Input Ratio Function of Temperature Curve Name
-  <%= hp_min_temp %>,             !- Minimum Outdoor Dry-Bulb Temperature for Compressor Operation {C}
-  ,                               !- Outdoor Dry-Bulb Temperature to Turn On Compressor {C}
-  <%= hp_defrost_temp %>,         !- Maximum Outdoor Dry-Bulb Temperature for Defrost Operation {C}
-  <%= crankcase_cap %>,           !- Crankcase Heater Capacity {W}
-  ,                               !- Crankcase Heater Capacity Function of Temperature Curve Name
-  <%= crankcase_max_temp %>,      !- Maximum Outdoor Dry-Bulb Temperature for Crankcase Heater Operation {C}
-  ReverseCycle,                   !- Defrost Strategy
-  timed,                          !- Defrost Control
-  <%= defrost_time_fra %>,                       !- Defrost Time Period Fraction
-  2000;                                   !- Resistive Defrost Heater Capacity {W}
-
-  <% if (curve_source == "big_ladder") %>
-    ! Following performance curves taken from single-speed ASHP system in BeOpt
-    Curve:Biquadratic,
-      <%= system_name %> HP_Heat-Cap-fT,   !- Name
-      0.566333415, -0.000744164, -0.0000103, 0.009414634, 0.0000506, -0.00000675,   !- Coefficients (list)
-      -100,             !- Minimum Value of x
-      100,              !- Maximum Value of x
-      -100,             !- Minimum Value of y
-      100;              !- Maximum Value of y
-
-    Curve:Biquadratic,
-      <%= system_name %> HP_Heat-EIR-fT,   !- Name
-      0.718398423, 0.003498178, 0.000142202, -0.005724331, 0.00014085, -0.000215321,   !- Coefficients (List)
-      -100,             !- Minimum Value of x
-      100,              !- Maximum Value of x
-      -100,             !- Minimum Value of y
-      100;              !- Maximum Value of y
-
-    Curve:Quadratic,
-      <%= system_name %> HP_Heat-PLF-fPLR,   !- Name
-      <%= 1 - heating_coil_cd %>,<%= heating_coil_cd %>,0,     !- Coefficients (List)
-      0,                  !- Minimum Value of x
-      1,                  !- Maximum Value of x
-      0.7,                !- Minimum Value of y
-      1;                  !- Maximum Value of y
-
-    Curve:Quadratic,
-      <%= system_name %> HP_Heat-Cap-fFF,                        !- Name
-      0.694045465,0.474207981,-0.168253446,   !- Coefficients (List)
-      0,                                      !- Minimum Value of x
-      2,                                      !- Maximum Value of x
-      0,                                      !- Minimum Value of y
-      2;                                      !- Maximum Value of y
-
-    Curve:Quadratic,
-      <%= system_name %> HP_Heat-EIR-fFF,                        !- Name
-      2.185418751,-1.942827919,0.757409168,   !- Coefficients (List)
-      0,                                      !- Minimum Value of x
-      2,                                      !- Maximum Value of x
-      0,                                      !- Minimum Value of y
-      2;                                      !- Maximum Value of y
-
-    Curve:Biquadratic,
-      <%= system_name %> DefrostEIR,         !- Name
-      0.1528,0,0,0,0,0,   !- Coefficients (List)
-      -100,               !- Minimum Value of x
-      100,                !- Maximum Value of x
-      -100,               !- Minimum Value of y
-      100;                !- Maximum Value of y
-  <% elsif (curve_source == "open_studio") %>
-      Curve:Biquadratic,
-        <%= system_name %> HP_Heat-Cap-fT,   !- Name
-        0.878143655,                            !- Coefficient1 Constant
-        -0.0029148552,                          !- Coefficient2 x
-        -3.3372e-005,                           !- Coefficient3 x**2
-        0.0223866612,                           !- Coefficient4 y
-        0.000163944,                            !- Coefficient5 y**2
-        -2.187e-005,                            !- Coefficient6 x*y
-        -100,                                   !- Minimum Value of x {BasedOnField A2}
-        100,                                    !- Maximum Value of x {BasedOnField A2}
-        -100,                                   !- Minimum Value of y {BasedOnField A3}
-        100;                                    !- Maximum Value of y {BasedOnField A3}
-
-      Curve:Biquadratic,
-        <%= system_name %> HP_Heat-EIR-fT,   !- Name
-        0.716518071,                            !- Coefficient1 Constant
-        0.0102759012,                           !- Coefficient2 x
-        0.00046073448,                          !- Coefficient3 x**2
-        -0.0064803654,                          !- Coefficient4 y
-        0.000456354,                            !- Coefficient5 y**2
-        -0.00069764004,                         !- Coefficient6 x*y
-        -100,                                   !- Minimum Value of x {BasedOnField A2}
-        100,                                    !- Maximum Value of x {BasedOnField A2}
-        -100,                                   !- Minimum Value of y {BasedOnField A3}
-        100;                                    !- Maximum Value of y {BasedOnField A3}
-
-      Curve:Quadratic,
-        <%= system_name %> HP_Heat-PLF-fPLR,   !- Name
-        <%= 1 - heating_coil_cd %>,<%= heating_coil_cd %>,0,     !- Coefficients (List)
-        0,                  !- Minimum Value of x
-        1,                  !- Maximum Value of x
-        0.7,                !- Minimum Value of y
-        1;                  !- Maximum Value of y
-
-      Curve:Quadratic,
-        <%= system_name %> HP_Heat-Cap-fFF,                        !- Name
-        0.694045465,                            !- Coefficient1 Constant
-        0.474207981,                            !- Coefficient2 x
-        -0.168253446,                           !- Coefficient3 x**2
-        0,                                      !- Minimum Value of x {BasedOnField A2}
-        2,                                      !- Maximum Value of x {BasedOnField A2}
-        0,                                      !- Minimum Curve Output {BasedOnField A3}
-        2;                                      !- Maximum Curve Output {BasedOnField A3}
-
-      Curve:Quadratic,
-        <%= system_name %> HP_Heat-EIR-fFF,                        !- Name
-        2.185418751,                            !- Coefficient1 Constant
-        -1.942827919,                           !- Coefficient2 x
-        0.757409168,                            !- Coefficient3 x**2
-        0,                                      !- Minimum Value of x {BasedOnField A2}
-        2,                                      !- Maximum Value of x {BasedOnField A2}
-        0,                                      !- Minimum Curve Output {BasedOnField A3}
-        2;                                      !- Maximum Curve Output {BasedOnField A3}
-
-      Curve:Biquadratic,
-        <%= system_name %> DefrostEIR,         !- Name
-        0.1528,                                 !- Coefficient1 Constant
-        0,                                      !- Coefficient2 x
-        0,                                      !- Coefficient3 x**2
-        0,                                      !- Coefficient4 y
-        0,                                      !- Coefficient5 y**2
-        0,                                      !- Coefficient6 x*y
-        -100,                                   !- Minimum Value of x {BasedOnField A2}
-        100,                                    !- Maximum Value of x {BasedOnField A2}
-        -100,                                   !- Minimum Value of y {BasedOnField A3}
-        100;                                    !- Maximum Value of y {BasedOnField A3}
-  <% end %>
-
-  Coil:Heating:Electric,
-    <%= system_name %> Supp Heating Coil,  !- Name
-    <%= system_name %> Always On Schedule,  !- Availability Schedule Name
-    1.0,                     !- Efficiency
-    Autosize,                !- Nominal Capacity
-  <% if (fan_config == "BLOWTHROUGH") %>
-    <%= system_name %> Heating Coil Outlet Node,  !- Air Inlet Node Name
-  <% elsif (fan_config == "DRAWTHROUGH") %>
-    <%= system_name %> Supply Fan Outlet Node,  !- Air Inlet Node Name
-  <% end %>
-  <% if (control_type == "Load") %>
-    <%= system_name %> Supply Equipment Outlet Node;  !- Air Outlet Node Name
-  <% elsif (control_type == "Setpoint") %>
-    <%= system_name %> Supply Equipment Outlet Node,  !- Air Outlet Node Name
-    <%= system_name %> Supply Equipment Outlet Node;  !- Temperature Setpoint Node Name
-  <% end %>
 <% end %>
+
 
   AirLoopHVAC:SupplyPath,
     <%= system_name %>,             !- Name
@@ -1351,25 +735,25 @@ Output:Table:Annual,
   AirflowNetwork:Distribution:Linkage,
     <%= system_name %> Supply Inlet Link,         !- Name
     <%= system_name %> Main Inlet Node_AFN,           !- Node 1 Name
-    <%= system_name %> Supply Equipment Inlet Node_AFN,            !- Node 2 Name
+    <%= system_name %> Unitary Inlet Node_AFN,            !- Node 2 Name
     <%= system_name %> Main Return Duct;            !- Component Name
 
   AirflowNetwork:Distribution:Node,
-    <%= system_name %> Supply Equipment Inlet Node_AFN,           !- Name
-    <%= system_name %> Supply Equipment Inlet Node,     !- Component Name or Node Name
+    <%= system_name %> Unitary Inlet Node_AFN,           !- Name
+    <%= system_name %> Unitary Inlet Node,     !- Component Name or Node Name
     Other,                   !- Component Object Type or Node Type
     3.0;                     !- Node Height {m}
 
   <% if (fan_config == "BLOWTHROUGH") %>
   AirflowNetwork:Distribution:Linkage,
     <%= system_name %> Supply Fan Link,         !- Name
-    <%= system_name %> Supply Equipment Inlet Node_AFN,           !- Node 1 Name
-    <%= system_name %> Supply Fan Outlet Node_AFN,            !- Node 2 Name
+    <%= system_name %> Unitary Inlet Node_AFN,           !- Node 1 Name
+    <%= system_name %> Unitary Outlet Node_AFN,            !- Node 2 Name
     <%= system_name %> Supply Fan;            !- Component Name
 
   AirflowNetwork:Distribution:Node,
-    <%= system_name %> Supply Fan Outlet Node_AFN,            !- Name
-    <%= system_name %> Supply Fan Outlet Node,  !- Component Name or Node Name
+    <%= system_name %> Unitary Outlet Node_AFN,            !- Name
+    <%= system_name %> Unitary Outlet Node,  !- Component Name or Node Name
     Other,                   !- Component Object Type or Node Type
     3.0;                     !- Node Height {m}
 
@@ -1379,7 +763,7 @@ Output:Table:Annual,
 
   AirflowNetwork:Distribution:Linkage,
     <%= system_name %> Cooling Coil Link,         !- Name
-    <%= system_name %> Supply Fan Outlet Node_AFN,           !- Node 1 Name
+    <%= system_name %> Unitary Outlet Node_AFN,           !- Node 1 Name
     <%= system_name %> Cooling Coil Outlet Node_AFN,        !- Node 2 Name
     <%= system_name %> Cooling Coil;              !- Component Name
 
@@ -1391,7 +775,7 @@ Output:Table:Annual,
 
   AirflowNetwork:Distribution:Component:Coil,
     <%= system_name %> Cooling Coil,              !- Coil Name
-    Coil:Cooling:DX:SingleSpeed,  !- Coil Object Type
+    Coil:Cooling:DX:VariableSpeed,  !- Coil Object Type
     0.1,                     !- Air Path Length {m}
     1.000;                   !- Air Path Hydraulic Diameter {m}
 
@@ -1401,7 +785,7 @@ Output:Table:Annual,
     <% if heating_coil_type == "ASHP" and cooling_coil_type == "ASHP" %>
     <%= system_name %> Heating Coil Outlet Node_AFN,       !- Node 2 Name
     <% else %>
-    <%= system_name %> Supply Equipment Outlet Node_AFN,       !- Node 2 Name
+    <%= system_name %> Unitary Outlet Node_AFN,       !- Node 2 Name
     <% end %>
     <%= system_name %> Heating Coil;     !- Component Name
 
@@ -1414,8 +798,8 @@ Output:Table:Annual,
 
     <% else %>
   AirflowNetwork:Distribution:Node,
-    <%= system_name %> Supply Equipment Outlet Node_AFN,            !- Name
-    <%= system_name %> Supply Equipment Outlet Node,     !- Component Name or Node Name
+    <%= system_name %> Unitary Outlet Node_AFN,            !- Name
+    <%= system_name %> Unitary Outlet Node,     !- Component Name or Node Name
     Other,                   !- Component Object Type or Node Type
     3.0;                     !- Node Height {m}
 
@@ -1427,7 +811,7 @@ Output:Table:Annual,
     <% elsif (heating_coil_type == "ELECTRIC") %>
 		Coil:Heating:Electric,        !- Coil Object Type
     <% elsif (heating_coil_type == "ASHP") %>
-		Coil:Heating:DX:SingleSpeed,        !- Coil Object Type
+		Coil:Heating:DX:VariableSpeed,        !- Coil Object Type
     <% end %>
     0.1,                     !- Air Path Length {m}
     1.000;                   !- Air Path Hydraulic Diameter {m}
@@ -1435,7 +819,7 @@ Output:Table:Annual,
   <% elsif (fan_config == "DRAWTHROUGH") %>
   AirflowNetwork:Distribution:Linkage,
     <%= system_name %> Cooling Coil Link,         !- Name
-    <%= system_name %> Supply Equipment Inlet Node_AFN,           !- Node 1 Name
+    <%= system_name %> Unitary Inlet Node_AFN,           !- Node 1 Name
     <%= system_name %> Cooling Coil Outlet Node_AFN,        !- Node 2 Name
     <%= system_name %> Cooling Coil;              !- Component Name
 
@@ -1447,7 +831,7 @@ Output:Table:Annual,
 
   AirflowNetwork:Distribution:Component:Coil,
     <%= system_name %> Cooling Coil,              !- Coil Name
-    Coil:Cooling:DX:SingleSpeed,  !- Coil Object Type
+    Coil:Cooling:DX:VariableSpeed,  !- Coil Object Type
     0.1,                     !- Air Path Length {m}
     1.000;                   !- Air Path Hydraulic Diameter {m}
 
@@ -1470,7 +854,7 @@ Output:Table:Annual,
     <% elsif (heating_coil_type == "ELECTRIC") %>
 		Coil:Heating:Electric,        !- Coil Object Type
     <% elsif (heating_coil_type == "ASHP") %>
-		Coil:Heating:DX:SingleSpeed,        !- Coil Object Type
+		Coil:Heating:DX:VariableSpeed,        !- Coil Object Type
     <% end %>
     0.1,                     !- Air Path Length {m}
     1.000;                   !- Air Path Hydraulic Diameter {m}
@@ -1479,23 +863,23 @@ Output:Table:Annual,
     <%= system_name %> Supply Fan Link,           !- Name
     <%= system_name %> Heating Coil Outlet Node_AFN,            !- Node 1 Name
     <% if heating_coil_type == "ASHP" and cooling_coil_type == "ASHP" %>
-    <%= system_name %> Supply Fan Outlet Node_AFN,            !- Node 2 Name
+    <%= system_name %> Unitary Outlet Node_AFN,            !- Node 2 Name
     <% else %>
-    <%= system_name %> Supply Equipment Outlet Node_AFN,            !- Node 2 Name
+    <%= system_name %> Unitary Outlet Node_AFN,            !- Node 2 Name
     <% end %>
     <%= system_name %> Supply Fan;            !- Component Name
 
     <% if heating_coil_type == "ASHP" and cooling_coil_type == "ASHP" %>
   AirflowNetwork:Distribution:Node,
-    <%= system_name %> Supply Fan Outlet Node_AFN,            !- Name
-    <%= system_name %> Supply Fan Outlet Node,  !- Component Name or Node Name
+    <%= system_name %> Unitary Outlet Node_AFN,            !- Name
+    <%= system_name %> Unitary Outlet Node,  !- Component Name or Node Name
     Other,                   !- Component Object Type or Node Type
     3.0;                     !- Node Height {m}
 
     <% else %>
   AirflowNetwork:Distribution:Node,
-    <%= system_name %> Supply Equipment Outlet Node_AFN,            !- Name
-    <%= system_name %> Supply Equipment Outlet Node,     !- Component Name or Node Name
+    <%= system_name %> Unitary Outlet Node_AFN,            !- Name
+    <%= system_name %> Unitary Outlet Node,     !- Component Name or Node Name
     Other,                   !- Component Object Type or Node Type
     3.0;                     !- Node Height {m}
 
@@ -1509,12 +893,12 @@ Output:Table:Annual,
   AirflowNetwork:Distribution:Linkage,
     <%= system_name %> Supp Heating Coil Link,         !- Name
     <%= system_name %> Heating Coil Outlet Node_AFN,        !- Node 1 Name
-    <%= system_name %> Supply Equipment Outlet Node_AFN,       !- Node 2 Name
+    <%= system_name %> Unitary Outlet Node_AFN,       !- Node 2 Name
     <%= system_name %> Supp Heating Coil;     !- Component Name
 
   AirflowNetwork:Distribution:Node,
-    <%= system_name %> Supply Equipment Outlet Node_AFN,            !- Name
-    <%= system_name %> Supply Equipment Outlet Node,     !- Component Name or Node Name
+    <%= system_name %> Unitary Outlet Node_AFN,            !- Name
+    <%= system_name %> Unitary Outlet Node,     !- Component Name or Node Name
     Other,                   !- Component Object Type or Node Type
     3.0;                     !- Node Height {m}
 
@@ -1527,7 +911,7 @@ Output:Table:Annual,
   <% end %>
   AirflowNetwork:Distribution:Linkage,
     <%= system_name %> Air Loop Supply Link,    !- Name
-    <%= system_name %> Supply Equipment Outlet Node_AFN,       !- Node 1 Name
+    <%= system_name %> Unitary Outlet Node_AFN,       !- Node 1 Name
     <%= system_name %> Equipment Inlet Node_AFN,      !- Node 2 Name
     <%= system_name %> Air Loop Supply Duct;           !- Component Name
 
@@ -2022,11 +1406,8 @@ InternalMass,
      <%= zone_name %> Return Node,                   !- Output:Variable or Output:Meter Index Key Name
      System Node Humidity Ratio;                     !- Output:Variable or Output:Meter Index Key Name
 
-  EnergyManagementSystem:Sensor,
-     Fan_RTF<%= zone_name_ems %>,            !- Name
-     <%= system_name %> Supply Fan,                  !- Output:Variable or Output:Meter Index Key Name
-     Fan Runtime Fraction;                           !- Output:Variable or Output:Meter Index Key Name
-
+EnergyManagementSystem:GlobalVariable,
+  Fan_RTF<%= zone_name_ems %>; !- Erl Variable Name 1
   ! Program
 
   EnergyManagementSystem:ProgramCallingManager,
@@ -2051,6 +1432,7 @@ InternalMass,
      Set Qleak_s = f_sup * AH_MFR<%= zone_name_ems %> * (h_RA - h_SA), ! Supply leakage total heat flow
      Set Qleak_s_l<%= zone_name_ems %> = f_sup * AH_MFR<%= zone_name_ems %> * h_fg * (RA_W<%= zone_name_ems %> - AH_Wout<%= zone_name_ems %>), ! Supply leakage latent heat flow
      Set Qleak_s_s<%= zone_name_ems %> = Qleak_s - Qleak_s_l<%= zone_name_ems %>, ! Supply leakage sensible heat flow
+     Set Fan_RTF<%= zone_name_ems %> = Fan_RTF_<%= zone_name_ems %>_Speed_1 + Fan_RTF_<%= zone_name_ems %>_Speed_2 + Fan_RTF_<%= zone_name_ems %>_Speed_3 + Fan_RTF_<%= zone_name_ems %>_Speed_4,
      Set expTerm = (Fan_RTF<%= zone_name_ems %> / ((@Max AH_MFR<%= zone_name_ems %> 0.001) * 1006.0)) * <%= supply_duct_ua %>,
      Set expTerm = 0 - expTerm,
      Set Tsupply = AHZone_T<%= zone_name_ems %> + ((AH_Tout<%= zone_name_ems %> - AHZone_T<%= zone_name_ems %>) * (@Exp expTerm)), ! Supply temperature
