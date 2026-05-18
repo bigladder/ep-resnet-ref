@@ -7,7 +7,7 @@ from resdx import (
     FanMotorType,
     RESNETDXModel,
     StagingType,
-    write_idf_file,
+    write_idf,
 )
 
 
@@ -64,10 +64,10 @@ def get_performance_map(
         is_ducted=is_ducted,
     )
 
-    objects = write_idf_file(
+    objects = write_idf(
         unit=unit,
         heating_type=heating_type,
-        system_name="HVAC ",
+        system_name="HVAC",
         system_type=EnergyPlusSystemType.UNITARY_SYSTEM,
         autosize=False,
         normalize=False,
