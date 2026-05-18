@@ -1,9 +1,5 @@
 from sys import argv
 
-# import resdx
-
-# print(resdx.__file__)
-
 from koozie import fr_u
 
 from resdx import (
@@ -11,8 +7,7 @@ from resdx import (
     FanMotorType,
     RESNETDXModel,
     StagingType,
-    create_idf_string,
-    get_select_idf_objects,
+    write_idf_file,
 )
 
 
@@ -69,7 +64,7 @@ def get_performance_map(
         is_ducted=is_ducted,
     )
 
-    objects = get_select_idf_objects(
+    objects = write_idf_file(
         unit=unit,
         heating_type=heating_type,
         system_name="HVAC ",
@@ -80,11 +75,10 @@ def get_performance_map(
         get_independent_variable_lists=True,
         get_cooling_performance_map=True,
         get_heating_performance_map=get_heating_performance_map,
+        return_idf_objects=True,
     )
 
-    object_string = create_idf_string(objects)
-
-    return object_string
+    return objects
 
 
 if __name__ == "__main__":
